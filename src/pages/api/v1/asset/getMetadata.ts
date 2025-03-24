@@ -7,7 +7,7 @@ const GET: APIRoute = async ({ url }) => {
   const name = url.searchParams.get("assetName");
 
   if (!name) {
-    const statusText = 'Missing query parameters. Expected "assetName" and "version"';
+    const statusText = 'Missing query parameters. Expected "assetName"';
     return new Response(statusText, {
       status: 400,
       statusText,

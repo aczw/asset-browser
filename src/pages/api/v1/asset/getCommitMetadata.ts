@@ -5,11 +5,12 @@ import { eq } from "drizzle-orm";
 
 const GET: APIRoute = async ({ url }) => {
   const name = url.searchParams.get("assetName");
+  const version = url.searchParams.get("version");
 
-  if (!name) {
+  if (!name || !version) {
     return new Response(null, {
       status: 400,
-      statusText: 'Invalid query parameter. Expected "assetName"',
+      statusText: 'Missing or invalid query parameters. Expected "assetName" and "version"',
     });
   }
 
@@ -22,11 +23,7 @@ const GET: APIRoute = async ({ url }) => {
     });
   }
 
-  const asset = assetEntries[0];
-  const commitEntries = await db.select().from(commits).where(eq(commits.assetId, asset.id));
-
-  // Sort by most recent to earliest commit
-  commitEntries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  const commitEntries = await db.select().from(commits).where(eq(commits.version, version));
   const commit = commitEntries[0];
 
   const keywordEntries = await db
@@ -34,12 +31,13 @@ const GET: APIRoute = async ({ url }) => {
     .from(keywords)
     .where(eq(keywords.commitId, commit.id));
 
+  const asset = assetEntries[0];
+
   return new Response(
     JSON.stringify({
       structureVersion: asset.structureVersion,
       hasTexture: asset.hasTexture,
       author: commit.author,
-      version: commit.version,
       keywords: keywordEntries,
       timestamp: commit.timestamp.getTime(),
       note: commit.note,

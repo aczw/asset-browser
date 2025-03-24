@@ -1,19 +1,26 @@
 ---
-import Welcome from '@/components/Welcome.astro';
-import Layout from '@/layouts/Layout.astro';
+import Welcome from "@/components/Welcome.astro";
+import Layout from "@/layouts/Layout.astro";
 
-const response = await fetch("http://localhost:4321/api/v1/asset/getMetadata?assetName=dummy", {
-	method: "GET"
-});
+const head = process.env.DEV
+  ? "http://localhost:4321"
+  : "https://asset-browser-aczw.vercel.app";
+
+const response = await fetch(
+  `${head}/api/v1/asset/getCommitMetadata?assetName=dummy&version=01.00.00`,
+  {
+    method: "GET",
+  }
+);
 
 if (response.ok) {
-	console.log(await response.json());
+  console.log(await response.json());
 } else {
-	const {status, statusText} = response;
-	console.error(`${status}: ${statusText}`);
+  const { status, statusText } = response;
+  console.error(`${status}: ${statusText}`);
 }
 ---
 
 <Layout>
-	<Welcome />
+  <Welcome />
 </Layout>

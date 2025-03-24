@@ -6,6 +6,6 @@ const turso = createClient({
   authToken: import.meta.env.TURSO_AUTH_TOKEN,
 });
 
-const db = drizzle(turso, { casing: "snake_case" });
+const db = drizzle(turso, { casing: "camelCase" });
 
 export { db };

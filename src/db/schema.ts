@@ -18,12 +18,18 @@ type Status =
 
 const commits = t.sqliteTable("commits", {
   id: t.int({ mode: "number" }).primaryKey({ autoIncrement: true }),
-  assetId: t.int().references(() => assets.id),
-  author: t.text().notNull(),
-  timestamp: t.integer({ mode: "timestamp_ms" }),
+  assetId: t
+    .int()
+    .references(() => assets.id)
+    .notNull(),
+  author: t
+    .text()
+    .references(() => authors.pennKey)
+    .notNull(),
+  version: t.text().notNull(),
+  timestamp: t.integer({ mode: "timestamp_ms" }).notNull(),
   note: t.text().notNull(),
   status: t.text().$type<Status>().notNull(),
-  url: t.text().notNull(),
 });
 
 const authors = t.sqliteTable("authors", {
@@ -32,7 +38,10 @@ const authors = t.sqliteTable("authors", {
 
 const keywords = t.sqliteTable("keywords", {
   id: t.int({ mode: "number" }).primaryKey({ autoIncrement: true }),
-  commitId: t.int().references(() => commits.id),
+  commitId: t
+    .int()
+    .references(() => commits.id)
+    .notNull(),
   keyword: t.text().notNull(),
 });
 

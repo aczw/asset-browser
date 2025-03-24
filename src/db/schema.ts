@@ -1,3 +1,4 @@
+import type { Status } from "@/scripts/types";
 import * as t from "drizzle-orm/sqlite-core";
 
 const assets = t.sqliteTable("assets", {
@@ -6,15 +7,6 @@ const assets = t.sqliteTable("assets", {
   structureVersion: t.text().notNull(),
   hasTexture: t.int({ mode: "boolean" }).notNull(),
 });
-
-type Status =
-  | "In Progress"
-  | "Not Started"
-  | "Completed"
-  | "Published"
-  | "Approved"
-  | "Latest"
-  | "Broken";
 
 const commits = t.sqliteTable("commits", {
   id: t.int({ mode: "number" }).primaryKey({ autoIncrement: true }),

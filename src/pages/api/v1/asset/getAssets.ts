@@ -1,6 +1,7 @@
 import { 
     S3Client,
-    ListBucketsCommand
+    ListBucketsCommand,
+    ListObjectsV2Command
  } from "@aws-sdk/client-s3";
 
 import type { APIRoute } from "astro";
@@ -16,7 +17,7 @@ const S3 = new S3Client({
 
 const GET: APIRoute = async ({url}) => {
     try {
-        const response = await S3.send(new ListBucketsCommand({}));
+        const response = await S3.send(new ListObjectsV2Command({ Bucket: "7000assets" }));
         return new Response(
             await JSON.stringify(response)
         );

@@ -8,18 +8,20 @@ const GET: APIRoute = async ({ url }) => {
   const version = url.searchParams.get("version");
 
   if (!name || !version) {
-    return new Response(null, {
+    const statusText = 'Missing query parameters. Expected "assetName" and "version"';
+    return new Response(statusText, {
       status: 400,
-      statusText: 'Missing or invalid query parameters. Expected "assetName" and "version"',
+      statusText,
     });
   }
 
   const assetEntries = await db.select().from(assets).where(eq(assets.name, name));
 
   if (assetEntries.length === 0) {
-    return new Response(null, {
+    const statusText = "Asset not found";
+    return new Response(statusText, {
       status: 404,
-      statusText: "Asset not found",
+      statusText,
     });
   }
 

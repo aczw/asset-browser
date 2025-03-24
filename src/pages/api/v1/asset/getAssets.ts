@@ -1,7 +1,8 @@
 import { 
     S3Client,
     ListBucketsCommand,
-    ListObjectsV2Command
+    ListObjectsV2Command,
+    GetObjectCommand
  } from "@aws-sdk/client-s3";
 
 import type { APIRoute } from "astro";
@@ -15,11 +16,28 @@ const S3 = new S3Client({
     },
 });
 
-const GET: APIRoute = async ({url}) => {
+// given an assetName, it will return the bucket
+// test url:
+// http://localhost:4321/api/v1/asset/getAssets?bucket=7000assets&key=cartoonFish
+const GET: APIRoute = async ({ url }) => {
     try {
-        const response = await S3.send(new ListObjectsV2Command({ Bucket: "7000assets" }));
+        const bucket = url.searchParams.get("bucket");
+        const key = url.searchParams.get("key") + "/";
+        
+        const command = new ListObjectsV2Command({ 
+            Bucket: bucket as string,
+            Prefix: key,
+            Delimiter: "/"
+        });
+
+        const response = await S3.send(command);
+        const files = response.Contents?.map(obj => obj.Key) || [];
+
         return new Response(
-            await JSON.stringify(response)
+            JSON.stringify({ files }),
+            {
+                status: 200
+            }
         );
     } catch (error)  {
         console.log(error);

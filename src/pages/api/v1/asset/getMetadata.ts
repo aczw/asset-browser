@@ -46,7 +46,12 @@ const GET: APIRoute = async ({ url }) => {
       timestamp: commit.timestamp.getTime(),
       note: commit.note,
       status: commit.status,
-    })
+    }),
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
   );
 };
 

@@ -1,27 +1,36 @@
+import { assets } from "@/db/schema";
+import { db } from "@/db/turso";
 import { MetadataSchema } from "@/scripts/types";
 import type { APIRoute } from "astro";
+import { eq } from "drizzle-orm";
 
 const POST: APIRoute = async ({ request }) => {
   const payload = await request.json();
   const parsed = MetadataSchema.safeParse(payload);
 
   if (!parsed.success) {
-    const statusText = `Incorrect payload. Error: ${parsed.error}`;
+    const statusText = `Incorrectly formatted payload. TODO: parse zod errors and return them - ${
+      parsed.error.flatten().fieldErrors
+    }`;
     return new Response(statusText, {
       status: 400,
       statusText,
     });
   }
 
-  // const assetEntries = await db.select().from(assets).where(eq(assets.name, name));
+  const { data } = parsed;
+  console.log("data:", data);
 
-  // if (assetEntries.length === 0) {
-  //   const statusText = "Asset not found";
-  //   return new Response(statusText, {
-  //     status: 404,
-  //     statusText,
-  //   });
-  // }
+  // Asset needs to already exist
+  const assetEntries = await db.select().from(assets).where(eq(assets.name, data.assetName));
+
+  if (assetEntries.length === 0) {
+    const statusText = "Asset not found, needs to already exist in database to add new commit";
+    return new Response(statusText, {
+      status: 404,
+      statusText,
+    });
+  }
 
   // const commitEntries = await db.select().from(commits).where(eq(commits.version, version));
   // const commit = commitEntries[0];
@@ -50,7 +59,7 @@ const POST: APIRoute = async ({ request }) => {
   //   }
   // );
 
-  return new Response(null);
+  return new Response(null, { status: 200, statusText: "New commit metadata inserted!" });
 };
 
 export { POST };

@@ -16,7 +16,6 @@ type Status = z.infer<typeof StatusSchema>;
 
 const MetadataSchema = z.object({
   assetName: z.string().nonempty(),
-  structureVersion: z.string().nonempty(),
   hasTexture: z.boolean(),
   author: z.string().nonempty(),
   keywords: z.array(z.string().nonempty()),
@@ -25,4 +24,6 @@ const MetadataSchema = z.object({
   status: z.enum(StatusEnum),
 });
 
-export { MetadataSchema, type Status };
+type MetadataProps = z.infer<typeof MetadataSchema>;
+
+export { MetadataSchema, type MetadataProps, type Status };

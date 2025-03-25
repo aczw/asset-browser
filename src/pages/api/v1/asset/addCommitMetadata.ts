@@ -1,4 +1,4 @@
-import { assets, commits } from "@/db/schema";
+import { assets, authors, commits, keywords } from "@/db/schema";
 import { db } from "@/db/turso";
 import { NewCommitMetadataSchema } from "@/scripts/types";
 import type { APIRoute } from "astro";
@@ -71,12 +71,31 @@ const POST: APIRoute = async ({ request }) => {
     });
   }
 
-  await db.insert(commits).values({
-    assetId: asset.id,
-    author: data.author,
-    version: newVersion,
-    note: data.note,
-    status: data.status,
+  const authorEntries = await db.select().from(authors).where(eq(authors.pennKey, data.author));
+
+  if (authorEntries.length === 0) {
+    await db.insert(authors).values({
+      pennKey: data.author,
+    });
+  }
+
+  const returned = await db
+    .insert(commits)
+    .values({
+      assetId: asset.id,
+      author: data.author,
+      version: newVersion,
+      note: data.note,
+      status: data.status,
+    })
+    .returning({ commitId: commits.id });
+  const commitId = returned[0].commitId;
+
+  data.keywords.forEach(async (keyword) => {
+    await db.insert(keywords).values({
+      commitId,
+      keyword,
+    });
   });
 
   return new Response(null, { status: 201, statusText: "New commit metadata inserted!" });

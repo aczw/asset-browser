@@ -14,13 +14,17 @@ const VersionIncrement = ["major", "minor", "patch"] as const;
 
 const StatusSchema = z.enum(StatusEnum);
 
-const NewAssetMetadataSchema = z.object({
+const NewMetadataBaseSchema = z.object({
   assetName: z.string().nonempty(),
   hasTexture: z.boolean(),
   author: z.string().nonempty(),
   keywords: z.array(z.string().nonempty()),
   note: z.string(),
   status: z.enum(StatusEnum),
+});
+
+const NewAssetMetadataSchema = NewMetadataBaseSchema.extend({
+  structureVersion: z.string().nonempty(),
 });
 
 const NewCommitMetadataSchema = NewAssetMetadataSchema.extend({

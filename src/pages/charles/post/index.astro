@@ -1,7 +1,7 @@
 ---
 import Welcome from "@/components/Welcome.astro";
 import Layout from "@/layouts/Layout.astro";
-import type { MetadataProps } from "@/scripts/types";
+import type { NewCommitMetadata } from "@/scripts/types";
 
 const head = import.meta.env.DEV
   ? "http://localhost:4321"
@@ -11,11 +11,11 @@ const payload = {
   assetName: "dummy2",
   hasTexture: false,
   author: "czw",
+  versionIncrement: "minor",
   keywords: ["also", "is", "not", "real"],
-  timestamp: Date.now(),
   note: "Incredible note goodness",
   status: "Latest",
-} satisfies MetadataProps;
+} satisfies NewCommitMetadata;
 
 const response = await fetch(`${head}/api/v1/asset/addCommitMetadata`, {
   method: "POST",
@@ -24,7 +24,7 @@ const response = await fetch(`${head}/api/v1/asset/addCommitMetadata`, {
 });
 
 if (response.ok) {
-  console.log("success!", response);
+  console.log("success!");
 } else {
   const { status, statusText } = response;
   console.error(`${status}: ${statusText}`);

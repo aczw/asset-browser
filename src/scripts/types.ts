@@ -27,7 +27,7 @@ const NewAssetMetadataSchema = NewMetadataBaseSchema.extend({
   structureVersion: z.string().nonempty(),
 });
 
-const NewCommitMetadataSchema = NewAssetMetadataSchema.extend({
+const NewCommitMetadataSchema = NewMetadataBaseSchema.extend({
   versionIncrement: z.enum(VersionIncrement),
 });
 

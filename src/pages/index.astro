@@ -1,6 +1,12 @@
 ---
 import Welcome from "@/components/Welcome.astro";
 import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.jsx";
+import SearchBar from "@/components/SearchBar.jsx";
+import Filters from "@/components/Filters.jsx";
+import Sort from "@/components/Sort.jsx";
+import CreateButton from "@/components/CreateButton.jsx";
+import AssetCard from "@/components/AssetCard.jsx";
 
 const head = import.meta.env.DEV
   ? "http://localhost:4321"
@@ -22,5 +28,21 @@ if (response.ok) {
 ---
 
 <Layout>
-  <Welcome />
+  <div id="container">
+    <Header client:only="react"/>
+    
+    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center">
+      <SearchBar client:only="react"  />
+      <CreateButton client:only="react" />
+    </div>
+
+    <div style="display: flex; justify-content: space-between; width: 100%">
+      <Filters client:only="react" />
+      <Sort client:only="react" />
+    </div>
+    
+    <div style="width:100%; margin: 2%" >
+      <AssetCard client:only="react" name="Sitting Moomin" thumbnail="../../public/thumbnails/thumbnail.png"/>
+    </div>
+  </div>
 </Layout>

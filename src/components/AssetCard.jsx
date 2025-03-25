@@ -1,12 +1,12 @@
-import * as React from 'react';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import { Box, Drawer, IconButton } from '@mui/material';
 import Card from '@mui/material/Card';
+import CardActionArea from '@mui/material/CardActionArea';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
-import Typography from '@mui/material/Typography';
-import CardActionArea from '@mui/material/CardActionArea';
-import { IconButton, Box, Drawer } from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+import * as React from 'react';
 import AssetInfo from '../components/AssetInfo';
 
 export default function AssetCard({name, thumbnail}) {
@@ -43,7 +43,7 @@ export default function AssetCard({name, thumbnail}) {
                     </Typography>
                 </Box>
                 <Divider />
-                <AssetInfo name="Sitting Moomin" thumbnail="../../public/thumbnails/thumbnail.png" />
+                <AssetInfo name="Sitting Moomin" thumbnail="../../thumbnails/thumbnail.png" />
             </Drawer>
 
             <Card sx={{ maxWidth: 300 }}>

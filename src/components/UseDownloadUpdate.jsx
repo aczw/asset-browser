@@ -28,5 +28,6 @@ export const useDownloadUpdate = () => {
     handleUpdateOpen,
     handleUpdateClose,
     setOpenDownload,
+    setOpenUpdate,
   };
 };

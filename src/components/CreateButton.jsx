@@ -44,7 +44,7 @@ export default function CreateButton() {
         aria-describedby="modal-modal-description"
       >
         <Box style={style}>
-          <UploadForm />
+          <UploadForm isUpdateForm={false} title={"Add New Asset"} />
         </Box>
       </Modal>
     </Box>

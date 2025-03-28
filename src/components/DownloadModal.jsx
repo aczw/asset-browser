@@ -19,13 +19,25 @@ const versionOptions = [
 ];
 
 const DCCoptions = [
-  { label: "Maya", id: 1 },
-  { label: "Houdini", id: 2 },
-  { label: "Blender", id: 3 },
+  { label: "None", id: 1 },
+  { label: "Maya", id: 2 },
+  { label: "Houdini", id: 3 },
+  { label: "Blender", id: 4 },
 ];
 
 export default function DownloadModal({ assetName }) {
   const { handleDownloadClose, setOpenDownload } = useDownloadUpdate();
+
+  const [selected, setSelected] = React.useState("");
+
+  let buttonLabel = "Download";
+
+  if (selected == "None") {
+    buttonLabel = "Download";
+  } else {
+    buttonLabel = "Download & Launch";
+  }
+
   return (
     <FormGroup>
       <Typography variant="h5" component="h2" style={{ margin: "2%" }}>
@@ -51,6 +63,10 @@ export default function DownloadModal({ assetName }) {
         control={
           <Autocomplete
             sx={{ width: 250 }}
+            selected={selected}
+            onInputChange={(event, newSelected) => {
+              setSelected(newSelected);
+            }}
             options={DCCoptions}
             renderInput={(params) => (
               <TextField {...params} label="Launch in..." />
@@ -68,7 +84,7 @@ export default function DownloadModal({ assetName }) {
 
       <Box style={{ display: "flex", gap: "20px" }}>
         <ButtonComponent name="Cancel" onClick={handleDownloadClose} />
-        <ButtonComponent name="Download & Launch" />
+        <ButtonComponent name={buttonLabel} />
       </Box>
     </FormGroup>
   );

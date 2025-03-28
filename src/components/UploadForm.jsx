@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState } from "react";
 import ButtonComponent from "./ButtonComponent";
 import {
   Checkbox,
@@ -32,28 +32,40 @@ const versionIncOptions = [
   { label: "Minor", id: 2 },
 ];
 
-export default function UploadForm() {
+export default function UploadForm({ isUpdateForm, title }) {
+  const [isChecked, setIsChecked] = useState(false);
+
+  const handleCheckboxChange = (event) => {
+    setIsChecked(event.target.checked);
+  };
+
   return (
     <FormGroup>
       <Typography variant="h5" component="h2" style={{ margin: "2%" }}>
-        Add New Asset
+        {title}
       </Typography>
-
       <Box style={style}>
-        <InputLabel htmlFor="my-input">Asset Name</InputLabel>
-        <FormControlLabel required control={<Input />} />
+        <InputLabel disabled={isUpdateForm} htmlFor="my-input">
+          Asset Name
+        </InputLabel>
+        <FormControlLabel
+          disabled={isUpdateForm}
+          required
+          control={<Input />}
+        />
       </Box>
 
       <Box style={style}>
-        <InputLabel htmlFor="my-input">Author</InputLabel>
-        <FormControlLabel required control={<Input />} />
+        <InputLabel disabled={true} htmlFor="my-input">
+          Author
+        </InputLabel>
+        <FormControlLabel disabled={true} required control={<Input />} />
       </Box>
 
       <Box style={style}>
         <InputLabel htmlFor="my-input">Keywords</InputLabel>
         <FormControlLabel required control={<Input />} />
       </Box>
-
       <Box style={style}>
         <InputLabel htmlFor="my-input">Status</InputLabel>
         <FormControlLabel
@@ -68,32 +80,53 @@ export default function UploadForm() {
           }
         />
       </Box>
-
-      <Box style={style}>
-        <InputLabel htmlFor="my-input">Version Increment</InputLabel>
-        <FormControlLabel
-          required
-          control={
-            <Autocomplete
-              sx={{ width: 250 }}
-              options={versionIncOptions}
-              renderInput={(params) => (
-                <TextField {...params} label="Version Increment" />
-              )}
-              style={{ margin: "2%" }}
-            />
-          }
-        />
-      </Box>
+      {isUpdateForm && (
+        <Box style={style}>
+          <InputLabel htmlFor="my-input">Version Increment</InputLabel>
+          <FormControlLabel
+            required
+            control={
+              <Autocomplete
+                sx={{ width: 250 }}
+                options={versionIncOptions}
+                renderInput={(params) => (
+                  <TextField {...params} label="Version Increment" />
+                )}
+                style={{ margin: "2%" }}
+              />
+            }
+          />
+        </Box>
+      )}
 
       <Box style={style}>
         <InputLabel htmlFor="my-input">Has Texture</InputLabel>
         <FormControlLabel
+          checked={isChecked}
+          onChange={handleCheckboxChange}
           required
           control={<Checkbox style={{ margin: "2%" }} />}
         />
       </Box>
-
+      {isChecked && (
+        <Box>
+          <InputLabel htmlFor="my-input">Diffuse Map</InputLabel>
+          <FormControlLabel
+            required
+            control={<Input type="file" variant="plain" />}
+          />
+          <InputLabel htmlFor="my-input">Roughness Map</InputLabel>
+          <FormControlLabel
+            required
+            control={<Input type="file" variant="plain" />}
+          />
+          <InputLabel htmlFor="my-input">Normal Map</InputLabel>
+          <FormControlLabel
+            required
+            control={<Input type="file" variant="plain" />}
+          />
+        </Box>
+      )}
       <Box style={style}>
         <InputLabel htmlFor="my-input">File</InputLabel>
         <FormControlLabel
@@ -101,7 +134,6 @@ export default function UploadForm() {
           control={<Input type="file" variant="plain" />}
         />
       </Box>
-
       <Box style={style}>
         <InputLabel htmlFor="my-input">Thumbnail</InputLabel>
         <FormControlLabel
@@ -109,12 +141,10 @@ export default function UploadForm() {
           control={<Input type="file" variant="plain" />}
         />
       </Box>
-
       <Box style={style}>
         <InputLabel htmlFor="my-input">Message</InputLabel>
         <FormControlLabel required control={<Input multiline />} />
       </Box>
-
       <ButtonComponent name="Submit" />
     </FormGroup>
   );

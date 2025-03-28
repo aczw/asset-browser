@@ -8,7 +8,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import { Checkbox, TextField, FormControlLabel, Modal } from "@mui/material";
 import VersionHistory from "./VersionHistory";
 import DownloadModal from "./DownloadModal";
-// import UpdateForm from "./UpdateForm";
+import UploadForm from "./UploadForm";
 import { useDownloadUpdate } from "./UseDownloadUpdate";
 
 const style = {
@@ -77,7 +77,9 @@ export default function AssetInfo({ name, thumbnail }) {
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
-          <Box style={style}>{/* <UpdateForm /> */}</Box>
+          <Box style={style}>
+            <UploadForm isUpdateForm={true} title={"Update Asset"} />
+          </Box>
         </Modal>
       </Box>
 

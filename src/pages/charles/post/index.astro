@@ -1,0 +1,36 @@
+---
+import Welcome from "@/components/Welcome.astro";
+import Layout from "@/layouts/Layout.astro";
+import type { NewCommitMetadata } from "@/scripts/types";
+
+const head = import.meta.env.DEV
+  ? "http://localhost:4321"
+  : "https://asset-browser-aczw.vercel.app";
+
+const payload = {
+  assetName: "dummy2",
+  hasTexture: false,
+  author: "geant",
+  versionIncrement: "minor",
+  keywords: ["also", "is", "not", "real"],
+  note: "Incredible note goodness",
+  status: "Latest",
+} satisfies NewCommitMetadata;
+
+const response = await fetch(`${head}/api/v1/asset/addCommitMetadata`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload),
+});
+
+if (response.ok) {
+  console.log("success!");
+} else {
+  const { status, statusText } = response;
+  console.error(`${status}: ${statusText}`);
+}
+---
+
+<Layout>
+  <Welcome />
+</Layout>

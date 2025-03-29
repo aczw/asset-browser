@@ -1,0 +1,23 @@
+---
+import Welcome from "@/components/Welcome.astro";
+import Layout from "@/layouts/Layout.astro";
+
+const head = import.meta.env.DEV
+  ? "http://localhost:4321"
+  : "https://asset-browser-aczw.vercel.app";
+
+const response = await fetch(`${head}/api/v1/asset/getMetadata?assetName=dummy`, {
+  method: "GET",
+});
+
+if (response.ok) {
+  console.log(await response.json());
+} else {
+  const { status, statusText } = response;
+  console.error(`${status}: ${statusText}`);
+}
+---
+
+<Layout>
+  <Welcome />
+</Layout>

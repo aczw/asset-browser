@@ -1,4 +1,5 @@
 import type { Status } from "@/scripts/types";
+import { sql } from "drizzle-orm";
 import * as t from "drizzle-orm/sqlite-core";
 
 const assets = t.sqliteTable("assets", {
@@ -19,7 +20,10 @@ const commits = t.sqliteTable("commits", {
     .references(() => authors.pennKey)
     .notNull(),
   version: t.text().notNull(),
-  timestamp: t.integer({ mode: "timestamp_ms" }).notNull(),
+  timestamp: t
+    .integer({ mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`(unixepoch() * 1000)`),
   note: t.text().notNull(),
   status: t.text().$type<Status>().notNull(),
 });

@@ -1,0 +1,36 @@
+---
+import Welcome from "@/components/Welcome.astro";
+import Layout from "@/layouts/Layout.astro";
+import type { NewAssetMetadata } from "@/scripts/types";
+
+const head = import.meta.env.DEV
+  ? "http://localhost:4321"
+  : "https://asset-browser-aczw.vercel.app";
+
+const payload = {
+  assetName: "dummy3",
+  structureVersion: "03.00.00",
+  hasTexture: false,
+  author: "echou",
+  keywords: ["new", "asset", "time", "yippee", "woo"],
+  note: "WOWOWOOWW a new asset! incredible!",
+  status: "Latest",
+} satisfies NewAssetMetadata;
+
+const response = await fetch(`${head}/api/v1/asset/createMetadata`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload),
+});
+
+if (response.ok) {
+  console.log("success!");
+} else {
+  const { status, statusText } = response;
+  console.error(`${status}: ${statusText}`);
+}
+---
+
+<Layout>
+  <Welcome />
+</Layout>

@@ -1,7 +1,7 @@
 import { assets, commits, keywords } from "@/db/schema";
 import { db } from "@/db/turso";
 import type { APIRoute } from "astro";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 const GET: APIRoute = async ({ url }) => {
   const name = url.searchParams.get("assetName");
@@ -25,10 +25,11 @@ const GET: APIRoute = async ({ url }) => {
   }
 
   const asset = assetEntries[0];
-  const commitEntries = await db.select().from(commits).where(eq(commits.assetId, asset.id));
-
-  // Sort by most recent to earliest commit
-  commitEntries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  const commitEntries = await db
+    .select()
+    .from(commits)
+    .where(eq(commits.assetId, asset.id))
+    .orderBy(asc(commits.timestamp));
   const commit = commitEntries[0];
 
   const keywordEntries = await db

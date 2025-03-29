@@ -1,56 +1,104 @@
-import { MetadataSchema } from "@/scripts/types";
+import { assets, authors, commits, keywords } from "@/db/schema";
+import { db } from "@/db/turso";
+import { NewCommitMetadataSchema } from "@/scripts/types";
 import type { APIRoute } from "astro";
+import { eq } from "drizzle-orm";
 
 const POST: APIRoute = async ({ request }) => {
   const payload = await request.json();
-  const parsed = MetadataSchema.safeParse(payload);
+  const parsed = NewCommitMetadataSchema.safeParse(payload);
 
   if (!parsed.success) {
-    const statusText = `Incorrect payload. Error: ${parsed.error}`;
+    const statusText = `Incorrectly formatted payload. TODO: parse zod errors and return them - ${
+      parsed.error.flatten().fieldErrors
+    }`;
     return new Response(statusText, {
       status: 400,
       statusText,
     });
   }
 
-  // const assetEntries = await db.select().from(assets).where(eq(assets.name, name));
+  const { data } = parsed;
 
-  // if (assetEntries.length === 0) {
-  //   const statusText = "Asset not found";
-  //   return new Response(statusText, {
-  //     status: 404,
-  //     statusText,
-  //   });
-  // }
+  // Asset needs to already exist
+  const assetEntries = await db.select().from(assets).where(eq(assets.name, data.assetName));
 
-  // const commitEntries = await db.select().from(commits).where(eq(commits.version, version));
-  // const commit = commitEntries[0];
+  if (assetEntries.length === 0) {
+    const statusText = "Asset not found, needs to already exist in database to add new commit";
+    return new Response(statusText, {
+      status: 404,
+      statusText,
+    });
+  }
 
-  // const keywordEntries = await db
-  //   .select({ keyword: keywords.keyword })
-  //   .from(keywords)
-  //   .where(eq(keywords.commitId, commit.id));
+  const asset = assetEntries[0];
+  const commitEntries = await db.select().from(commits).where(eq(commits.assetId, asset.id));
 
-  // const asset = assetEntries[0];
+  // Increment version. Need to find most recent version first
+  let newVersion = "";
+  if (commitEntries.length !== 0) {
+    commitEntries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-  // return new Response(
-  //   JSON.stringify({
-  //     structureVersion: asset.structureVersion,
-  //     hasTexture: asset.hasTexture,
-  //     author: commit.author,
-  //     keywords: keywordEntries,
-  //     timestamp: commit.timestamp.getTime(),
-  //     note: commit.note,
-  //     status: commit.status,
-  //   }),
-  //   {
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   }
-  // );
+    const { version: oldVersion } = commitEntries[0];
+    const split = oldVersion.split(".");
 
-  return new Response(null);
+    function increment(versionSection: number) {
+      const incr = versionSection + 1;
+      return incr > 9 ? String(incr) : `0${incr}`;
+    }
+
+    switch (data.versionIncrement) {
+      case "major": {
+        newVersion = `${increment(Number(split[0]))}.00.00`;
+        break;
+      }
+
+      case "minor": {
+        newVersion = `${split[0]}.${increment(Number(split[1]))}.${split[2]}`;
+        break;
+      }
+
+      case "patch": {
+        newVersion = `${split[0]}.${split[1]}.${increment(Number(split[2]))}`;
+        break;
+      }
+    }
+  } else {
+    const statusText = "Asset exists but does not have at least one associated commit!";
+    return new Response(statusText, {
+      status: 500,
+      statusText,
+    });
+  }
+
+  const authorEntries = await db.select().from(authors).where(eq(authors.pennKey, data.author));
+
+  if (authorEntries.length === 0) {
+    await db.insert(authors).values({
+      pennKey: data.author,
+    });
+  }
+
+  const returned = await db
+    .insert(commits)
+    .values({
+      assetId: asset.id,
+      author: data.author,
+      version: newVersion,
+      note: data.note,
+      status: data.status,
+    })
+    .returning({ commitId: commits.id });
+  const commitId = returned[0].commitId;
+
+  data.keywords.forEach(async (keyword) => {
+    await db.insert(keywords).values({
+      commitId,
+      keyword,
+    });
+  });
+
+  return new Response(null, { status: 201, statusText: "New commit metadata inserted!" });
 };
 
 export { POST };

@@ -10,19 +10,35 @@ const StatusEnum = [
   "Broken",
 ] as const;
 
+const VersionIncrement = ["major", "minor", "patch"] as const;
+
 const StatusSchema = z.enum(StatusEnum);
 
-type Status = z.infer<typeof StatusSchema>;
-
-const MetadataSchema = z.object({
+const NewMetadataBaseSchema = z.object({
   assetName: z.string().nonempty(),
-  structureVersion: z.string().nonempty(),
   hasTexture: z.boolean(),
   author: z.string().nonempty(),
   keywords: z.array(z.string().nonempty()),
-  timestamp: z.number().positive(),
   note: z.string(),
   status: z.enum(StatusEnum),
 });
 
-export { MetadataSchema, type Status };
+const NewAssetMetadataSchema = NewMetadataBaseSchema.extend({
+  structureVersion: z.string().nonempty(),
+});
+
+const NewCommitMetadataSchema = NewMetadataBaseSchema.extend({
+  versionIncrement: z.enum(VersionIncrement),
+});
+
+type Status = z.infer<typeof StatusSchema>;
+type NewAssetMetadata = z.infer<typeof NewAssetMetadataSchema>;
+type NewCommitMetadata = z.infer<typeof NewCommitMetadataSchema>;
+
+export {
+  NewAssetMetadataSchema,
+  NewCommitMetadataSchema,
+  type NewAssetMetadata,
+  type NewCommitMetadata,
+  type Status,
+};

@@ -16,13 +16,23 @@ const style = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 400,
   backgroundColor: "white",
   border: "2px solid #000",
   boxShadow: 24,
   p: 4,
   padding: "2rem",
 };
+
+const boxStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "20px",
+  margin: "2%",
+};
+
+const labelWidth = { width: "100px" };
+
+const fieldWidth = { width: "70%" };
 
 const options = [
   { label: "01.00.00", id: 1 },
@@ -31,7 +41,20 @@ const options = [
   { label: "03.00.00", id: 4 },
 ];
 
-export default function AssetInfo({ name, thumbnail }) {
+const keywordOptions = [
+  { label: "creature", id: 1 },
+  { label: "moomin", id: 2 },
+  { label: "character", id: 3 },
+  { label: "sitting", id: 4 },
+  { label: "troll", id: 5 },
+];
+
+const authorOptions = [
+  { label: "echou", id: 1 },
+  { label: "claran", id: 2 },
+];
+
+export default function AssetInfo({ name, thumbnail, handle }) {
   const {
     openDownload,
     openUpdate,
@@ -56,7 +79,9 @@ export default function AssetInfo({ name, thumbnail }) {
           display: "flex",
           justifyContent: "center",
           gap: "20px",
-          margin: "10px",
+          margin: "2%",
+          paddingTop: "2%",
+          paddingBottom: "4%",
         }}
       >
         <ButtonComponent name="Download" onClick={handleDownloadOpen} />
@@ -67,8 +92,11 @@ export default function AssetInfo({ name, thumbnail }) {
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
-          <Box style={style}>
-            <DownloadModal assetName={name} />
+          <Box style={({ width: "50%" }, style)}>
+            <DownloadModal
+              assetName={name}
+              handleDownloadClose={handleDownloadClose}
+            />
           </Box>
         </Modal>
         <Modal
@@ -77,60 +105,71 @@ export default function AssetInfo({ name, thumbnail }) {
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
-          <Box style={style}>
-            <UploadForm isUpdateForm={true} title={"Update Asset"} />
+          <Box style={({ width: "400" }, style)}>
+            <UploadForm
+              isUpdateForm={true}
+              title={"Update Asset"}
+              handleUpdateClose={handleUpdateClose}
+            />
           </Box>
         </Modal>
       </Box>
 
-      <Box style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-        <Typography style={{ width: "200px" }}>Authors</Typography>
-        <TextField
-          fullWidth
-          label="eschou, claran"
-          variant="outlined"
-          margin="normal"
-          disabled
+      <Box style={boxStyle}>
+        <Typography style={labelWidth}>Authors</Typography>
+        <Autocomplete
+          multiple
+          id="tags-readOnly"
+          options={authorOptions.map((option) => option.label)}
+          defaultValue={authorOptions.map((option) => option.label)}
+          readOnly
+          renderInput={(params) => <TextField {...params} label="Authors" />}
+          size="small"
+          style={fieldWidth}
         />
       </Box>
 
-      <Box style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-        <Typography style={{ width: "200px" }}>Keywords</Typography>
-        <TextField
-          fullWidth
-          label="creature, moomin, character, sitting, troll"
-          variant="outlined"
-          margin="normal"
-          disabled
+      <Box style={boxStyle}>
+        <Typography style={labelWidth}>Keywords</Typography>
+        <Autocomplete
+          multiple
+          id="tags-readOnly"
+          options={keywordOptions.map((option) => option.label)}
+          defaultValue={keywordOptions.map((option) => option.label)}
+          readOnly
+          renderInput={(params) => <TextField {...params} label="Keywords" />}
+          size="small"
+          style={fieldWidth}
         />
       </Box>
 
-      <Box style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-        <Typography style={{ width: "200px" }}>Version</Typography>
+      <Box style={boxStyle}>
+        <Typography style={labelWidth}>Version</Typography>
         <Autocomplete
           sx={{ width: 250 }}
           options={options}
           renderInput={(params) => (
             <TextField {...params} label={options[2].label} />
           )}
+          style={fieldWidth}
         />
       </Box>
 
-      <Box style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-        <Typography style={{ width: "200px" }}>Has Texture</Typography>
+      <Box style={boxStyle}>
+        <Typography style={labelWidth}>Has Texture</Typography>
         <Checkbox />
       </Box>
 
-      <Box style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-        <Typography style={{ width: "200px" }}>Structure Version</Typography>
+      {/* <Box style={boxStyle}>
+        <Typography style={labelWidth}>Structure Version</Typography>
         <TextField
-          fullWidth
           label="03.00.00"
           variant="outlined"
           margin="normal"
           disabled
+          style={fieldWidth}
         />
-      </Box>
+      </Box> */}
 
       <VersionHistory />
     </Box>

@@ -20,6 +20,14 @@ const style = {
   alignItems: "center",
 };
 
+const labelWidth = {
+  width: "150px",
+};
+
+const fieldWidth = { width: "70%" };
+
+const formControlWidth = { width: "100%" };
+
 const statusOptions = [
   { label: "Approved", id: 1 },
   { label: "Latest", id: 2 },
@@ -32,7 +40,15 @@ const versionIncOptions = [
   { label: "Minor", id: 2 },
 ];
 
-export default function UploadForm({ isUpdateForm, title }) {
+const keywordOptions = [
+  { label: "creature", id: 1 },
+  { label: "moomin", id: 2 },
+  { label: "character", id: 3 },
+  { label: "sitting", id: 4 },
+  { label: "troll", id: 5 },
+];
+
+export default function UploadForm({ isUpdateForm, title, handleUpdateClose }) {
   const [isChecked, setIsChecked] = useState(false);
 
   const handleCheckboxChange = (event) => {
@@ -45,46 +61,84 @@ export default function UploadForm({ isUpdateForm, title }) {
         {title}
       </Typography>
       <Box style={style}>
-        <InputLabel disabled={isUpdateForm} htmlFor="my-input">
+        <InputLabel
+          disabled={isUpdateForm}
+          htmlFor="my-input"
+          style={labelWidth}
+        >
           Asset Name
         </InputLabel>
         <FormControlLabel
           disabled={isUpdateForm}
           required
-          control={<Input />}
+          control={<Input style={fieldWidth} />}
+          style={formControlWidth}
         />
       </Box>
 
       <Box style={style}>
-        <InputLabel disabled={true} htmlFor="my-input">
+        <InputLabel disabled={true} htmlFor="my-input" style={labelWidth}>
           Author
         </InputLabel>
-        <FormControlLabel disabled={true} required control={<Input />} />
+        <FormControlLabel
+          disabled={true}
+          required
+          control={<Input style={fieldWidth} />}
+          style={formControlWidth}
+        />
       </Box>
 
       <Box style={style}>
-        <InputLabel htmlFor="my-input">Keywords</InputLabel>
-        <FormControlLabel required control={<Input />} />
-      </Box>
-      <Box style={style}>
-        <InputLabel htmlFor="my-input">Status</InputLabel>
+        <InputLabel htmlFor="my-input" style={labelWidth}>
+          Keywords
+        </InputLabel>
         <FormControlLabel
           required
+          style={formControlWidth}
+          control={
+            <Autocomplete
+              multiple
+              id="tags-outlined"
+              options={keywordOptions.map((option) => option.label)}
+              defaultValue={
+                isUpdateForm
+                  ? keywordOptions.map((option) => option.label)
+                  : undefined
+              }
+              renderInput={(params) => (
+                <TextField {...params} label="Keywords" />
+              )}
+              style={fieldWidth}
+            />
+          }
+        />
+      </Box>
+
+      <Box style={style}>
+        <InputLabel htmlFor="my-input" style={labelWidth}>
+          Status
+        </InputLabel>
+        <FormControlLabel
+          required
+          style={formControlWidth}
           control={
             <Autocomplete
               sx={{ width: 250 }}
               options={statusOptions}
               renderInput={(params) => <TextField {...params} label="Status" />}
-              style={{ margin: "2%" }}
+              style={({ margin: "2%" }, fieldWidth)}
             />
           }
         />
       </Box>
       {isUpdateForm && (
         <Box style={style}>
-          <InputLabel htmlFor="my-input">Version Increment</InputLabel>
+          <InputLabel htmlFor="my-input" style={labelWidth}>
+            Version Increment
+          </InputLabel>
           <FormControlLabel
             required
+            style={formControlWidth}
             control={
               <Autocomplete
                 sx={{ width: 250 }}
@@ -92,7 +146,7 @@ export default function UploadForm({ isUpdateForm, title }) {
                 renderInput={(params) => (
                   <TextField {...params} label="Version Increment" />
                 )}
-                style={{ margin: "2%" }}
+                style={({ margin: "2%" }, fieldWidth)}
               />
             }
           />
@@ -100,27 +154,36 @@ export default function UploadForm({ isUpdateForm, title }) {
       )}
 
       <Box style={style}>
-        <InputLabel htmlFor="my-input">Has Texture</InputLabel>
+        <InputLabel htmlFor="my-input" style={labelWidth}>
+          Has Texture
+        </InputLabel>
         <FormControlLabel
           checked={isChecked}
           onChange={handleCheckboxChange}
           required
+          style={formControlWidth}
           control={<Checkbox style={{ margin: "2%" }} />}
         />
       </Box>
       {isChecked && (
         <Box>
-          <InputLabel htmlFor="my-input">Diffuse Map</InputLabel>
+          <InputLabel htmlFor="my-input" style={labelWidth}>
+            Diffuse Map
+          </InputLabel>
           <FormControlLabel
             required
             control={<Input type="file" variant="plain" />}
           />
-          <InputLabel htmlFor="my-input">Roughness Map</InputLabel>
+          <InputLabel htmlFor="my-input" style={labelWidth}>
+            Roughness Map
+          </InputLabel>
           <FormControlLabel
             required
             control={<Input type="file" variant="plain" />}
           />
-          <InputLabel htmlFor="my-input">Normal Map</InputLabel>
+          <InputLabel htmlFor="my-input" style={labelWidth}>
+            Normal Map
+          </InputLabel>
           <FormControlLabel
             required
             control={<Input type="file" variant="plain" />}
@@ -128,24 +191,40 @@ export default function UploadForm({ isUpdateForm, title }) {
         </Box>
       )}
       <Box style={style}>
-        <InputLabel htmlFor="my-input">File</InputLabel>
+        <InputLabel htmlFor="my-input" style={labelWidth}>
+          File
+        </InputLabel>
         <FormControlLabel
           required
-          control={<Input type="file" variant="plain" />}
+          control={<Input type="file" variant="plain" style={fieldWidth} />}
+          style={formControlWidth}
         />
       </Box>
       <Box style={style}>
-        <InputLabel htmlFor="my-input">Thumbnail</InputLabel>
+        <InputLabel htmlFor="my-input" style={labelWidth}>
+          Thumbnail
+        </InputLabel>
         <FormControlLabel
           required
-          control={<Input type="file" variant="plain" />}
+          control={<Input type="file" variant="plain" style={fieldWidth} />}
+          style={formControlWidth}
         />
       </Box>
       <Box style={style}>
-        <InputLabel htmlFor="my-input">Message</InputLabel>
-        <FormControlLabel required control={<Input multiline />} />
+        <InputLabel htmlFor="my-input" style={labelWidth}>
+          Message
+        </InputLabel>
+        <FormControlLabel
+          required
+          control={<Input multiline style={fieldWidth} />}
+          style={formControlWidth}
+        />
       </Box>
-      <ButtonComponent name="Submit" />
+
+      <Box style={{ display: "flex", gap: "20px", margin: "2%" }}>
+        <ButtonComponent name="Cancel" onClick={handleUpdateClose} />
+        <ButtonComponent name="Submit" />
+      </Box>
     </FormGroup>
   );
 }

@@ -25,10 +25,8 @@ const DCCoptions = [
   { label: "Blender", id: 4 },
 ];
 
-export default function DownloadModal({ assetName }) {
-  const { handleDownloadClose, setOpenDownload } = useDownloadUpdate();
-
-  const [selected, setSelected] = React.useState("");
+export default function DownloadModal({ assetName, handleDownloadClose }) {
+  const [selected, setSelected] = React.useState("None");
 
   let buttonLabel = "Download";
 

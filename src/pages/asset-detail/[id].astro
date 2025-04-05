@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AssetDetailReactApp from '../../components/AssetDetailReactApp';
+
+// For server-side rendering, we need to set prerender to false
+export const prerender = false;
+
+// Get the ID from the URL parameters and use it as the asset name
+const { id } = Astro.params;
+const assetName = id || '';
+
+<Layout>
+  <div id="root">
+    <AssetDetailReactApp assetName={assetName} client:only="react" />
+  </div>
+</Layout>

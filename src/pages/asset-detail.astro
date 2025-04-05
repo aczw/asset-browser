@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AssetDetailReactApp from '../components/AssetDetailReactApp';
+
+// Get the asset name from the URL query parameter
+const assetNameParam = Astro.url.searchParams.get('name');
+// Make sure we pass a string, not null or undefined
+const assetName = assetNameParam || '';
+console.log("Asset detail page - Asset name from query param:", assetName);
+---
+
+<Layout>
+  <div id="root">
+    <AssetDetailReactApp assetName={assetName} client:only="react" />
+  </div>
+</Layout>

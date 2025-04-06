@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
-import { Input } from "../components/ui/input";
+import { Check, ChevronDown, Filter, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui/button";
-import { Search, Filter, ChevronDown, Check } from "lucide-react";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuGroup, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "../components/ui/dropdown-menu";
 import { Checkbox } from "../components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
+import { Input } from "../components/ui/input";
 import { api } from "../services/api";
 
 interface SearchBarProps {
@@ -27,7 +27,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
   const [authors, setAuthors] = useState<string[]>([]);
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState("updated");
-  
+
   const sortOptions = [
     { label: "Name", value: "name" },
     { label: "Author", value: "author" },
@@ -46,7 +46,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
         setAuthors([]);
       }
     };
-    
+
     fetchAuthors();
   }, []);
 
@@ -83,10 +83,10 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
           className="search-input pl-10 h-12 text-base"
         />
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-        <Button 
-          type="submit" 
-          variant="default" 
-          size="sm" 
+        <Button
+          type="submit"
+          variant="default"
+          size="sm"
           className="absolute right-1 top-1/2 transform -translate-y-1/2"
         >
           Search
@@ -109,7 +109,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
               <div className="max-h-[300px] overflow-y-auto">
                 <DropdownMenuGroup>
                   {authors.map((author) => (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       key={author}
                       onClick={() => handleAuthorSelect(author)}
                       className="flex items-center justify-between cursor-pointer"
@@ -126,7 +126,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
-                Sort: {sortOptions.find(option => option.value === sortOption)?.label}
+                Sort: {sortOptions.find((option) => option.value === sortOption)?.label}
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -135,7 +135,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 {sortOptions.map((option) => (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     key={option.value}
                     onClick={() => handleSortSelect(option.value)}
                     className="flex items-center justify-between cursor-pointer"
@@ -150,15 +150,12 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
         </div>
 
         <div className="flex items-center gap-2">
-          <Checkbox 
-            id="checked-in-only" 
+          <Checkbox
+            id="checked-in-only"
             checked={showCheckedInOnly}
             onCheckedChange={handleCheckedInToggle}
           />
-          <label 
-            htmlFor="checked-in-only" 
-            className="text-sm cursor-pointer"
-          >
+          <label htmlFor="checked-in-only" className="text-sm cursor-pointer">
             Show checked-in assets only
           </label>
         </div>

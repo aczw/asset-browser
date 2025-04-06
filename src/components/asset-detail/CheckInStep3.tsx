@@ -1,18 +1,23 @@
-
-import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useUser } from "@/contexts/UserContext";
+import { cn } from "@/lib/utils";
+import type { AssetWithDetails } from "@/services/api";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { AssetWithDetails } from "@/services/api";
-import { useUser } from "@/contexts/UserContext";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React, { useState } from "react";
 
 interface CheckInStep3Props {
   asset: AssetWithDetails;
@@ -38,7 +43,7 @@ const CheckInStep3 = ({ asset, onComplete }: CheckInStep3Props) => {
     return [
       `${major + 1}.00.00`, // Major update
       `${major}.${(minor + 1).toString().padStart(2, "0")}.00`, // Minor update
-      `${major}.${minor.toString().padStart(2, "0")}.${(patch + 1).toString().padStart(2, "0")}` // Patch update
+      `${major}.${minor.toString().padStart(2, "0")}.${(patch + 1).toString().padStart(2, "0")}`, // Patch update
     ];
   };
 
@@ -78,12 +83,7 @@ const CheckInStep3 = ({ asset, onComplete }: CheckInStep3Props) => {
             <label htmlFor="author" className="text-sm font-medium">
               Author *
             </label>
-            <Input 
-              id="author" 
-              value={user?.name || ""} 
-              readOnly 
-              className="bg-muted"
-            />
+            <Input id="author" value={user?.name || ""} readOnly className="bg-muted" />
           </div>
 
           {/* Date Field */}
@@ -105,12 +105,7 @@ const CheckInStep3 = ({ asset, onComplete }: CheckInStep3Props) => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
+                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
               </PopoverContent>
             </Popover>
           </div>
@@ -181,10 +176,7 @@ const CheckInStep3 = ({ asset, onComplete }: CheckInStep3Props) => {
       </ScrollArea>
 
       <div className="flex justify-end pt-4 mt-auto border-t">
-        <Button 
-          onClick={onComplete} 
-          disabled={!isFormValid()}
-        >
+        <Button onClick={onComplete} disabled={!isFormValid()}>
           Submit
         </Button>
       </div>

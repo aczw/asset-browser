@@ -19,7 +19,9 @@ const AssetPreview = ({ asset }: AssetPreviewProps) => {
       <img
         src={asset?.thumbnailUrl}
         alt={asset?.name}
-        className={`w-full aspect-video object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full aspect-video object-cover transition-opacity duration-500 ${
+          imageLoaded ? "opacity-100" : "opacity-0"
+        }`}
         onLoad={() => setImageLoaded(true)}
       />
     </div>

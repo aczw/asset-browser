@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
-import { DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import { FileUp, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { Button } from "../../components/ui/button";
-import { X, FileUp } from "lucide-react";
+import { DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import type { AssetWithDetails } from "../../services/api";
 
 interface CheckInStep2Props {
@@ -33,12 +33,12 @@ const CheckInStep2 = ({
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
       setUploadedFiles([...uploadedFiles, ...newFiles]);
-      
+
       // Reset verification status and message when new files are uploaded
       setVerificationComplete(false);
       setVerificationMessage(null);
       setInvalidFiles([]);
-      
+
       // Reset the input value so the same file can be uploaded again if needed
       e.target.value = "";
     }
@@ -48,7 +48,7 @@ const CheckInStep2 = ({
     const newFiles = [...uploadedFiles];
     newFiles.splice(index, 1);
     setUploadedFiles(newFiles);
-    
+
     // Reset verification when files change
     setVerificationComplete(false);
     setVerificationMessage(null);
@@ -58,30 +58,32 @@ const CheckInStep2 = ({
   const handleVerify = () => {
     const assetName = asset.name.toLowerCase();
     const invalidFilesList: string[] = [];
-    
+
     // Validate each file against the allowed patterns
-    uploadedFiles.forEach(file => {
+    uploadedFiles.forEach((file) => {
       const fileName = file.name.toLowerCase();
-      
+
       // Valid patterns:
       // 1. assetName.usda (eg. skateboard.usda)
       // 2. assetName_variantName.usda (eg. skateboard_LOD2.usda)
       // 3. thumbnail.png
-      
-      const isValid = 
-        fileName === `${assetName}.usda` || 
-        (fileName.startsWith(`${assetName}_`) && fileName.endsWith('.usda')) ||
-        fileName === 'thumbnail.png';
-      
+
+      const isValid =
+        fileName === `${assetName}.usda` ||
+        (fileName.startsWith(`${assetName}_`) && fileName.endsWith(".usda")) ||
+        fileName === "thumbnail.png";
+
       if (!isValid) {
         invalidFilesList.push(file.name);
       }
     });
-    
+
     setInvalidFiles(invalidFilesList);
-    
+
     if (invalidFilesList.length > 0) {
-      setVerificationMessage(`${invalidFilesList.length} file(s) have invalid names. Please fix them.`);
+      setVerificationMessage(
+        `${invalidFilesList.length} file(s) have invalid names. Please fix them.`
+      );
       setVerificationComplete(false);
     } else {
       setVerificationMessage("All files have valid names!");
@@ -106,8 +108,8 @@ const CheckInStep2 = ({
           </ul>
         </div>
 
-        <Button 
-          className="w-full flex items-center gap-2" 
+        <Button
+          className="w-full flex items-center gap-2"
           onClick={handleUploadClick}
           variant="outline"
         >
@@ -127,10 +129,10 @@ const CheckInStep2 = ({
             <p className="text-sm font-medium">Uploaded files:</p>
             <ul className="space-y-2">
               {uploadedFiles.map((file, index) => (
-                <li 
-                  key={index} 
+                <li
+                  key={index}
                   className={`flex items-center justify-between border-b pb-1 ${
-                    invalidFiles.includes(file.name) ? 'text-red-500' : ''
+                    invalidFiles.includes(file.name) ? "text-red-500" : ""
                   }`}
                 >
                   <span className="text-sm truncate">{file.name}</span>
@@ -148,8 +150,8 @@ const CheckInStep2 = ({
           </div>
         )}
 
-        <Button 
-          onClick={handleVerify} 
+        <Button
+          onClick={handleVerify}
           disabled={uploadedFiles.length === 0}
           variant="outline"
           className="w-full"
@@ -158,9 +160,11 @@ const CheckInStep2 = ({
         </Button>
 
         {verificationMessage && (
-          <div className={`p-2 text-center text-sm font-medium ${
-            verificationComplete ? 'text-green-600' : 'text-red-500'
-          }`}>
+          <div
+            className={`p-2 text-center text-sm font-medium ${
+              verificationComplete ? "text-green-600" : "text-red-500"
+            }`}
+          >
             {verificationMessage}
           </div>
         )}
@@ -170,9 +174,7 @@ const CheckInStep2 = ({
             <p className="text-sm font-medium text-red-700 mb-2">Invalid file names:</p>
             <ul className="space-y-1 text-sm text-red-600">
               {invalidFiles.map((fileName, index) => (
-                <li key={index}>
-                  • {fileName} - should follow one of the valid patterns
-                </li>
+                <li key={index}>• {fileName} - should follow one of the valid patterns</li>
               ))}
             </ul>
           </div>

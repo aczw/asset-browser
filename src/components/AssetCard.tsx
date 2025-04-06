@@ -1,12 +1,11 @@
+import { Calendar, Lock, User } from "lucide-react";
 import { useState } from "react";
-import { api } from "../services/api";
-import type { AssetWithDetails } from "../services/api";
 import { Card, CardContent } from "../components/ui/card";
-import { Lock, Calendar, User } from "lucide-react";
+import type { AssetWithDetails } from "../services/api";
 
 // Helper function to replace the cn utility
 const cn = (...classes: (string | boolean | undefined)[]) => {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 };
 
 interface AssetCardProps {
@@ -19,17 +18,18 @@ const AssetCard = ({ asset }: AssetCardProps) => {
   const handleCardClick = () => {
     // Navigate to asset detail page using the asset name
     console.log("Navigating to asset detail page for asset:", asset.name);
-    window.location.href = `/asset-detail?name=${encodeURIComponent(asset.name)}`;
+    window.location.href = `/asset/${encodeURIComponent(asset.name)}`;
   };
 
   return (
     <div className="block">
-      <Card className={cn(
-        "asset-card h-full overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-md",
-        asset.isCheckedOut && "checked-out",
-        !imageLoaded && "animate-pulse bg-muted"
-      )}
-      onClick={handleCardClick}
+      <Card
+        className={cn(
+          "asset-card h-full overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-md",
+          asset.isCheckedOut && "checked-out",
+          !imageLoaded && "animate-pulse bg-muted"
+        )}
+        onClick={handleCardClick}
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
           {!imageLoaded && (
@@ -72,9 +72,9 @@ const AssetCard = ({ asset }: AssetCardProps) => {
                     const date = new Date(dateStr);
                     if (!isNaN(date.getTime())) {
                       return date.toLocaleString("en-US", {
-                        month: "long",   // "February", "March", etc.
-                        day: "numeric",  // 1, 2, 3, ...
-                        year: "numeric"  // 2025, 2026, ...
+                        month: "long", // "February", "March", etc.
+                        day: "numeric", // 1, 2, 3, ...
+                        year: "numeric", // 2025, 2026, ...
                       });
                     }
 

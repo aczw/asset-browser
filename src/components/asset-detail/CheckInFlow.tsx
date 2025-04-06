@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { AssetWithDetails } from "../../services/api";
 import { Dialog, DialogContent } from "../../components/ui/dialog";
+import type { AssetWithDetails } from "../../services/api";
 import CheckInStep1 from "./CheckInStep1";
 import CheckInStep2 from "./CheckInStep2";
 import CheckInStep3 from "./CheckInStep3";
@@ -22,10 +22,10 @@ const CheckInFlow = ({ asset, open, onOpenChange, onComplete }: CheckInFlowProps
     boundingBox: false,
     usdValidate: false,
   });
-  
+
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [verificationComplete, setVerificationComplete] = useState(false);
-  
+
   const handleNextStep = () => {
     if (step < 3) {
       setStep((prev) => (prev + 1) as 1 | 2 | 3);
@@ -44,30 +44,25 @@ const CheckInFlow = ({ asset, open, onOpenChange, onComplete }: CheckInFlowProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         {step === 1 && (
-          <CheckInStep1 
-            checkedItems={checkedItems} 
-            setCheckedItems={setCheckedItems} 
-            onNext={handleNextStep} 
+          <CheckInStep1
+            checkedItems={checkedItems}
+            setCheckedItems={setCheckedItems}
+            onNext={handleNextStep}
           />
         )}
-        
+
         {step === 2 && (
-          <CheckInStep2 
+          <CheckInStep2
             asset={asset}
             uploadedFiles={uploadedFiles}
             setUploadedFiles={setUploadedFiles}
             verificationComplete={verificationComplete}
             setVerificationComplete={setVerificationComplete}
-            onNext={handleNextStep} 
+            onNext={handleNextStep}
           />
         )}
-        
-        {step === 3 && (
-          <CheckInStep3
-            asset={asset}
-            onComplete={handleComplete}
-          />
-        )}
+
+        {step === 3 && <CheckInStep3 asset={asset} onComplete={handleComplete} />}
       </DialogContent>
     </Dialog>
   );

@@ -1,8 +1,14 @@
+import { Download, Lock, LockOpen, PlayCircle } from "lucide-react";
 import { useState } from "react";
-import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-import { Lock, LockOpen, Download, PlayCircle } from "lucide-react";
+import { Button } from "../../components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
 import type { AssetWithDetails } from "../../services/api";
 import CheckInFlow from "./CheckInFlow";
 
@@ -23,7 +29,7 @@ const AssetControlPanel = ({
   onCheckout,
   onCheckin,
   onDownload,
-  onLaunchDCC
+  onLaunchDCC,
 }: AssetControlPanelProps) => {
   const [checkInOpen, setCheckInOpen] = useState(false);
 
@@ -43,7 +49,7 @@ const AssetControlPanel = ({
           </Badge>
         )}
       </div>
-      
+
       <div className="flex items-center gap-3">
         <div className="text-sm text-muted-foreground">Version</div>
         <div className="text-sm font-medium">{asset?.version}</div>
@@ -52,50 +58,38 @@ const AssetControlPanel = ({
             <SelectValue placeholder={asset?.version} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={asset?.version ?? ''}>{asset?.version}</SelectItem>
+            <SelectItem value={asset?.version ?? ""}>{asset?.version}</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3">
-        <Button 
-          className="flex items-center gap-2" 
-          onClick={onCheckout}
-          disabled={!canCheckout}
-        >
+        <Button className="flex items-center gap-2" onClick={onCheckout} disabled={!canCheckout}>
           <LockOpen className="h-4 w-4" />
           Check Out
         </Button>
-        
-        <Button 
-          className="flex items-center gap-2" 
+
+        <Button
+          className="flex items-center gap-2"
           onClick={() => setCheckInOpen(true)}
           disabled={!canCheckin}
         >
           <Lock className="h-4 w-4" />
           Check In
         </Button>
-        
-        <Button 
-          variant="outline" 
-          className="flex items-center gap-2" 
-          onClick={onDownload}
-        >
+
+        <Button variant="outline" className="flex items-center gap-2" onClick={onDownload}>
           <Download className="h-4 w-4" />
           Download Copy
         </Button>
-        
-        <Button 
-          variant="outline" 
-          className="flex items-center gap-2" 
-          onClick={onLaunchDCC}
-        >
+
+        <Button variant="outline" className="flex items-center gap-2" onClick={onLaunchDCC}>
           <PlayCircle className="h-4 w-4" />
           Launch DCC
         </Button>
       </div>
 
-      <CheckInFlow 
+      <CheckInFlow
         asset={asset}
         open={checkInOpen}
         onOpenChange={setCheckInOpen}

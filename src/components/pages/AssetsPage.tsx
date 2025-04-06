@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../services/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import type { AssetWithDetails } from "../../services/api";
+import { api } from "../../services/api";
 import AssetGrid from "../AssetGrid";
 import SearchBar from "../SearchBar";
 
@@ -12,13 +12,18 @@ const AssetsPage = () => {
   const [filterAuthor, setFilterAuthor] = useState<string | null>(null);
   const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
   const [sortBy, setSortBy] = useState("updated");
-  
+
   const queryClient = useQueryClient();
-  
+
   const fetchAssets = async () => {
     setIsLoading(true);
     try {
-      console.log("Fetching assets with params:", { searchTerm, filterAuthor, showCheckedInOnly, sortBy });
+      console.log("Fetching assets with params:", {
+        searchTerm,
+        filterAuthor,
+        showCheckedInOnly,
+        sortBy,
+      });
       const response = await api.getAssets({
         search: searchTerm,
         author: filterAuthor || undefined, // Convert null to undefined for API compatibility
@@ -71,14 +76,14 @@ const AssetsPage = () => {
         <h1 className="text-3xl font-bold mb-2 text-left">Asset Browser</h1>
         <p className="text-muted-foreground text-left">Browse and search for assets</p>
       </div>
-      
+
       <SearchBar
         onSearch={handleSearch}
         onAuthorFilter={handleAuthorFilter}
         onCheckedInFilter={handleCheckedInFilter}
         onSort={handleSort}
       />
-      
+
       <div className="mt-6">
         <AssetGrid assets={assets} isLoading={isLoading} />
       </div>

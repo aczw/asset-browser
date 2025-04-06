@@ -1,4 +1,4 @@
-import { User, Calendar, Tag, Info, Lock, GitCommit } from "lucide-react";
+import { GitCommit, Info, Lock, Tag, User } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import type { AssetWithDetails } from "../../services/api";
 
@@ -11,7 +11,7 @@ const AssetMetadata = ({ asset, hideTitle = false }: AssetMetadataProps) => {
   return (
     <div className="space-y-4 text-left">
       {!hideTitle && <h3 className="text-lg font-medium text-left">{asset?.name}</h3>}
-      
+
       <div className="space-y-3">
         <div className="flex items-start gap-2">
           <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -20,7 +20,7 @@ const AssetMetadata = ({ asset, hideTitle = false }: AssetMetadataProps) => {
             <div className="text-sm text-muted-foreground">{asset?.creator}</div>
           </div>
         </div>
-        
+
         <div className="flex items-start gap-2">
           <GitCommit className="h-4 w-4 mt-0.5 text-muted-foreground" />
           <div className="text-left">
@@ -36,13 +36,13 @@ const AssetMetadata = ({ asset, hideTitle = false }: AssetMetadataProps) => {
                     month: "long",
                     day: "numeric",
                     hour: "2-digit",
-                    minute: "2-digit"
+                    minute: "2-digit",
                   })
-                : ''}
+                : ""}
             </div>
           </div>
         </div>
-        
+
         {asset?.isCheckedOut && asset.checkedOutBy && (
           <div className="flex items-start gap-2">
             <Lock className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -52,7 +52,7 @@ const AssetMetadata = ({ asset, hideTitle = false }: AssetMetadataProps) => {
             </div>
           </div>
         )}
-        
+
         {asset?.keywords && asset.keywords.length > 0 && (
           <div className="flex items-start gap-2">
             <Tag className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -68,17 +68,15 @@ const AssetMetadata = ({ asset, hideTitle = false }: AssetMetadataProps) => {
             </div>
           </div>
         )}
-        
+
         <div className="flex items-start gap-2">
           <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />
           <div className="text-left">
             <div className="text-sm font-medium">Materials Available</div>
-            <div className="text-sm text-muted-foreground">
-              {asset?.materials ? "Yes" : "No"}
-            </div>
+            <div className="text-sm text-muted-foreground">{asset?.materials ? "Yes" : "No"}</div>
           </div>
         </div>
-        
+
         {asset?.description && (
           <div className="flex items-start gap-2">
             <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />

@@ -3,10 +3,6 @@
   "include": [
     ".astro/types.d.ts",
     "**/*",
-    "src",            // Your main source files
-    "env.d.ts",       // If you have env type definitions
-    "astro-env.d.ts", // Astro auto-generated env definitions
-    "types/**/*.d.ts" // If you keep custom types in a separate folder
   ],
   "exclude": [
     "dist"

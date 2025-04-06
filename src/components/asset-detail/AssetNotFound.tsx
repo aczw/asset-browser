@@ -4,7 +4,7 @@ const AssetNotFound = () => {
   const handleBack = () => {
     window.history.back();
   };
-  
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       <div className="text-center py-16">

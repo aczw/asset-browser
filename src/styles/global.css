@@ -1,3 +1,91 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 6%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 20% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 20% 6%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 100% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 12%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 14% 14%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+
+    --accent: 220 12% 18%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 50.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 12.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Premium looking scroll bar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary/50;
+    border-radius: 100px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary/50;
+    border-radius: 100px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/80;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-secondary/60 backdrop-blur-sm border border-white/10 shadow-lg;
+  }
+
+  .asset-card {
+    @apply bg-card border border-border/50 rounded-lg overflow-hidden transition-all duration-300;
+  }
+
+  .asset-card:hover {
+    @apply border-primary/50 shadow-[0_0_15px_rgba(59,130,246,0.15)];
+    transform: translateY(-2px);
+  }
+
+  .checked-out {
+    @apply opacity-60 grayscale;
+  }
+
+  .search-input {
+    @apply bg-secondary border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300;
+  }
+}

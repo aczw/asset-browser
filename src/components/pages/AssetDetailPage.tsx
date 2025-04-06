@@ -1,16 +1,15 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../../services/api";
+import { useEffect, useState } from "react";
 import type { AssetWithDetails } from "../../services/api";
+import { api } from "../../services/api";
 import { Separator } from "../ui/separator";
 import { toast } from "../ui/use-toast";
 
-import AssetDetailHeader from "../asset-detail/AssetDetailHeader";
-import AssetPreview from "../asset-detail/AssetPreview";
 import AssetControlPanel from "../asset-detail/AssetControlPanel";
-import AssetMetadata from "../asset-detail/AssetMetadata";
+import AssetDetailHeader from "../asset-detail/AssetDetailHeader";
 import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
+import AssetMetadata from "../asset-detail/AssetMetadata";
 import AssetNotFound from "../asset-detail/AssetNotFound";
+import AssetPreview from "../asset-detail/AssetPreview";
 
 interface AssetDetailPageProps {
   assetName: string;
@@ -19,10 +18,10 @@ interface AssetDetailPageProps {
 const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const [asset, setAsset] = useState<AssetWithDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Mock user for demonstration purposes
   const user = { pennId: "willcai", fullName: "Will Cai" };
-  
+
   // Helper function to get user full name
   const getUserFullName = (pennId: string | null): string | null => {
     if (!pennId) return null;
@@ -30,19 +29,19 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     const mockUsers = [
       { pennId: "willcai", fullName: "Will Cai" },
       { pennId: "chuu", fullName: "Christina Qiu" },
-      { pennId: "cxndy", fullName: "Cindy Xu" }
+      { pennId: "cxndy", fullName: "Cindy Xu" },
     ];
-    const user = mockUsers.find(u => u.pennId === pennId);
+    const user = mockUsers.find((u) => u.pennId === pennId);
     return user ? user.fullName : null;
   };
-  
+
   const fetchAsset = async () => {
     if (!assetName) {
       console.error("Cannot fetch asset: No assetName provided");
       setIsLoading(false);
       return;
     }
-    
+
     console.log("Fetching asset with name:", assetName);
     setIsLoading(true);
     try {
@@ -56,15 +55,15 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       toast({
         title: "Error",
         description: "Failed to load asset details. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
-  
+
   useEffect(() => {
     console.log("AssetDetailPage - Asset name changed:", assetName);
     console.log("AssetDetailPage - Asset name type:", typeof assetName);
-    
+
     if (!assetName) {
       console.error("AssetDetailPage - No assetName provided");
       return;
@@ -72,10 +71,10 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     fetchAsset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assetName]);
-  
+
   const handleCheckout = async () => {
     if (!assetName || !user || !asset) return;
-    
+
     try {
       const response = await api.checkoutAsset(assetName, user.pennId);
       const { asset: updatedAsset, downloadUrl } = response;
@@ -84,38 +83,38 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
         title: "Asset Checked Out",
         description: `You have successfully checked out ${asset.name}.`,
       });
-      
+
       // Automatically download the asset
       if (downloadUrl) {
         console.log(`Downloading asset from ${downloadUrl}`);
-        
+
         try {
           // Make a fetch request to download the asset
-          const apiUrl = 'http://localhost:5000';
+          const apiUrl = "http://localhost:5000";
           const downloadResponse = await fetch(`${apiUrl}${downloadUrl}`);
-          
+
           if (!downloadResponse.ok) {
-            throw new Error('Failed to download asset');
+            throw new Error("Failed to download asset");
           }
-          
+
           // Get the blob from the response
           const blob = await downloadResponse.blob();
-          
+
           // Create a URL for the blob
           const url = window.URL.createObjectURL(blob);
-          
+
           // Create a link and click it to download the file
-          const link = document.createElement('a');
+          const link = document.createElement("a");
           link.href = url;
           link.download = `${asset.name}.zip`;
           document.body.appendChild(link);
           link.click();
-          
+
           // Clean up
           window.URL.revokeObjectURL(url);
           document.body.removeChild(link);
         } catch (downloadError) {
-          console.error('Error downloading asset:', downloadError);
+          console.error("Error downloading asset:", downloadError);
           toast({
             title: "Download Error",
             description: "Failed to download the asset. Please try again.",
@@ -132,10 +131,10 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       });
     }
   };
-  
+
   const handleCheckIn = async () => {
     if (!assetName || !user || !asset) return;
-    
+
     try {
       const { asset: updatedAsset } = await api.checkinAsset(assetName, user.pennId);
       setAsset(updatedAsset);
@@ -153,46 +152,45 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       });
     }
   };
-  
+
   // Back button handler
   const handleBack = () => {
     window.history.back();
   };
-  
+
   if (isLoading) {
     return <AssetDetailSkeleton />;
   }
-  
+
   if (!asset) {
     return <AssetNotFound />;
   }
-  
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       <AssetDetailHeader title={asset.name} />
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-7">
           <AssetPreview asset={asset} />
         </div>
-        
+
         <div className="lg:col-span-5 space-y-6">
-          <AssetControlPanel 
+          <AssetControlPanel
             asset={asset}
             canCheckout={!asset.isCheckedOut && !!user}
             canCheckin={asset.isCheckedOut && !!user && asset.checkedOutBy === user.pennId}
             onCheckout={handleCheckout}
             onCheckin={handleCheckIn}
-            onDownload={() => window.open(`/api/assets/${asset.name}/download`, '_blank')}
-            onLaunchDCC={() => window.open(`/asset-preview?name=${encodeURIComponent(asset.name)}`, '_blank')}
+            onDownload={() => window.open(`/api/assets/${asset.name}/download`, "_blank")}
+            onLaunchDCC={() =>
+              window.open(`/asset-preview?name=${encodeURIComponent(asset.name)}`, "_blank")
+            }
           />
-          
+
           <Separator />
-          
-          <AssetMetadata 
-            asset={asset} 
-            hideTitle={true}
-          />
+
+          <AssetMetadata asset={asset} hideTitle={true} />
         </div>
       </div>
     </div>

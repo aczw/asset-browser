@@ -3,6 +3,7 @@ from django.db.models import Q
 from .models import Asset, Author, Commit
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from .utils.s3_utils import S3Manager 
 
 @api_view(['GET'])
 def get_assets(request):
@@ -46,15 +47,17 @@ def get_assets(request):
 
         # Convert to frontend format
         assets_list = []
+        s3Manager = S3Manager();
         for asset in assets:
             try:
                 # Pull first / latest commit
                 latest_commit = asset.commits.order_by('-timestamp').first()
                 first_commit  = asset.commits.order_by('timestamp').first()
+                thumbnail_url = s3Manager.generate_presigned_url(asset.thumbnailKey) if asset.thumbnailKey else None
 
                 assets_list.append({
                     'name': asset.assetName,
-                    'thumbnailUrl': asset.thumbnailKey,  # You'll need to handle S3 URL generation
+                    'thumbnailUrl': thumbnail_url,  # You'll need to handle S3 URL generation
                     'version': latest_commit.version if latest_commit else "01.00.00",
                     'creator': f"{first_commit.author.firstName} {first_commit.author.lastName}" if first_commit and first_commit.author else "Unknown",
                     'lastModifiedBy': f"{latest_commit.author.firstName} {latest_commit.author.lastName}" if latest_commit and latest_commit.author else "Unknown",
@@ -86,10 +89,14 @@ def get_asset(request, asset_name):
         latest_commit = asset.commits.order_by('-timestamp').first()
         first_commit = asset.commits.order_by('timestamp').first()
 
+        # Generate S3 URLs
+        s3Manager = S3Manager();
+        thumbnail_url = s3Manager.generate_presigned_url(asset.thumbnailKey) if asset.thumbnailKey else None
+
         # Format the response to match frontend's AssetWithDetails interface
         asset_data = {
             'name': asset.assetName,
-            'thumbnailUrl': asset.thumbnailKey,  # You'll need to handle S3 URL generation
+            'thumbnailUrl': thumbnail_url,  # You'll need to handle S3 URL generation
             'version': latest_commit.version if latest_commit else "01.00.00",
             'creator': f"{first_commit.author.firstName} {first_commit.author.lastName}" if first_commit and first_commit.author else "Unknown",
             'lastModifiedBy': f"{latest_commit.author.firstName} {latest_commit.author.lastName}" if latest_commit and latest_commit.author else "Unknown",

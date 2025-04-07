@@ -3,11 +3,13 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.http import HttpResponse
 from django.http import StreamingHttpResponse
+from django.http import JsonResponse
 from django .template import loader
 from .models import Asset, Commit, AssetVersion, Keyword
 from django.db.models import Q;
 from .utils.s3_utils import S3Manager
 from .utils.zipper import zip_files_from_memory
+from django.views.decorators.csrf import csrf_exempt
 import os
 # Create your views here.
 
@@ -78,3 +80,20 @@ def download_asset_by_name(request, assetName):
     response = StreamingHttpResponse(zip_buffer, content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="{assetName}.zip"'
     return response
+
+@csrf_exempt
+def upload_files(request, assetName):
+    if (request.method == "POST"):
+        s3 = S3Manager()
+
+        # check for existing file
+        prefix = f"{assetName}"
+        if (not s3.list_s3_files(prefix)):
+            return
+
+        files = request.FILES.getlist()
+        for file in files:
+            s3.upload_file(file, f"{assetName}/{file.name}")
+
+        response = JsonResponse({'message': 'Successfully uploaded', 'status': 200})
+        return response

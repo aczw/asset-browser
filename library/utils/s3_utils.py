@@ -18,6 +18,10 @@ class S3Manager:
             ExpiresIn=expires_in
         )
 
+    def update_file(self, file, key):
+        # TO DO: read into versioning with put_object, this is a temporary function for now
+        self.client.put_object(Bucket=self.bucket, Key=key)
+
     def upload_file(self, file, key):
         self.client.upload_fileobj(file, self.bucket, key)
     

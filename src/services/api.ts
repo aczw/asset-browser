@@ -151,15 +151,15 @@ export const api = {
 
         let filteredAssets = [...mockAssets];
 
-        // Apply search filter
-        if (params?.search) {
-          const searchLower = params.search.toLowerCase();
-          filteredAssets = filteredAssets.filter(
-            (asset) =>
-              asset.assetName.toLowerCase().includes(searchLower) ||
-              asset.keywords.some((keyword) => keyword.toLowerCase().includes(searchLower))
-          );
-        }
+      // Apply search filter
+      if (params?.search) {
+        const searchLower = params.search.toLowerCase();
+        filteredAssets = filteredAssets.filter(
+          (asset) =>
+            asset.assetName.toLowerCase().includes(searchLower) ||
+            asset.keywords.some((keyword) => keyword.toLowerCase().includes(searchLower))
+        );
+      }
 
         // Convert to AssetWithDetails before applying author filter
         let assetsWithDetails = filteredAssets.map(getAssetWithDetails);

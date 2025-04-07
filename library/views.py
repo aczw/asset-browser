@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.http import HttpResponse
 from django.http import StreamingHttpResponse
+from django.http import JsonResponse
 from django .template import loader
 from .models import Asset, Commit, AssetVersion, Keyword
 from django.db.models import Q;

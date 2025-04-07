@@ -115,3 +115,26 @@ def get_asset(request, asset_name):
         return Response({'error': 'Asset not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+@api_view(['POST'])
+def upload_S3_asset(request, asset_name):
+    try:
+        # On the frontend, we should first check if metadata exists
+        # Metadata upload is a separate POST 
+        s3 = S3Manager()
+
+        prefix = f"{asset_name}"
+        if len(s3.list_s3_files(prefix)) > 0:
+            return Response({'error': 'Asset already found!'}, status=400)
+
+        files = request.FILES.getlist('files')
+        if not files:
+            return Response({'error': 'Asset already found!'}, status=400)
+
+        for file in files:
+            s3.upload_file(file, f"{asset_name}/{file.name}")
+
+        return Response({'message': 'Successfully uploaded'}, status=200)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

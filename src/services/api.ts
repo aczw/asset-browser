@@ -122,7 +122,7 @@ const getAssetWithDetails = (asset: Asset): AssetWithDetails => {
 const simulateApiDelay = async (ms = 100) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // API functions that would connect to Express backend
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const api = {
   // Get all assets with optional filtering

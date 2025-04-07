@@ -13,4 +13,5 @@ urlpatterns = [
     path('api/upload_S3/<str:asset_name>/', views_api.upload_S3_asset, name='upload_S3_asset'),
     path('api/assets/<str:asset_name>/checkout/', views_api.checkout_asset, name='api_asset_checkout'),
     path('api/assets/<str:asset_name>/download/', views_api.download_asset, name='api_asset_download'),
+    path('api/commits/', views_api.get_commits, name='get_commits'),
 ]

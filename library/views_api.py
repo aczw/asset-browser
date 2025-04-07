@@ -165,6 +165,7 @@ def upload_S3_asset(request, asset_name):
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 
+# TODO: This is a temporary endpoint for testing. Once we have a proper auth system, we should use that.
 @api_view(['POST'])
 def checkout_asset(request, asset_name):
     try:
@@ -253,4 +254,26 @@ def download_asset(request, asset_name):
         return Response({'error': 'Asset not found'}, status=404)
     except Exception as e:
         print(f"Error in download_asset: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def get_commits(request):
+    try:
+        commits = Commit.objects.all().order_by('-timestamp')
+        commits_list = []
+        
+        for commit in commits:
+            commits_list.append({
+                'commitId': str(commit.id),
+                'pennKey': commit.author.pennkey if commit.author else None,
+                'versionNum': commit.version,
+                'notes': commit.note,
+                'commitDate': commit.timestamp.isoformat(),
+                'hasMaterials': commit.sublayers.exists(),
+                'state': [],  # This matches the frontend interface but we don't have state in backend
+                'assetName': commit.asset.assetName
+            })
+
+        return Response({'commits': commits_list})
+    except Exception as e:
         return Response({'error': str(e)}, status=500)

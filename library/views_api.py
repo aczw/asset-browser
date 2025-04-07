@@ -310,3 +310,35 @@ def get_commit(request, commit_id):
         return Response({'error': 'Commit not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def get_users(request):
+    try:
+        authors = Author.objects.all().order_by('firstName', 'lastName')
+        users_list = []
+        
+        for author in authors:
+            users_list.append({
+                'pennId': author.pennkey,
+                'fullName': f"{author.firstName} {author.lastName}".strip() or author.pennkey,
+            })
+
+        return Response({'users': users_list})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def get_user(request, pennkey):
+    try:
+        author = Author.objects.get(pennkey=pennkey)
+        
+        user_data = {
+            'pennId': author.pennkey,
+            'fullName': f"{author.firstName} {author.lastName}".strip() or author.pennkey,
+        }
+
+        return Response({'user': user_data})
+    except Author.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .utils.s3_utils import S3Manager 
 from django.utils import timezone
+from django.db.models import OuterRef, Subquery
 
 @api_view(['GET'])
 def get_assets(request):
@@ -17,6 +18,20 @@ def get_assets(request):
 
         # Base queryset
         assets = Asset.objects.all()
+
+        earliest_commit = Commit.objects.filter(asset=OuterRef('pk')).order_by('timestamp')
+        latest_commit   = Commit.objects.filter(asset=OuterRef('pk')).order_by('-timestamp')
+
+        assets = assets.annotate(
+            first_author_first = Subquery(
+                earliest_commit.values('author__firstName')[:1]
+            ),
+            first_author_last  = Subquery(
+                earliest_commit.values('author__lastName')[:1]
+            ),
+            first_ts  = Subquery(earliest_commit.values('timestamp')[:1]),
+            latest_ts = Subquery(latest_commit.values('timestamp')[:1]),
+        )
 
         # Apply search filter
         if search:
@@ -38,23 +53,20 @@ def get_assets(request):
 
         # Apply sorting and ensure uniqueness
         if sort_by == 'name':
-            assets = assets.order_by('assetName').distinct()
+            assets = assets.order_by('assetName')
+
         elif sort_by == 'author':
-            # First get the latest commit for each asset
-            assets = assets.annotate(
-                latest_author_first=Max('commits__author__firstName'),
-                latest_author_last=Max('commits__author__lastName')
-            ).order_by('latest_author_first', 'latest_author_last').distinct()
+            # sort by the *creator* (author of the first commit)
+            assets = assets.order_by('first_author_first', 'first_author_last')
+
         elif sort_by == 'updated':
-            # First get the latest commit for each asset
-            assets = assets.annotate(
-                latest_timestamp=Max('commits__timestamp')
-            ).order_by('-latest_timestamp').distinct()
+            # most recently touched asset first
+            assets = assets.order_by('-latest_ts')
+
         elif sort_by == 'created':
-            # First get the earliest commit for each asset
-            assets = assets.annotate(
-                earliest_timestamp=Min('commits__timestamp')
-            ).order_by('earliest_timestamp').distinct()
+            # asset whose *first* commit is newest comes first
+            assets = assets.order_by('-first_ts')
+
 
         # Convert to frontend format
         assets_list = []

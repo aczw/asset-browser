@@ -277,3 +277,36 @@ def get_commits(request):
         return Response({'commits': commits_list})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def get_commit(request, commit_id):
+    try:
+        commit = Commit.objects.get(id=commit_id)
+        
+        commit_data = {
+            'commitId': str(commit.id),
+            'pennKey': commit.author.pennkey if commit.author else None,
+            'versionNum': commit.version,
+            'notes': commit.note,
+            'commitDate': commit.timestamp.isoformat(),
+            'hasMaterials': commit.sublayers.exists(),
+            'state': [],  # This matches the frontend interface but we don't have state in backend
+            'assetName': commit.asset.assetName,
+            # Additional details for single commit view
+            'authorName': f"{commit.author.firstName} {commit.author.lastName}" if commit.author else None,
+            'authorEmail': commit.author.email if commit.author else None,
+            'assetId': str(commit.asset.id),
+            'sublayers': [
+                {
+                    'id': str(layer.id),
+                    'versionName': layer.versionName,
+                    'filepath': str(layer.filepath)
+                } for layer in commit.sublayers.all()
+            ]
+        }
+
+        return Response({'commit': commit_data})
+    except Commit.DoesNotExist:
+        return Response({'error': 'Commit not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

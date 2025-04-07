@@ -14,4 +14,5 @@ urlpatterns = [
     path('api/assets/<str:asset_name>/checkout/', views_api.checkout_asset, name='api_asset_checkout'),
     path('api/assets/<str:asset_name>/download/', views_api.download_asset, name='api_asset_download'),
     path('api/commits/', views_api.get_commits, name='get_commits'),
+    path('api/commits/<str:commit_id>/', views_api.get_commit, name='get_commit'),
 ]

@@ -192,72 +192,17 @@ export const api = {
   // Check out an asset
   async checkoutAsset(assetName: string, pennId: string) {
     try {
-      // In development, use mock data
-      if (process.env.NODE_ENV === "development") {
-        await simulateApiDelay();
-        const assetIndex = mockAssets.findIndex((a) => a.assetName === assetName);
-
-        if (assetIndex === -1) {
-          throw new Error("Asset not found");
-        }
-
-        if (mockAssets[assetIndex].checkedOut) {
-          const checkedOutBy = mockAssets[assetIndex].latestCommitId.toString();
-          const checkedOutByName = getUserFullName(checkedOutBy);
-          throw new Error(`Asset is already checked out by ${checkedOutByName}`);
-        }
-
-        // Find user by pennId
-        const user = mockUsers.find((u) => u.pennId === pennId);
-        if (!user) {
-          throw new Error("User not found");
-        }
-
-        // Create a new commit for this checkout
-        const newCommitId = (mockCommits.length + 1).toString();
-        const lastCommit = getCommitById(mockAssets[assetIndex].latestCommitId);
-
-        const newCommit: Commit = {
-          commitId: newCommitId,
-          pennKey: user.pennId,
-          versionNum: lastCommit?.versionNum || "01.00.00",
-          notes: `Checked out ${mockAssets[assetIndex].assetName}`,
-          prevCommitId: lastCommit?.commitId || null,
-          commitDate: new Date().toISOString(),
-          hasMaterials: lastCommit?.hasMaterials || false,
-          state: [],
-        };
-
-        // Add the new commit to mock data
-        mockCommits.unshift(newCommit);
-
-        // Update the mock asset
-        mockAssets[assetIndex] = {
-          ...mockAssets[assetIndex],
-          checkedOut: true,
-          latestCommitId: newCommitId,
-        };
-
-        const updatedAsset = getAssetWithDetails(mockAssets[assetIndex]);
-        console.log("Updated asset after checkout:", updatedAsset);
-        return {
-          asset: updatedAsset,
-          downloadUrl: `/api/assets/${assetName}/download`,
-        };
-      }
-
-      // In production, call API
-      const response = await fetch(`${API_URL}/assets/${assetName}/checkout`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/assets/${assetName}/checkout/`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ pennId }),
+        body: JSON.stringify({ pennkey: pennId }),  // Note: backend expects 'pennkey' not 'pennId'
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to check out asset");
+        throw new Error(error.error || 'Failed to check out asset');
       }
 
       const data = await response.json();
@@ -276,80 +221,17 @@ export const api = {
   // Check in an asset
   async checkinAsset(assetName: string, pennId: string) {
     try {
-      // In development, use mock data
-      if (process.env.NODE_ENV === "development") {
-        await simulateApiDelay();
-        const assetIndex = mockAssets.findIndex((a) => a.assetName === assetName);
-
-        if (assetIndex === -1) {
-          throw new Error("Asset not found");
-        }
-
-        if (!mockAssets[assetIndex].checkedOut) {
-          throw new Error("Asset is not checked out");
-        }
-
-        // Get the asset details to check who checked it out
-        const assetDetails = getAssetWithDetails(mockAssets[assetIndex]);
-
-        // Verify the user who's checking in is the one who checked out
-        if (assetDetails.checkedOutBy !== pennId) {
-          const checkedOutByName = getUserFullName(assetDetails.checkedOutBy);
-          throw new Error(`Asset is checked out by ${checkedOutByName}, not you`);
-        }
-
-        // Create a new commit for this check-in
-        const lastCommit = getCommitById(mockAssets[assetIndex].latestCommitId);
-        if (!lastCommit) {
-          throw new Error("Could not find the last commit");
-        }
-
-        // Update version (simplified for mock)
-        const versionParts = lastCommit.versionNum.split(".");
-        const minorVersion = parseInt(versionParts[1]) + 1;
-        const newVersion = `${versionParts[0]}.${minorVersion.toString().padStart(2, "0")}.00`;
-
-        // Create a new commit
-        const newCommitId = (mockCommits.length + 1).toString();
-        const newCommit: Commit = {
-          commitId: newCommitId,
-          pennKey: pennId,
-          versionNum: newVersion,
-          notes: `Update to ${mockAssets[assetIndex].assetName}`,
-          prevCommitId: lastCommit.commitId,
-          commitDate: new Date().toISOString(),
-          hasMaterials: lastCommit.hasMaterials,
-          state: [],
-        };
-
-        // Add the new commit to mock data
-        mockCommits.unshift(newCommit);
-
-        // Update the asset with the new commit ID
-        mockAssets[assetIndex] = {
-          ...mockAssets[assetIndex],
-          latestCommitId: newCommitId,
-          checkedOut: false,
-          lastApprovedId: "0",
-        };
-
-        const updatedAsset = getAssetWithDetails(mockAssets[assetIndex]);
-        console.log("Updated asset after check-in:", updatedAsset);
-        return { asset: updatedAsset };
-      }
-
-      // In production, call API
-      const response = await fetch(`${API_URL}/assets/${assetName}/checkin`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ pennId }),
+        body: JSON.stringify({ pennkey: pennId }),  // Note: backend expects 'pennkey' not 'pennId'
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to check in asset");
+        throw new Error(error.error || 'Failed to check in asset');
       }
 
       const data = await response.json();

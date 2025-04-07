@@ -4,6 +4,7 @@ from .models import Asset, Author, Commit
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .utils.s3_utils import S3Manager 
+from django.utils import timezone
 
 @api_view(['GET'])
 def get_assets(request):
@@ -137,4 +138,62 @@ def upload_S3_asset(request, asset_name):
         return Response({'message': 'Successfully uploaded'}, status=200)
     
     except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+def checkout_asset(request, asset_name):
+    try:
+        print(f"Request data: {request.data}")
+        print(f"Request headers: {request.headers}")
+        
+        # Get the asset
+        try:
+            asset = Asset.objects.get(assetName=asset_name)
+            print(f"Found asset: {asset.assetName}")
+        except Asset.DoesNotExist as e:
+            print(f"Asset not found: {asset_name}")
+            return Response({'error': 'Asset not found'}, status=404)
+        
+        # Get the user's pennkey from the request
+        pennkey = request.data.get('pennkey')
+        print(f"Received pennkey: {pennkey}")
+        
+        if not pennkey:
+            return Response({'error': 'pennkey is required'}, status=400)
+
+        # Check if asset is already checked out
+        if asset.checkedOutBy:
+            print(f"Asset already checked out by: {asset.checkedOutBy}")
+            return Response({
+                'error': f'Asset is already checked out by {asset.checkedOutBy.firstName} {asset.checkedOutBy.lastName}'
+            }, status=400)
+
+        # Get the user
+        try:
+            user = Author.objects.get(pennkey=pennkey)
+            print(f"Found user: {user.firstName} {user.lastName}")
+        except Author.DoesNotExist as e:
+            print(f"User not found: {pennkey}")
+            return Response({'error': 'User not found'}, status=404)
+
+        # Check out the asset
+        try:
+            asset.checkedOutBy = user
+            asset.save()
+            print("Asset checked out successfully")
+        except Exception as e:
+            print(f"Error saving asset: {str(e)}")
+            raise
+
+        return Response({
+            'message': 'Asset checked out successfully',
+            'asset': {
+                'name': asset.assetName,
+                'checkedOutBy': user.pennkey,
+                'isCheckedOut': True
+            }
+        })
+
+    except Exception as e:
+        print(f"Unexpected error in checkout_asset: {str(e)}")
         return Response({'error': str(e)}, status=500)

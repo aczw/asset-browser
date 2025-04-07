@@ -51,7 +51,7 @@ class Commit(models.Model):
     timestamp = models.DateTimeField()
     note = models.TextField()
     sublayers = models.ManyToManyField(AssetVersion, blank=True)
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='commits')
 
     def __str__(self):
         return f"{self.version} - {self.asset.assetName}"

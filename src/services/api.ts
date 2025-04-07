@@ -122,7 +122,7 @@ const getAssetWithDetails = (asset: Asset): AssetWithDetails => {
 const simulateApiDelay = async (ms = 100) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // API functions that would connect to Express backend
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const api = {
   // Get all assets with optional filtering
@@ -135,9 +135,6 @@ export const api = {
     try {
       console.log("[DEBUG] API: getAssets called with params:", params);
 
-      // Simulate network delay
-      await simulateApiDelay();
-
       // Build query string from params
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
@@ -147,63 +144,25 @@ export const api = {
 
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
 
-      // Always use mock data for now
-      console.log("[DEBUG] API: Using mock data for getAssets");
-      let filteredAssets = [...mockAssets];
-
-      // Apply search filter
-      if (params?.search) {
-        const searchLower = params.search.toLowerCase();
-        filteredAssets = filteredAssets.filter(
-          (asset) =>
-            asset.assetName.toLowerCase().includes(searchLower) ||
-            asset.keywords.some((keyword) => keyword.toLowerCase().includes(searchLower))
-        );
+      // Always make API call
+      console.log("[DEBUG] API: Making API call to:", `${API_URL}/assets${queryString}`);
+      const response = await fetch(`${API_URL}/assets${queryString}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch assets: ${response.statusText}`);
       }
 
-      // Convert to AssetWithDetails before applying author filter
-      let assetsWithDetails = filteredAssets.map(getAssetWithDetails);
+      const data = await response.json();
+      console.log("[DEBUG] API: Received response:", data);
+      return data;
 
-      // Apply author filter - now filtering on the "creator" field of AssetWithDetails
-      if (params?.author) {
-        assetsWithDetails = assetsWithDetails.filter(
-          (asset) => asset.creator === params.author || asset.lastModifiedBy === params.author
-        );
-      }
-
-      // Apply checked-in filter
-      if (params?.checkedInOnly) {
-        assetsWithDetails = assetsWithDetails.filter((asset) => !asset.isCheckedOut);
-      }
-
-      // Apply sorting
-      if (params?.sortBy) {
-        switch (params.sortBy) {
-          case "name":
-            assetsWithDetails.sort((a, b) => a.name.localeCompare(b.name));
-            break;
-          case "author":
-            assetsWithDetails.sort((a, b) => a.creator.localeCompare(b.creator));
-            break;
-          case "updated":
-            assetsWithDetails.sort(
-              (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-            );
-            break;
-          case "created":
-            assetsWithDetails.sort(
-              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
-            break;
-          default:
-            break;
-        }
-      }
-
-      console.log("[DEBUG] API: Returning filtered assets:", assetsWithDetails.length);
-      return { assets: assetsWithDetails };
     } catch (error) {
       console.error("[ERROR] API: Failed to fetch assets:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch assets. Please try again.",
+        variant: "destructive",
+      });
       return { assets: [] };
     }
   },
@@ -213,22 +172,7 @@ export const api = {
     try {
       console.log("[DEBUG] API: assetName type:", typeof assetName);
 
-      // In development, use mock data
-      if (process.env.NODE_ENV === "development") {
-        await simulateApiDelay();
-        // Find the asset by name
-        const asset = mockAssets.find((a) => a.assetName === assetName);
-
-        if (!asset) {
-          console.error("[DEBUG] API: Asset not found with name:", assetName);
-          throw new Error("Asset not found");
-        }
-
-        const assetWithDetails = getAssetWithDetails(asset);
-        return { asset: assetWithDetails };
-      }
-
-      // In production, call API
+      // Always make API call
       const response = await fetch(`${API_URL}/assets/${assetName}`);
       if (!response.ok) throw new Error("Failed to fetch asset details");
 
@@ -248,72 +192,17 @@ export const api = {
   // Check out an asset
   async checkoutAsset(assetName: string, pennId: string) {
     try {
-      // In development, use mock data
-      if (process.env.NODE_ENV === "development") {
-        await simulateApiDelay();
-        const assetIndex = mockAssets.findIndex((a) => a.assetName === assetName);
-
-        if (assetIndex === -1) {
-          throw new Error("Asset not found");
-        }
-
-        if (mockAssets[assetIndex].checkedOut) {
-          const checkedOutBy = mockAssets[assetIndex].latestCommitId.toString();
-          const checkedOutByName = getUserFullName(checkedOutBy);
-          throw new Error(`Asset is already checked out by ${checkedOutByName}`);
-        }
-
-        // Find user by pennId
-        const user = mockUsers.find((u) => u.pennId === pennId);
-        if (!user) {
-          throw new Error("User not found");
-        }
-
-        // Create a new commit for this checkout
-        const newCommitId = (mockCommits.length + 1).toString();
-        const lastCommit = getCommitById(mockAssets[assetIndex].latestCommitId);
-
-        const newCommit: Commit = {
-          commitId: newCommitId,
-          pennKey: user.pennId,
-          versionNum: lastCommit?.versionNum || "01.00.00",
-          notes: `Checked out ${mockAssets[assetIndex].assetName}`,
-          prevCommitId: lastCommit?.commitId || null,
-          commitDate: new Date().toISOString(),
-          hasMaterials: lastCommit?.hasMaterials || false,
-          state: [],
-        };
-
-        // Add the new commit to mock data
-        mockCommits.unshift(newCommit);
-
-        // Update the mock asset
-        mockAssets[assetIndex] = {
-          ...mockAssets[assetIndex],
-          checkedOut: true,
-          latestCommitId: newCommitId,
-        };
-
-        const updatedAsset = getAssetWithDetails(mockAssets[assetIndex]);
-        console.log("Updated asset after checkout:", updatedAsset);
-        return {
-          asset: updatedAsset,
-          downloadUrl: `/api/assets/${assetName}/download`,
-        };
-      }
-
-      // In production, call API
-      const response = await fetch(`${API_URL}/assets/${assetName}/checkout`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/assets/${assetName}/checkout/`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ pennId }),
+        body: JSON.stringify({ pennkey: pennId }),  // Note: backend expects 'pennkey' not 'pennId'
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to check out asset");
+        throw new Error(error.error || 'Failed to check out asset');
       }
 
       const data = await response.json();
@@ -332,80 +221,17 @@ export const api = {
   // Check in an asset
   async checkinAsset(assetName: string, pennId: string) {
     try {
-      // In development, use mock data
-      if (process.env.NODE_ENV === "development") {
-        await simulateApiDelay();
-        const assetIndex = mockAssets.findIndex((a) => a.assetName === assetName);
-
-        if (assetIndex === -1) {
-          throw new Error("Asset not found");
-        }
-
-        if (!mockAssets[assetIndex].checkedOut) {
-          throw new Error("Asset is not checked out");
-        }
-
-        // Get the asset details to check who checked it out
-        const assetDetails = getAssetWithDetails(mockAssets[assetIndex]);
-
-        // Verify the user who's checking in is the one who checked out
-        if (assetDetails.checkedOutBy !== pennId) {
-          const checkedOutByName = getUserFullName(assetDetails.checkedOutBy);
-          throw new Error(`Asset is checked out by ${checkedOutByName}, not you`);
-        }
-
-        // Create a new commit for this check-in
-        const lastCommit = getCommitById(mockAssets[assetIndex].latestCommitId);
-        if (!lastCommit) {
-          throw new Error("Could not find the last commit");
-        }
-
-        // Update version (simplified for mock)
-        const versionParts = lastCommit.versionNum.split(".");
-        const minorVersion = parseInt(versionParts[1]) + 1;
-        const newVersion = `${versionParts[0]}.${minorVersion.toString().padStart(2, "0")}.00`;
-
-        // Create a new commit
-        const newCommitId = (mockCommits.length + 1).toString();
-        const newCommit: Commit = {
-          commitId: newCommitId,
-          pennKey: pennId,
-          versionNum: newVersion,
-          notes: `Update to ${mockAssets[assetIndex].assetName}`,
-          prevCommitId: lastCommit.commitId,
-          commitDate: new Date().toISOString(),
-          hasMaterials: lastCommit.hasMaterials,
-          state: [],
-        };
-
-        // Add the new commit to mock data
-        mockCommits.unshift(newCommit);
-
-        // Update the asset with the new commit ID
-        mockAssets[assetIndex] = {
-          ...mockAssets[assetIndex],
-          latestCommitId: newCommitId,
-          checkedOut: false,
-          lastApprovedId: "0",
-        };
-
-        const updatedAsset = getAssetWithDetails(mockAssets[assetIndex]);
-        console.log("Updated asset after check-in:", updatedAsset);
-        return { asset: updatedAsset };
-      }
-
-      // In production, call API
-      const response = await fetch(`${API_URL}/assets/${assetName}/checkin`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ pennId }),
+        body: JSON.stringify({ pennkey: pennId }),  // Note: backend expects 'pennkey' not 'pennId'
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to check in asset");
+        throw new Error(error.error || 'Failed to check in asset');
       }
 
       const data = await response.json();
@@ -423,40 +249,34 @@ export const api = {
 
   // Download a copy of the asset
   async downloadAsset(assetName: string) {
+    console.log("[DEBUG] api.downloadAsset called with assetName:", assetName);
     try {
-      // In development, use mock data
-      if (process.env.NODE_ENV === "development") {
-        await simulateApiDelay();
-        const asset = mockAssets.find((a) => a.assetName === assetName);
-
-        if (!asset) {
-          throw new Error("Asset not found");
-        }
-
-        console.log(`Downloading asset ${assetName}: ${asset.assetName}`);
-
-        toast({
-          title: "Download Started",
-          description: `${asset.assetName} is being downloaded.`,
-        });
-
-        return { success: true };
-      }
-
-      // In production, call API
+      // Call API in both development and production
+      console.log("[DEBUG] Making API call to:", `${API_URL}/assets/${assetName}/download`);
       const response = await fetch(`${API_URL}/assets/${assetName}/download`);
+      console.log("[DEBUG] API response status:", response.status);
       if (!response.ok) throw new Error("Failed to download asset");
 
-      // Handle file download response
+      // Get the blob from the response
       const blob = await response.blob();
+      console.log("[DEBUG] Received blob of size:", blob.size);
+
+      // Create a URL for the blob
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `asset-${assetName}.zip`;
-      document.body.appendChild(a);
-      a.click();
+      console.log("[DEBUG] Created blob URL");
+
+      // Create a link and click it to download the file
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${assetName}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      console.log("[DEBUG] Triggered download");
+
+      // Clean up
       window.URL.revokeObjectURL(url);
-      a.remove();
+      document.body.removeChild(link);
+      console.log("[DEBUG] Cleaned up resources");
 
       toast({
         title: "Download Complete",
@@ -465,7 +285,7 @@ export const api = {
 
       return { success: true };
     } catch (error) {
-      console.error(`Failed to download asset ${assetName}:`, error);
+      console.error(`[DEBUG] Failed to download asset ${assetName}:`, error);
       toast({
         title: "Error",
         description: "Failed to download asset. Please try again.",

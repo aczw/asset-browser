@@ -135,9 +135,6 @@ export const api = {
     try {
       console.log("[DEBUG] API: getAssets called with params:", params);
 
-      // Simulate network delay
-      await simulateApiDelay();
-
       // Build query string from params
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
@@ -147,63 +144,85 @@ export const api = {
 
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
 
-      // Always use mock data for now
-      console.log("[DEBUG] API: Using mock data for getAssets");
-      let filteredAssets = [...mockAssets];
+      // In development, use mock data
+      if (process.env.NODE_ENV === "development") {
+        console.log("[DEBUG] API: Using mock data for getAssets");
+        await simulateApiDelay();
 
-      // Apply search filter
-      if (params?.search) {
-        const searchLower = params.search.toLowerCase();
-        filteredAssets = filteredAssets.filter(
-          (asset) =>
-            asset.assetName.toLowerCase().includes(searchLower) ||
-            asset.keywords.some((keyword) => keyword.toLowerCase().includes(searchLower))
-        );
-      }
+        let filteredAssets = [...mockAssets];
 
-      // Convert to AssetWithDetails before applying author filter
-      let assetsWithDetails = filteredAssets.map(getAssetWithDetails);
-
-      // Apply author filter - now filtering on the "creator" field of AssetWithDetails
-      if (params?.author) {
-        assetsWithDetails = assetsWithDetails.filter(
-          (asset) => asset.creator === params.author || asset.lastModifiedBy === params.author
-        );
-      }
-
-      // Apply checked-in filter
-      if (params?.checkedInOnly) {
-        assetsWithDetails = assetsWithDetails.filter((asset) => !asset.isCheckedOut);
-      }
-
-      // Apply sorting
-      if (params?.sortBy) {
-        switch (params.sortBy) {
-          case "name":
-            assetsWithDetails.sort((a, b) => a.name.localeCompare(b.name));
-            break;
-          case "author":
-            assetsWithDetails.sort((a, b) => a.creator.localeCompare(b.creator));
-            break;
-          case "updated":
-            assetsWithDetails.sort(
-              (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-            );
-            break;
-          case "created":
-            assetsWithDetails.sort(
-              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
-            break;
-          default:
-            break;
+        // Apply search filter
+        if (params?.search) {
+          const searchLower = params.search.toLowerCase();
+          filteredAssets = filteredAssets.filter(
+            (asset) =>
+              asset.assetName.toLowerCase().includes(searchLower) ||
+              asset.keywords.some((keyword) => keyword.toLowerCase().includes(searchLower))
+          );
         }
+
+        // Convert to AssetWithDetails before applying author filter
+        let assetsWithDetails = filteredAssets.map(getAssetWithDetails);
+
+        // Apply author filter
+        if (params?.author) {
+          assetsWithDetails = assetsWithDetails.filter(
+            (asset) => asset.creator === params.author || asset.lastModifiedBy === params.author
+          );
+        }
+
+        // Apply checked-in filter
+        if (params?.checkedInOnly) {
+          assetsWithDetails = assetsWithDetails.filter((asset) => !asset.isCheckedOut);
+        }
+
+        // Apply sorting
+        if (params?.sortBy) {
+          switch (params.sortBy) {
+            case "name":
+              assetsWithDetails.sort((a, b) => a.name.localeCompare(b.name));
+              break;
+            case "author":
+              assetsWithDetails.sort((a, b) => a.creator.localeCompare(b.creator));
+              break;
+            case "updated":
+              assetsWithDetails.sort(
+                (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+              );
+              break;
+            case "created":
+              assetsWithDetails.sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              );
+              break;
+            default:
+              break;
+          }
+        }
+
+        console.log("[DEBUG] API: Returning filtered assets:", assetsWithDetails.length);
+        return { assets: assetsWithDetails };
       }
 
-      console.log("[DEBUG] API: Returning filtered assets:", assetsWithDetails.length);
-      return { assets: assetsWithDetails };
+      // In production, make real API call
+      console.log("[DEBUG] API: Making real API call to:", `${API_URL}/assets${queryString}`);
+      const response = await fetch(`${API_URL}/assets${queryString}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch assets: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("[DEBUG] API: Received response:", data);
+      return data;
+
     } catch (error) {
       console.error("[ERROR] API: Failed to fetch assets:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch assets. Please try again.",
+        variant: "destructive",
+      });
       return { assets: [] };
     }
   },

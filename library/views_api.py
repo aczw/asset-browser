@@ -46,10 +46,11 @@ def get_assets(request):
 
         # Apply author filter
         if author:
-            assets = assets.filter(
-                Q(commits__author__firstName__icontains=author) |
-                Q(commits__author__lastName__icontains=author)
-            ).distinct()
+            for token in author.split():
+                assets = assets.filter(
+                    Q(first_author_first__icontains=token) |
+                    Q(first_author_last__icontains=token)
+                )
 
         # Apply sorting and ensure uniqueness
         if sort_by == 'name':

@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Max, Min
 from .models import Asset, Author, Commit
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -32,28 +32,38 @@ def get_assets(request):
         # Apply author filter
         if author:
             assets = assets.filter(
-                Q(commit__author__firstName__icontains=author) |
-                Q(commit__author__lastName__icontains=author)
+                Q(commits__author__firstName__icontains=author) |
+                Q(commits__author__lastName__icontains=author)
             ).distinct()
 
-        # Apply sorting
+        # Apply sorting and ensure uniqueness
+        if sort_by == 'name':
+            assets = assets.order_by('assetName').distinct()
         elif sort_by == 'author':
-            assets = assets.order_by('commits__author__firstName',
-                                    'commits__author__lastName')
+            # First get the latest commit for each asset
+            assets = assets.annotate(
+                latest_author_first=Max('commits__author__firstName'),
+                latest_author_last=Max('commits__author__lastName')
+            ).order_by('latest_author_first', 'latest_author_last').distinct()
         elif sort_by == 'updated':
-            assets = assets.order_by('-commits__timestamp')
+            # First get the latest commit for each asset
+            assets = assets.annotate(
+                latest_timestamp=Max('commits__timestamp')
+            ).order_by('-latest_timestamp').distinct()
         elif sort_by == 'created':
-            assets = assets.order_by('commits__timestamp')
-
+            # First get the earliest commit for each asset
+            assets = assets.annotate(
+                earliest_timestamp=Min('commits__timestamp')
+            ).order_by('earliest_timestamp').distinct()
 
         # Convert to frontend format
         assets_list = []
         s3Manager = S3Manager();
         for asset in assets:
             try:
-                # Pull first / latest commit
-                latest_commit = asset.commits.order_by('-timestamp').first()
-                first_commit  = asset.commits.order_by('timestamp').first()
+                # Get latest and first commits
+                latest_commit = Commit.objects.filter(asset=asset).order_by('-timestamp').first()
+                first_commit = Commit.objects.filter(asset=asset).order_by('timestamp').first()
                 thumbnail_url = s3Manager.generate_presigned_url(asset.thumbnailKey) if asset.thumbnailKey else None
 
                 assets_list.append({

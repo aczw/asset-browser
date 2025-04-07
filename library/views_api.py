@@ -22,34 +22,35 @@ def get_assets(request):
                 Q(assetName__icontains=search) |
                 Q(keywordsList__keyword__icontains=search)
             ).distinct()
-
-        # Apply author filter
-        if author:
-            assets = assets.filter(
-                Q(commits__author__firstName__icontains=author) |
-                Q(commits__author__lastName__icontains=author)
-            ).distinct()
-
+        
         # Apply checked-in filter
         if checked_in_only:
             assets = assets.filter(checkedOutBy__isnull=True)
 
+        # Apply author filter
+        if author:
+            assets = assets.filter(
+                Q(commit__author__firstName__icontains=author) |
+                Q(commit__author__lastName__icontains=author)
+            ).distinct()
+
         # Apply sorting
-        if sort_by == 'name':
-            assets = assets.order_by('assetName')
         elif sort_by == 'author':
-            assets = assets.order_by('commits__author__firstName', 'commits__author__lastName')
+            assets = assets.order_by('commits__author__firstName',
+                                    'commits__author__lastName')
         elif sort_by == 'updated':
             assets = assets.order_by('-commits__timestamp')
         elif sort_by == 'created':
             assets = assets.order_by('commits__timestamp')
 
+
         # Convert to frontend format
         assets_list = []
         for asset in assets:
             try:
+                # Pull first / latest commit
                 latest_commit = asset.commits.order_by('-timestamp').first()
-                first_commit = asset.commits.order_by('timestamp').first()
+                first_commit  = asset.commits.order_by('timestamp').first()
 
                 assets_list.append({
                     'name': asset.assetName,

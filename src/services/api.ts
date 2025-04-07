@@ -144,68 +144,8 @@ export const api = {
 
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
 
-      // In development, use mock data
-      if (process.env.NODE_ENV === "development") {
-        console.log("[DEBUG] API: Using mock data for getAssets");
-        await simulateApiDelay();
-
-        let filteredAssets = [...mockAssets];
-
-      // Apply search filter
-      if (params?.search) {
-        const searchLower = params.search.toLowerCase();
-        filteredAssets = filteredAssets.filter(
-          (asset) =>
-            asset.assetName.toLowerCase().includes(searchLower) ||
-            asset.keywords.some((keyword) => keyword.toLowerCase().includes(searchLower))
-        );
-      }
-
-        // Convert to AssetWithDetails before applying author filter
-        let assetsWithDetails = filteredAssets.map(getAssetWithDetails);
-
-        // Apply author filter
-        if (params?.author) {
-          assetsWithDetails = assetsWithDetails.filter(
-            (asset) => asset.creator === params.author || asset.lastModifiedBy === params.author
-          );
-        }
-
-        // Apply checked-in filter
-        if (params?.checkedInOnly) {
-          assetsWithDetails = assetsWithDetails.filter((asset) => !asset.isCheckedOut);
-        }
-
-        // Apply sorting
-        if (params?.sortBy) {
-          switch (params.sortBy) {
-            case "name":
-              assetsWithDetails.sort((a, b) => a.name.localeCompare(b.name));
-              break;
-            case "author":
-              assetsWithDetails.sort((a, b) => a.creator.localeCompare(b.creator));
-              break;
-            case "updated":
-              assetsWithDetails.sort(
-                (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-              );
-              break;
-            case "created":
-              assetsWithDetails.sort(
-                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-              );
-              break;
-            default:
-              break;
-          }
-        }
-
-        console.log("[DEBUG] API: Returning filtered assets:", assetsWithDetails.length);
-        return { assets: assetsWithDetails };
-      }
-
-      // In production, make real API call
-      console.log("[DEBUG] API: Making real API call to:", `${API_URL}/assets${queryString}`);
+      // Always make API call
+      console.log("[DEBUG] API: Making API call to:", `${API_URL}/assets${queryString}`);
       const response = await fetch(`${API_URL}/assets${queryString}`);
       
       if (!response.ok) {
@@ -232,22 +172,7 @@ export const api = {
     try {
       console.log("[DEBUG] API: assetName type:", typeof assetName);
 
-      // In development, use mock data
-      if (process.env.NODE_ENV === "development") {
-        await simulateApiDelay();
-        // Find the asset by name
-        const asset = mockAssets.find((a) => a.assetName === assetName);
-
-        if (!asset) {
-          console.error("[DEBUG] API: Asset not found with name:", assetName);
-          throw new Error("Asset not found");
-        }
-
-        const assetWithDetails = getAssetWithDetails(asset);
-        return { asset: assetWithDetails };
-      }
-
-      // In production, call API
+      // Always make API call
       const response = await fetch(`${API_URL}/assets/${assetName}`);
       if (!response.ok) throw new Error("Failed to fetch asset details");
 

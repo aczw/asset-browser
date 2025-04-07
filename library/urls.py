@@ -12,5 +12,5 @@ urlpatterns = [
     path('api/assets/<str:asset_name>/', views_api.get_asset, name='api_asset'),
     path('api/upload_S3/<str:asset_name>/', views_api.upload_S3_asset, name='upload_S3_asset'),
     path('api/assets/<str:asset_name>/checkout/', views_api.checkout_asset, name='api_asset_checkout'),
-    # path('api/assets/<str:asset_name>/checkin/', views_api.checkin_asset, name='api_asset_checkin'),
+    path('api/assets/<str:asset_name>/download/', views_api.download_asset, name='api_asset_download'),
 ]

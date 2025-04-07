@@ -1,11 +1,13 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from django.db.models import Q, Max, Min
 from .models import Asset, Author, Commit
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .utils.s3_utils import S3Manager 
+from .utils.zipper import zip_files_from_memory
 from django.utils import timezone
 from django.db.models import OuterRef, Subquery
+import os
 
 @api_view(['GET'])
 def get_assets(request):
@@ -219,4 +221,36 @@ def checkout_asset(request, asset_name):
 
     except Exception as e:
         print(f"Unexpected error in checkout_asset: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def download_asset(request, asset_name):
+    """Stream a zipped version of the entire asset folder from S3."""
+    try:
+        # Make sure the asset exists in the DB first (helps 404 early)
+        Asset.objects.get(assetName=asset_name)
+
+        s3 = S3Manager()
+        prefix = f"{asset_name}"
+        keys = s3.list_s3_files(prefix)
+
+        if not keys:
+            return Response({'error': 'No files found for this asset'}, status=404)
+
+        file_data = {}
+        for key in keys:
+            name_in_zip = os.path.relpath(key, prefix)
+            file_bytes  = s3.download_s3_file(key)
+            file_data[name_in_zip] = file_bytes
+
+        zip_buffer = zip_files_from_memory(file_data)
+
+        response = StreamingHttpResponse(zip_buffer, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{asset_name}.zip"'
+        return response
+
+    except Asset.DoesNotExist:
+        return Response({'error': 'Asset not found'}, status=404)
+    except Exception as e:
+        print(f"Error in download_asset: {str(e)}")
         return Response({'error': str(e)}, status=500)

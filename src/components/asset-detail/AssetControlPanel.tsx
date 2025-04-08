@@ -1,3 +1,4 @@
+import type { Metadata } from "@/lib/types";
 import { Download, Lock, LockOpen, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../../components/ui/badge";
@@ -11,7 +12,6 @@ import {
 } from "../../components/ui/select";
 import type { AssetWithDetails } from "../../services/api";
 import CheckInFlow from "./CheckInFlow";
-import type { Metadata } from "@/lib/types";
 
 interface AssetControlPanelProps {
   asset: AssetWithDetails;
@@ -64,7 +64,7 @@ const AssetControlPanel = ({
             <SelectValue placeholder={asset?.version} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={asset?.version ?? ""}>
+            <SelectItem value={asset?.version ?? "THIS SHOULD NOT HAPPEN"}>
               {asset?.version}
             </SelectItem>
           </SelectContent>

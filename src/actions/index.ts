@@ -1,8 +1,8 @@
-import { defineAction, ActionError } from "astro:actions";
+import { MetadataSchema, type VersionMap } from "@/lib/types";
+import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
-import { MetadataSchema, type Metadata, type VersionMap } from "@/lib/types";
 
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = "https://usd-asset-library.up.railway.app/api";
 
 export const server = {
   getAssets: defineAction({

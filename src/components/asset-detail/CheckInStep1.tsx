@@ -56,7 +56,7 @@ const CheckInStep1 = ({
       </div>
 
       <div className="flex justify-end mt-6">
-        <Button onClick={onNext} disabled={!allChecked && false}>
+        <Button onClick={onNext} disabled={!allChecked}>
           Proceed with uploading
         </Button>
       </div>

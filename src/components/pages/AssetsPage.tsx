@@ -47,7 +47,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
       if (error) {
         toast({
           title: "getAuthors - TODO",
-          description: "Not implemented",
+          description: "Not implemented. 'Filter by Author' will be empty for now.",
           variant: "destructive",
         });
 

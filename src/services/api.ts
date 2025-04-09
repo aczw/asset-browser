@@ -1,6 +1,5 @@
 import { toast } from "@/components/ui/use-toast";
-import type { Metadata, VersionMap } from "@/lib/types";
-import { Value } from "@radix-ui/react-select";
+import type { AssetWithDetails, Metadata, VersionMap } from "@/lib/types";
 
 // Types based on schemas
 export interface Asset {
@@ -29,22 +28,6 @@ export interface User {
   fullName: string;
 }
 
-// Combined asset data for frontend display
-export interface AssetWithDetails {
-  name: string;
-  thumbnailUrl: string;
-  version: string;
-  creator: string;
-  lastModifiedBy: string;
-  checkedOutBy: string | null;
-  isCheckedOut: boolean;
-  materials: boolean;
-  keywords: string[];
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const mockUsers: User[] = [
   { pennId: "willcai", fullName: "Will Cai" },
   { pennId: "chuu", fullName: "Christina Qiu" },
@@ -63,22 +46,14 @@ const mockCommits: Commit[] = Array.from({ length: 50 }, (_, i) => ({
 }));
 
 const mockAssets: Asset[] = Array.from({ length: 20 }, (_, i) => {
-  const assetCommits = mockCommits.filter((c) =>
-    c.notes.includes(`asset ${i + 1}`)
-  );
+  const assetCommits = mockCommits.filter((c) => c.notes.includes(`asset ${i + 1}`));
   const latestCommit = assetCommits.length > 0 ? assetCommits[0] : null;
 
   return {
     assetName: `mockAsset${i + 1}`,
-    keywords: [
-      "3D",
-      "Model",
-      "Character",
-      "Environment",
-      "Prop",
-      "Texture",
-      "Animation",
-    ].filter((_, ki) => ki % ((i % 3) + 2) === 0),
+    keywords: ["3D", "Model", "Character", "Environment", "Prop", "Texture", "Animation"].filter(
+      (_, ki) => ki % ((i % 3) + 2) === 0
+    ),
     checkedOut: i % 5 === 0,
     latestCommitId: latestCommit?.commitId || "0",
     lastApprovedId: latestCommit?.commitId || "0",
@@ -129,20 +104,14 @@ const getAssetWithDetails = (asset: Asset): AssetWithDetails => {
 };
 
 // Function to simulate API loading delay
-const simulateApiDelay = async (ms = 100) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const simulateApiDelay = async (ms = 100) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // API functions that would connect to Express backend
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const api = {
   // Check in an asset
-  async checkinAsset(
-    assetName: string,
-    pennId: string,
-    files: File[],
-    metadata: Metadata
-  ) {
+  async checkinAsset(assetName: string, pennId: string, files: File[], metadata: Metadata) {
     try {
       const formData = new FormData();
 
@@ -151,13 +120,10 @@ export const api = {
       }
 
       // S3 update, returns Version IDs
-      const response_version_ids = await fetch(
-        `${API_URL}/assets/${assetName}/`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response_version_ids = await fetch(`${API_URL}/assets/${assetName}/`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!response_version_ids.ok) {
         const error = await response_version_ids.json();
@@ -186,8 +152,7 @@ export const api = {
       console.error(`Failed to check in asset ${assetName}:`, error);
       toast({
         title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to check in asset.",
+        description: error instanceof Error ? error.message : "Failed to check in asset.",
         variant: "destructive",
       });
       throw error;
@@ -199,10 +164,7 @@ export const api = {
     console.log("[DEBUG] api.downloadAsset called with assetName:", assetName);
     try {
       // Call API in both development and production
-      console.log(
-        "[DEBUG] Making API call to:",
-        `${API_URL}/assets/${assetName}/download`
-      );
+      console.log("[DEBUG] Making API call to:", `${API_URL}/assets/${assetName}/download`);
       const response = await fetch(`${API_URL}/assets/${assetName}/download`);
       console.log("[DEBUG] API response status:", response.status);
       if (!response.ok) throw new Error("Failed to download asset");

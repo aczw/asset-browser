@@ -22,4 +22,20 @@ type Commit = z.infer<typeof CommitSchema>;
 type VersionMap = z.infer<typeof VersionMapSchema>;
 type Metadata = z.infer<typeof MetadataSchema>;
 
-export { MetadataSchema, type Commit, type Metadata, type VersionMap };
+// Combined asset data for frontend display
+type AssetWithDetails = {
+  name: string;
+  thumbnailUrl: string;
+  version: string;
+  creator: string;
+  lastModifiedBy: string;
+  checkedOutBy: string | null;
+  isCheckedOut: boolean;
+  materials: boolean;
+  keywords: string[];
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export { MetadataSchema, type AssetWithDetails, type Commit, type Metadata, type VersionMap };

@@ -1,10 +1,8 @@
 ---
-import ReactApp from "../components/ReactApp";
+import AssetsPage from "@/components/pages/AssetsPage";
 import Layout from "../layouts/Layout.astro";
 ---
 
 <Layout>
-  <div id="root">
-    <ReactApp client:only="react" />
-  </div>
+  <AssetsPage client:only="react" />
 </Layout>

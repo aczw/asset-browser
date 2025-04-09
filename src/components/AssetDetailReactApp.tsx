@@ -1,15 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AssetDetailPage from "./pages/AssetDetailPage";
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30000,
-    },
-  },
-});
 
 interface AssetDetailReactAppProps {
   assetName?: string;
@@ -53,10 +42,8 @@ export default function AssetDetailReactApp({ assetName }: AssetDetailReactAppPr
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="asset-detail-app-wrapper">
-        <AssetDetailPage assetName={effectiveAssetName} />
-      </div>
-    </QueryClientProvider>
+    <div className="asset-detail-app-wrapper">
+      <AssetDetailPage assetName={effectiveAssetName} />
+    </div>
   );
 }

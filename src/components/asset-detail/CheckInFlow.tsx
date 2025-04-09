@@ -1,11 +1,9 @@
+import type { AssetWithDetails, Metadata } from "@/lib/types";
 import { useState } from "react";
 import { Dialog, DialogContent } from "../../components/ui/dialog";
-import type { AssetWithDetails } from "../../services/api";
 import CheckInStep1 from "./CheckInStep1";
 import CheckInStep2 from "./CheckInStep2";
 import CheckInStep3 from "./CheckInStep3";
-import { UserProvider } from "@/contexts/UserContext";
-import type { Metadata } from "@/lib/types";
 
 interface CheckInFlowProps {
   asset: AssetWithDetails;
@@ -77,13 +75,11 @@ const CheckInFlow = ({
         )}
 
         {step === 3 && (
-          <UserProvider>
-            <CheckInStep3
-              asset={asset}
-              onComplete={handleComplete}
-              onMetadataChange={onMetadataChange}
-            />
-          </UserProvider>
+          <CheckInStep3
+            asset={asset}
+            onComplete={handleComplete}
+            onMetadataChange={onMetadataChange}
+          />
         )}
       </DialogContent>
     </Dialog>

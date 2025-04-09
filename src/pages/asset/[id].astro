@@ -1,14 +1,8 @@
 ---
 import AssetDetailReactApp from "../../components/AssetDetailReactApp";
 import Layout from "../../layouts/Layout.astro";
-
-// Get the ID from the URL parameters and use it as the asset name
-const { id } = Astro.params;
-const assetName = id || "";
 ---
 
 <Layout>
-  <div id="root">
-    <AssetDetailReactApp assetName={assetName} client:only="react" />
-  </div>
+  <AssetDetailReactApp assetName={Astro.params.id} client:only="react" />
 </Layout>

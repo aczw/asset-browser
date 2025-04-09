@@ -2,11 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -16,10 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useUser } from "@/contexts/UserContext";
-import type { Commit, Metadata } from "@/lib/types";
+import type { AssetWithDetails, Commit, Metadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import type { AssetWithDetails } from "@/services/api";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import React, { useState } from "react";
@@ -30,12 +24,7 @@ interface CheckInStep3Props {
   onMetadataChange: (newMetadata: Metadata) => void;
 }
 
-const CheckInStep3 = ({
-  asset,
-  onComplete,
-  onMetadataChange,
-}: CheckInStep3Props) => {
-  const { user } = useUser();
+const CheckInStep3 = ({ asset, onComplete, onMetadataChange }: CheckInStep3Props) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [version, setVersion] = useState<string>("");
   const [materials, setMaterials] = useState<string>("None");
@@ -53,13 +42,17 @@ const CheckInStep3 = ({
     return [
       `${major + 1}.00.00`, // Major update
       `${major}.${(minor + 1).toString().padStart(2, "0")}.00`, // Minor update
-      `${major}.${minor.toString().padStart(2, "0")}.${(patch + 1)
-        .toString()
-        .padStart(2, "0")}`, // Patch update
+      `${major}.${minor.toString().padStart(2, "0")}.${(patch + 1).toString().padStart(2, "0")}`, // Patch update
     ];
   };
 
   const versionOptions = getVersionOptions();
+
+  // Hardcoded user for now
+  const user = {
+    pennId: "fakepennkey",
+    name: "Fake User",
+  };
 
   // Set default version to major update
   React.useEffect(() => {
@@ -122,12 +115,7 @@ const CheckInStep3 = ({
             <label htmlFor="author" className="text-sm font-medium">
               Author *
             </label>
-            <Input
-              id="author"
-              value={user?.name || ""}
-              readOnly
-              className="bg-muted"
-            />
+            <Input id="author" value={user?.name || ""} readOnly className="bg-muted" />
           </div>
 
           {/* Date Field */}
@@ -149,12 +137,7 @@ const CheckInStep3 = ({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
+                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
               </PopoverContent>
             </Popover>
           </div>

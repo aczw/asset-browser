@@ -1,17 +1,16 @@
+import type { AssetWithDetails } from "@/lib/types";
 import { useEffect, useState } from "react";
-import type { AssetWithDetails } from "../../services/api";
-import { api } from "../../services/api";
 import { Separator } from "../ui/separator";
 import { toast } from "../ui/use-toast";
 
+import { type Metadata } from "@/lib/types";
+import { actions } from "astro:actions";
 import AssetControlPanel from "../asset-detail/AssetControlPanel";
 import AssetDetailHeader from "../asset-detail/AssetDetailHeader";
 import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
 import AssetMetadata from "../asset-detail/AssetMetadata";
 import AssetNotFound from "../asset-detail/AssetNotFound";
 import AssetPreview from "../asset-detail/AssetPreview";
-import { type Metadata } from "@/lib/types";
-import { actions } from "astro:actions";
 
 interface AssetDetailPageProps {
   assetName: string;
@@ -158,15 +157,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const handleCheckIn = async () => {
     console.log("It's time to check in.");
 
-    if (
-      !assetName ||
-      !user ||
-      !asset ||
-      !metadata ||
-      userFiles.length === 0 ||
-      !metadata
-    )
-      return;
+    if (!assetName || !user || !asset || !metadata || userFiles.length === 0 || !metadata) return;
 
     console.log("good job on making it this far");
     console.log(`Metadata: ${metadata}`);
@@ -200,28 +191,51 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
   const handleDownload = async () => {
     console.log("[DEBUG] handleDownload called with assetName:", assetName);
+
     if (!assetName) {
       console.log("[DEBUG] No assetName provided, returning early");
       return;
     }
 
-    try {
-      console.log("[DEBUG] Calling api.downloadAsset");
-      await api.downloadAsset(assetName);
-      console.log("[DEBUG] api.downloadAsset completed successfully");
-    } catch (error) {
-      console.error("[DEBUG] Error in handleDownload:", error);
+    console.log("[DEBUG] Calling downloadAsset");
+    const { data, error } = await actions.downloadAsset({ assetName });
+
+    if (error) {
+      console.error("[DEBUG] Error in handleDownload:", error.message);
+
       toast({
         title: "Download Error",
         description: "Failed to download the asset. Please try again.",
         variant: "destructive",
       });
-    }
-  };
+    } else {
+      // Get the blob from the response
+      console.log("[DEBUG] Received blob of size:", data.size);
 
-  // Back button handler
-  const handleBack = () => {
-    window.history.back();
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(data);
+      console.log("[DEBUG] Created blob URL");
+
+      // Create a link and click it to download the file
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${assetName}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      console.log("[DEBUG] Triggered download");
+
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      console.log("[DEBUG] Cleaned up resources");
+
+      toast({
+        title: "Download Complete",
+        description: "Asset has been downloaded.",
+      });
+
+      console.log("[DEBUG] downloadAsset completed successfully");
+    }
   };
 
   if (isLoading) {
@@ -245,20 +259,21 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
           <AssetControlPanel
             asset={asset}
             canCheckout={!asset.isCheckedOut && !!user}
-            canCheckin={
-              asset.isCheckedOut && !!user && asset.checkedOutBy === user.pennId
-            }
+            canCheckin={asset.isCheckedOut && !!user && asset.checkedOutBy === user.pennId}
             onCheckout={handleCheckout}
             onCheckin={handleCheckIn}
             onDownload={handleDownload}
             onFilesChange={handleUserFilesChange}
             onMetadataChange={handleMetadataChange}
-            onLaunchDCC={() =>
-              window.open(
-                `/asset-preview?name=${encodeURIComponent(asset.name)}`,
-                "_blank"
-              )
-            }
+            onLaunchDCC={() => {
+              toast({
+                title: "Not implemented",
+                description: "TODO",
+                variant: "destructive",
+              });
+
+              window.open(`/asset-preview?name=${encodeURIComponent(asset.name)}`, "_blank");
+            }}
           />
 
           <Separator />

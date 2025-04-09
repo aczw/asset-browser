@@ -1,4 +1,4 @@
-import type { Metadata } from "@/lib/types";
+import type { AssetWithDetails, Metadata } from "@/lib/types";
 import { Download, Lock, LockOpen, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../../components/ui/badge";
@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
-import type { AssetWithDetails } from "../../services/api";
 import CheckInFlow from "./CheckInFlow";
 
 interface AssetControlPanelProps {
@@ -72,11 +71,7 @@ const AssetControlPanel = ({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Button
-          className="flex items-center gap-2"
-          onClick={onCheckout}
-          disabled={!canCheckout}
-        >
+        <Button className="flex items-center gap-2" onClick={onCheckout} disabled={!canCheckout}>
           <LockOpen className="h-4 w-4" />
           Check Out
         </Button>
@@ -90,20 +85,12 @@ const AssetControlPanel = ({
           Check In
         </Button>
 
-        <Button
-          variant="outline"
-          className="flex items-center gap-2"
-          onClick={onDownload}
-        >
+        <Button variant="outline" className="flex items-center gap-2" onClick={onDownload}>
           <Download className="h-4 w-4" />
           Download Copy
         </Button>
 
-        <Button
-          variant="outline"
-          className="flex items-center gap-2"
-          onClick={onLaunchDCC}
-        >
+        <Button variant="outline" className="flex items-center gap-2" onClick={onLaunchDCC}>
           <PlayCircle className="h-4 w-4" />
           Launch DCC
         </Button>

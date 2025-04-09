@@ -12,7 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import type { AssetWithDetails } from "@/lib/types";
-import { api } from "@/services/api";
 import AssetGrid from "../AssetGrid";
 
 import { actions } from "astro:actions";
@@ -43,12 +42,18 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
   useEffect(() => {
     // Fetch authors when component mounts
     const fetchAuthors = async () => {
-      try {
-        const { authors } = await api.getAuthors();
-        setAuthors(authors);
-      } catch (error) {
-        console.error("Error fetching authors:", error);
+      const { data, error } = await actions.getAuthors();
+
+      if (error) {
+        toast({
+          title: "getAuthors - TODO",
+          description: "Not implemented",
+          variant: "destructive",
+        });
+
         setAuthors([]);
+      } else {
+        // TODO
       }
     };
 
@@ -76,8 +81,6 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
     setSortOption(sortBy);
     onSort(sortBy);
   };
-
-  const [open, setOpen] = useState(false);
 
   return (
     <div className="w-full space-y-4 animate-fade-in">

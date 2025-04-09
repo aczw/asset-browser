@@ -26,15 +26,10 @@ export const server = {
       if (params?.checkedInOnly) queryParams.append("checkedInOnly", "true");
       if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
 
-      const queryString = queryParams.toString()
-        ? `?${queryParams.toString()}`
-        : "";
+      const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
 
       // Always make API call
-      console.log(
-        "[DEBUG] API: Making API call to:",
-        `${API_URL}/assets${queryString}`
-      );
+      console.log("[DEBUG] API: Making API call to:", `${API_URL}/assets${queryString}`);
       const response = await fetch(`${API_URL}/assets${queryString}`);
 
       if (!response.ok) {
@@ -107,18 +102,17 @@ export const server = {
       }
 
       // S3 update, returns Version IDs
-      const responseVersionIds = await fetch(
-        `${API_URL}/assets/${assetName}/`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const responseVersionIds = await fetch(`${API_URL}/assets/${assetName}/`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!responseVersionIds.ok) {
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
-          message: responseVersionIds.statusText || "Failed to check in asset",
+          message: responseVersionIds.statusText
+            ? `Failed to check in asset. Error message: ${responseVersionIds.statusText}`
+            : "Failed to check in asset",
         });
       }
 
@@ -129,23 +123,78 @@ export const server = {
       metadata.versionMap = versionMap;
 
       // Metadata update, adds new AssetVersions based on Commit
-      const responseMetadata = await fetch(
-        `${API_URL}/metadata/${assetName}/`,
-        {
-          method: "POST",
-          body: JSON.stringify(metadata),
-        }
-      );
+      const responseMetadata = await fetch(`${API_URL}/metadata/${assetName}/`, {
+        method: "POST",
+        body: JSON.stringify(metadata),
+      });
 
       if (!responseMetadata.ok) {
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
-          message: responseMetadata.statusText || "Failed to check in asset",
+          message: responseMetadata.statusText
+            ? `Failed to check in asset. Error message: ${responseMetadata.statusText}`
+            : "Failed to check in asset",
         });
       }
 
       const data = await responseMetadata.json();
       return data;
+    },
+  }),
+
+  downloadAsset: defineAction({
+    input: z.object({
+      assetName: z.string(),
+    }),
+    handler: async ({ assetName }) => {
+      console.log("[DEBUG] downloadAsset called with assetName:", assetName);
+
+      // Call API in both development and production
+      console.log("[DEBUG] Making API call to:", `${API_URL}/assets/${assetName}/download`);
+      const response = await fetch(`${API_URL}/assets/${assetName}/download`);
+
+      if (!response.ok) {
+        console.log("[DEBUG] Error occurred! API response status code:", response.status);
+
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to download asset",
+        });
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      console.log("[DEBUG] Received blob of size:", blob.size);
+
+      return blob;
+    },
+  }),
+
+  launchDCC: defineAction({
+    input: z.object({
+      assetName: z.string(),
+    }),
+    handler: async ({ assetName }) => {
+      console.log("[DEBUG] API: launchDCC called");
+
+      // TODO
+      throw new ActionError({
+        code: "FORBIDDEN",
+        message: "To do",
+      });
+    },
+  }),
+
+  getAuthors: defineAction({
+    input: undefined,
+    handler: async () => {
+      console.log("[DEBUG] API: getAuthors called");
+
+      // TODO
+      throw new ActionError({
+        code: "FORBIDDEN",
+        message: "To do",
+      });
     },
   }),
 };

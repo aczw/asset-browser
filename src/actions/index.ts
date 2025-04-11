@@ -1,8 +1,31 @@
 import { MetadataSchema, type VersionMap } from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
+import { execFile } from "child_process";
+import * as path from 'path';
+import * as os from 'os';
 
 const API_URL = "https://usd-asset-library.up.railway.app/api";
+
+const houdiniPath = process.env.HFS 
+  ? path.win32.join(process.env.HFS, 'bin', 'houdini.exe'): null;
+function findHoudiniPath(): string | null {
+  const programFiles = process.env.PROGRAMFILES || 'C:/Program Files';
+  
+  // This pattern allows it to find any version of Houdini installed
+  const basePath = path.join(programFiles, 'Side Effects Software');
+  
+  // Here you'd need to scan for Houdini folders - just an example
+  // In a real implementation, you'd use fs.readdirSync to scan the directory
+  const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.0', 'Houdini 19.5'];
+  
+  for (const version of possibleVersions) {
+    const testPath = path.join(basePath, version, 'bin', 'houdini.exe');
+    return testPath; // Return the first match
+  }
+  
+  return null;
+}
 
 export const server = {
   getAssets: defineAction({
@@ -177,13 +200,27 @@ export const server = {
     handler: async ({ assetName }) => {
       console.log("[DEBUG] API: launchDCC called");
 
-      // TODO
-      throw new ActionError({
-        code: "FORBIDDEN",
-        message: "To do",
+      const foundPath = findHoudiniPath();
+      console.log("[DEBUG] Found Houdini path:", foundPath);
+      console.log("[DEBUG] " + os.homedir());
+      const exePath = foundPath || path.join(os.homedir(), "Desktop", "houdini.exe"); // Replace with the actual path to the .exe file
+      console.log("[DEBUG] final exePath:", exePath);
+
+      execFile(exePath, (error, stdout, stderr) => {
+        if (error) {
+          console.error("[ERROR] Failed to launch .exe:", error);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to launch application: ${error.message}`,
+          });
+        }
+
+        console.log("[DEBUG] Application launched successfully. Output:", stdout);
       });
+
+      return { message: "Application launched successfully" };
     },
-  }),
+}),
 
   getAuthors: defineAction({
     input: undefined,

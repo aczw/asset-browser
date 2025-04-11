@@ -10,7 +10,7 @@ The frontend for this project is built with [Astro](https://astro.build/), and y
    brew install node
    ```
 
-2. Navigate to the project directory `asset-browser` and install dependencies
+2. Navigate to the project directory `frontend` and install dependencies
 
    ```bash
    npm install

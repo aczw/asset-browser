@@ -56,12 +56,12 @@ const AssetCard = ({ asset }: AssetCardProps) => {
         <CardContent className="p-3">
           <h3 className="font-medium text-sm line-clamp-1 text-left">{asset.name}</h3>
           <div className="mt-2 flex flex-col gap-1">
-            <div className="flex items-center text-xs text-muted-foreground">
-              <User className="h-3 w-3 mr-1" />
+            <div className="flex items-center text-[10px] text-muted-foreground">
+              <User className="h-2.5 w-2.5 mr-1" />
               <span className="line-clamp-1">{asset.creator}</span>
             </div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3 mr-1" />
+            <div className="flex items-center text-[10px] text-muted-foreground">
+              <Calendar className="h-2.5 w-2.5 mr-1" />
               <span>
                 {(() => {
                   try {

@@ -37,12 +37,12 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
   const portalState = state.display === "fullscreen" ? "open" : "closed";
 
   return (
-    <div className="lg:col-span-7 bg-secondary rounded-xl overflow-hidden h-fit relative">
+    <div className="w-[80vh] h-[80vh] bg-secondary rounded-xl overflow-hidden relative">
       <img
         src={asset.thumbnailUrl}
         alt={asset.name}
         loading="eager"
-        className={cn("w-full aspect-square object-cover")}
+        className={cn("w-full h-full object-cover")}
       />
 
       <canvas

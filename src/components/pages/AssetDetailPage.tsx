@@ -2,14 +2,16 @@ import type { AssetWithDetails } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { Separator } from "../ui/separator";
 import { toast } from "../ui/use-toast";
+import { Button } from "../ui/button";
+import { ChevronLeft } from "lucide-react";
+import { Badge } from "../ui/badge";
+import { Lock } from "lucide-react";
 
 import { type Metadata } from "@/lib/types";
 import { actions } from "astro:actions";
 import AssetControlPanel from "../asset-detail/AssetControlPanel";
-import AssetDetailHeader from "../asset-detail/AssetDetailHeader";
 import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
 import AssetMetadata from "../asset-detail/AssetMetadata";
-import AssetNotFound from "../asset-detail/AssetNotFound";
 import AssetPreview from "../asset-detail/AssetPreview";
 
 interface AssetDetailPageProps {
@@ -246,19 +248,41 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   }
 
   if (!asset) {
-    return <AssetNotFound />;
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-7xl">
+        <div className="text-center py-16">
+          <h2 className="text-2xl font-bold mb-2">Asset Not Found</h2>
+          <p className="text-muted-foreground mb-6">The requested asset could not be found.</p>
+          <Button onClick={() => window.history.back()}>Return to Asset Browser</Button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
-      <AssetDetailHeader title={asset.name} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7">
-          <AssetPreview asset={asset} />
-        </div>
-
-        <div className="lg:col-span-5 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 hover:bg-secondary/80 transition-all"
+          onClick={() => window.history.back()}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back to Assets
+        </Button>
+      </div>
+      
+      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10 px-4">
+        <div className="flex-1 space-y-5">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold animate-fade-in text-left">{asset.name}</h1>
+            {asset?.isCheckedOut && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                Checked Out
+              </Badge>
+            )}
+          </div>
           <AssetControlPanel
             asset={asset}
             canCheckout={!asset.isCheckedOut && !!user}
@@ -278,10 +302,15 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
               window.open(`/asset-preview?name=${encodeURIComponent(asset.name)}`, "_blank");
             }}
           />
-
           <Separator />
 
           <AssetMetadata asset={asset} hideTitle={true} />
+        </div>
+
+        <div className="flex justify-center lg:block mt-4 lg:mt-0">
+          <div className="w-[80vh] h-[80vh] bg-secondary rounded-xl overflow-hidden relative">
+            <AssetPreview asset={asset} />
+          </div>
         </div>
       </div>
     </div>

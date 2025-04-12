@@ -106,7 +106,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
       <div className="flex flex-wrap items-center gap-3 pb-2">
         <div className="flex items-center gap-3">
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
                 <Filter className="h-4 w-4 mr-1" />
                 {selectedAuthor ? `Author: ${selectedAuthor}` : "Filter by Author"}
@@ -134,7 +134,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
           </DropdownMenu>
 
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
                 Sort: {sortOptions.find((option) => option.value === sortOption)?.label}
                 <ChevronDown className="h-4 w-4" />

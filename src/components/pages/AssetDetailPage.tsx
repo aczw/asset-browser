@@ -209,11 +209,14 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
         variant: "destructive",
       });
     } else {
+      // Convert array buffer to blob for easier usage
+      const blob = new Blob([data], { type: "application/zip" });
+
       // Get the blob from the response
-      console.log("[DEBUG] Received blob of size:", data.size);
+      console.log("[DEBUG] Received blob of size:", blob.size);
 
       // Create a URL for the blob
-      const url = window.URL.createObjectURL(data);
+      const url = window.URL.createObjectURL(blob);
       console.log("[DEBUG] Created blob URL");
 
       // Create a link and click it to download the file

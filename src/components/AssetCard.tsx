@@ -1,7 +1,7 @@
+import type { AssetWithDetails } from "@/lib/types";
 import { Calendar, Lock, User } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "../components/ui/card";
-import type { AssetWithDetails } from "../services/api";
 
 // Helper function to replace the cn utility
 const cn = (...classes: (string | boolean | undefined)[]) => {

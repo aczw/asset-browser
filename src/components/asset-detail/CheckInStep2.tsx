@@ -1,8 +1,8 @@
+import type { AssetWithDetails } from "@/lib/types";
 import { FileUp, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "../../components/ui/button";
 import { DialogHeader, DialogTitle } from "../../components/ui/dialog";
-import type { AssetWithDetails } from "../../services/api";
 
 interface CheckInStep2Props {
   asset: AssetWithDetails;

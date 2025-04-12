@@ -1,4 +1,4 @@
-import type { AssetWithDetails } from "../services/api";
+import type { AssetWithDetails } from "@/lib/types";
 import AssetCard from "./AssetCard";
 
 interface AssetGridProps {

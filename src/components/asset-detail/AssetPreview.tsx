@@ -1,6 +1,6 @@
+import type { AssetWithDetails } from "@/lib/types";
 import { useState } from "react";
 import LoadingIndicator from "../../components/LoadingIndicator";
-import type { AssetWithDetails } from "../../services/api";
 
 interface AssetPreviewProps {
   asset: AssetWithDetails;

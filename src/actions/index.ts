@@ -4,6 +4,9 @@ import { z } from "astro:schema";
 import { execFile } from "child_process";
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
+import * as unzipper from 'unzipper';
+
 
 const API_URL = "https://usd-asset-library.up.railway.app/api";
 
@@ -198,9 +201,8 @@ export const server = {
   launchDCC: defineAction({
     input: z.object({
       assetName: z.string(),
-      houdiniFile: z.string(),
     }),
-    handler: async ({ assetName, houdiniFile }) => {
+    handler: async ({ assetName }) => {
       console.log("[DEBUG] API: launchDCC called");
 
       const foundPath = findHoudiniPath();
@@ -209,19 +211,51 @@ export const server = {
       const exePath = foundPath || path.join(os.homedir(), "Desktop", "houdini.exe"); // Replace with the actual path to the .exe file
       console.log("[DEBUG] final exePath:", exePath);
 
-      execFile(exePath, [houdiniFile], (error, stdout, stderr) => {
-        if (error) {
-          console.error("[ERROR] Failed to launch .exe:", error);
-          throw new ActionError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Failed to launch application: ${error.message}`,
+      const assetZip = os.homedir()+"\\Downloads\\"+ assetName + ".zip"
+      const outputDir = os.homedir()+"\\Downloads\\"+ assetName +"\\";
+      
+      // if the zip file exists
+      if (fs.existsSync(assetZip)) {
+        console.log("File exists at the specified path.");
+        
+        if (!fs.existsSync(outputDir)) {
+          // unzip the file
+          fs.createReadStream(assetZip)
+            .pipe(unzipper.Extract({ path: outputDir }))
+            .on('close', () => {
+              console.log('Extraction complete.');
+            })
+            .on('error', () => {
+              console.error('Error during extraction:');
           });
         }
 
-        console.log("[DEBUG] Application launched successfully. Output:", stdout);
-      });
+        const houdiniFile = path.join(outputDir, assetName + ".fbx");
+
+        execFile(exePath, [houdiniFile], (error, stdout, stderr) => {
+          if (error) {
+            console.error("[ERROR] Failed to launch .exe:", error);
+            throw new ActionError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Failed to launch application: ${error.message}`,
+            });
+          }
+  
+          console.log("[DEBUG] Application launched successfully. Output:", stdout);
+        
+        });
+
+      }
+      else {
+
+        // TODO: output message to the user to download the asset first
+        console.log("File does not exist at the specified path.");
+      }
+
+      //const houdiniFile = 'C:/Users/0cfer/Documents/upenn/cs7000/houdini_usd_template/houdini_usd_template/houdini_usd_template.hiplc';
 
       return { message: "Application launched successfully" };
+
     },
 }),
 

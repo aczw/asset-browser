@@ -3,6 +3,7 @@ import { Download, Lock, LockOpen, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
+import { Dialog, DialogContent } from "../../components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -10,7 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
-import CheckInFlow from "./CheckInFlow";
+import CheckInStep1 from "./CheckInStep1";
+import CheckInStep2 from "./CheckInStep2";
+import CheckInStep3 from "./CheckInStep3";
 
 interface AssetControlPanelProps {
   asset: AssetWithDetails;
@@ -36,25 +39,60 @@ const AssetControlPanel = ({
   onMetadataChange,
 }: AssetControlPanelProps) => {
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({
+    materials: false,
+    visualCheck: false,
+    centeredGeometry: false,
+    rigsWorking: false,
+    boundingBox: false,
+    usdValidate: false,
+  });
+
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [verificationComplete, setVerificationComplete] = useState(false);
 
   const handleCheckInComplete = () => {
     onCheckin();
     console.log("The checkin is done.");
-    //setCheckInOpen(false);
+    setCheckInOpen(false);
+  };
+
+  const handleNextStep = () => {
+    if (step < 3) {
+      setStep((prev) => (prev + 1) as 1 | 2 | 3);
+    } else {
+      handleCheckInComplete();
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setCheckInOpen(open);
+    if (!open) {
+      // Reset state when dialog is closed
+      setStep(1);
+      setCheckedItems({
+        materials: false,
+        visualCheck: false,
+        centeredGeometry: false,
+        rigsWorking: false,
+        boundingBox: false,
+        usdValidate: false,
+      });
+      setUploadedFiles([]);
+      setVerificationComplete(false);
+    }
+  };
+
+  const handleComplete = () => {
+    console.log("we have reached the flow state");
+    console.log(uploadedFiles);
+    onFilesChange([...uploadedFiles]);
+    handleCheckInComplete();
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-medium">Asset Details</h2>
-        {asset?.isCheckedOut && (
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Lock className="h-3 w-3" />
-            Checked Out
-          </Badge>
-        )}
-      </div>
-
       <div className="flex items-center gap-3">
         <div className="text-sm text-muted-foreground">Version</div>
         <div className="text-sm font-medium">{asset?.version}</div>
@@ -96,14 +134,37 @@ const AssetControlPanel = ({
         </Button>
       </div>
 
-      <CheckInFlow
-        asset={asset}
-        open={checkInOpen}
-        onOpenChange={setCheckInOpen}
-        onComplete={handleCheckInComplete}
-        onFilesChange={onFilesChange}
-        onMetadataChange={onMetadataChange}
-      />
+      {/* Check-in Flow Dialog */}
+      <Dialog open={checkInOpen} onOpenChange={handleDialogOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          {step === 1 && (
+            <CheckInStep1
+              checkedItems={checkedItems}
+              setCheckedItems={setCheckedItems}
+              onNext={handleNextStep}
+            />
+          )}
+
+          {step === 2 && (
+            <CheckInStep2
+              asset={asset}
+              uploadedFiles={uploadedFiles}
+              setUploadedFiles={setUploadedFiles}
+              verificationComplete={verificationComplete}
+              setVerificationComplete={setVerificationComplete}
+              onNext={handleNextStep}
+            />
+          )}
+
+          {step === 3 && (
+            <CheckInStep3
+              asset={asset}
+              onComplete={handleComplete}
+              onMetadataChange={onMetadataChange}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -189,7 +189,9 @@ export const server = {
       const blob = await response.blob();
       console.log("[DEBUG] Received blob of size:", blob.size);
 
-      return blob;
+      // Action handlers don't support directly returning blobs. See https://github.com/rich-harris/devalue
+      const arrayBuffer = await blob.arrayBuffer();
+      return arrayBuffer;
     },
   }),
 

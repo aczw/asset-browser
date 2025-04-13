@@ -1,4 +1,4 @@
-import type { AssetWithDetails } from "../services/api";
+import type { AssetWithDetails } from "@/lib/types";
 import AssetCard from "./AssetCard";
 
 interface AssetGridProps {
@@ -9,8 +9,8 @@ interface AssetGridProps {
 const AssetGrid = ({ assets, isLoading }: AssetGridProps) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4">
-        {Array.from({ length: 8 }).map((_, index) => (
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-4">
+        {Array.from({ length: 10 }).map((_, index) => (
           <div key={index} className="animate-pulse rounded-lg overflow-hidden bg-secondary">
             <div className="aspect-4/3 bg-muted" />
             <div className="p-3 space-y-2">
@@ -51,7 +51,7 @@ const AssetGrid = ({ assets, isLoading }: AssetGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-4">
       {assets.map((asset) => (
         <div
           key={asset.name}

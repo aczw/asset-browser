@@ -13,9 +13,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import type { AssetWithDetails } from "@/lib/types";
 import AssetGrid from "../AssetGrid";
+import UploadAssetFlow from "../asset-detail/UploadAssetFlow";
 
 import { actions } from "astro:actions";
-import { Check, ChevronDown, Filter, Search } from "lucide-react";
+import { Check, ChevronDown, Filter, Plus, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface SearchBarProps {
@@ -31,6 +32,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
   const [authors, setAuthors] = useState<string[]>([]);
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState("updated");
+  const [createAssetOpen, setCreateAssetOpen] = useState(false);
 
   const sortOptions = [
     { label: "Name", value: "name" },
@@ -84,29 +86,45 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
 
   return (
     <div className="w-full space-y-4 animate-fade-in">
-      <form onSubmit={handleSearchSubmit} className="relative">
-        <Input
-          type="text"
-          placeholder="Search assets by name or keywords..."
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          className="search-input pl-10 h-12 text-base"
-        />
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-        <Button
-          type="submit"
-          variant="default"
-          size="sm"
-          className="absolute right-1 top-1/2 transform -translate-y-1/2"
-        >
-          Search
-        </Button>
-      </form>
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-[80%]">
+          <form onSubmit={handleSearchSubmit} className="relative w-full">
+            <Input
+              type="text"
+              placeholder="Search assets by name or keywords..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="search-input pl-10 h-12 text-base"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Button
+              type="submit"
+              variant="default"
+              size="sm"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2"
+            >
+              Search
+            </Button>
+          </form>
+        </div>
+        
+        <div className="ml-auto">
+          <Button 
+            variant="default" 
+            size="sm"
+            onClick={() => setCreateAssetOpen(true)}
+            className="flex items-center gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            Upload New Asset
+          </Button>
+        </div>
+      </div>
 
       <div className="flex flex-wrap items-center gap-3 pb-2">
         <div className="flex items-center gap-3">
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
                 <Filter className="h-4 w-4 mr-1" />
                 {selectedAuthor ? `Author: ${selectedAuthor}` : "Filter by Author"}
@@ -134,7 +152,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
           </DropdownMenu>
 
           <DropdownMenu>
-            <DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1">
                 Sort: {sortOptions.find((option) => option.value === sortOption)?.label}
                 <ChevronDown className="h-4 w-4" />
@@ -170,6 +188,15 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
           </label>
         </div>
       </div>
+
+      <UploadAssetFlow
+        open={createAssetOpen}
+        onOpenChange={setCreateAssetOpen}
+        onComplete={() => {
+          // Refresh the asset list after creating a new asset
+          onSearch(searchValue);
+        }}
+      />
     </div>
   );
 };
@@ -181,6 +208,9 @@ const AssetsPage = () => {
   const [filterAuthor, setFilterAuthor] = useState<string | null>(null);
   const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
   const [sortBy, setSortBy] = useState("updated");
+  
+  // Mock user for demonstration purposes
+  const user = { pennId: "willcai", fullName: "Will Cai" };
 
   const fetchAssets = async () => {
     setIsLoading(true);
@@ -227,10 +257,31 @@ const AssetsPage = () => {
   }, [searchTerm, filterAuthor, showCheckedInOnly, sortBy]);
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-left">Asset Browser</h1>
-        <p className="text-muted-foreground text-left">Browse and search for assets</p>
+    <div className="container mx-auto py-14 px-4 max-w-7xl">
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold mb-2 text-left">Asset Browser</h1>
+          <p className="text-muted-foreground text-left">Browse and search for assets</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">{user.fullName}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center cursor-pointer hover:bg-secondary/80">
+                <User className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="cursor-pointer">
+                My Commits
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer">
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <SearchBar

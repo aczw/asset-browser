@@ -1,6 +1,6 @@
+import type { AssetWithDetails } from "@/lib/types";
 import { GitCommit, Info, Lock, Tag, User } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
-import type { AssetWithDetails } from "../../services/api";
 
 interface AssetMetadataProps {
   asset: AssetWithDetails;

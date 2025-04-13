@@ -30,6 +30,63 @@ function findHoudiniPath(): string | null {
   return null;
 }
 
+function findHythonPath(): string | null {
+  const programFiles = process.env.PROGRAMFILES || 'C:/Program Files';
+  
+  // This pattern allows it to find any version of Houdini installed
+  const basePath = path.join(programFiles, 'Side Effects Software');
+  
+  // Here you'd need to scan for Houdini folders - just an example
+  // In a real implementation, you'd use fs.readdirSync to scan the directory
+  const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.0', 'Houdini 19.5'];
+  
+  for (const version of possibleVersions) {
+    const testPath = path.join(basePath, version, 'bin', 'hython.exe');
+    return testPath; // Return the first match
+  }
+  
+  return null;
+}
+
+function writePythonHipFile(filePath:string) {
+
+  const content = `
+import hou
+import sys
+
+def create_simple_scene():
+    # Clear the current scene
+    hou.hipFile.clear()
+    
+    # Create a simple geometry node
+    obj = hou.node('/obj')
+    geo = obj.createNode('geo', 'my_geometry')
+    
+    # Add a sphere inside the geo node
+    sphere = geo.createNode('sphere')
+    
+    # Connect and layout
+    sphere.moveToGoodPosition()
+    
+    # Save the file
+    output_path = sys.argv[1] if len(sys.argv) > 1 else "C:/temp/generated_scene.hip"
+    hou.hipFile.save(output_path)
+    print(f"Scene saved to {output_path}")
+
+if __name__ == "__main__":
+    create_simple_scene()
+`;
+
+  fs.writeFile(filePath, content, (err) => {
+    if (err) {
+      console.error("Error writing to Python file:", err);
+      return;
+    }
+    console.log("Python file written successfully at:", filePath);
+  });
+
+}
+
 export const server = {
   getAssets: defineAction({
     input: z
@@ -232,7 +289,34 @@ export const server = {
 
         const houdiniFile = path.join(outputDir, assetName + ".fbx");
 
-        execFile(exePath, [houdiniFile], (error, stdout, stderr) => {
+        const hythonExe = findHythonPath() || 'C:\\Program Files\\Side Effects Software\\Houdini 20.5.550\\bin\\hython.exe';
+
+        console.log("[DEBUG] hythonExe path:", hythonExe);
+             
+        // create python generation file here
+        writePythonHipFile(process.cwd()+"\\writtenPythonScript.py");
+        const pythonScript = process.cwd() + "\\writtenPythonScript.py";
+        const outputHipFile = outputDir +'\generated_scene.hip';
+
+        execFile(hythonExe, [pythonScript, outputHipFile], (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Error running Hython: ${error.message}`);
+            return;
+          }
+          
+          if (stderr && stderr.trim()) {
+            console.error(`Hython stderr: ${stderr}`);
+          }
+          
+          if (stdout && stdout.trim()) {
+            console.log(`Hython stdout: ${stdout}`);
+          }
+          
+          console.log(`Hip file generated successfully at: ${outputHipFile}`);
+        });
+        
+
+        execFile(exePath, [outputHipFile], (error, stdout, stderr) => {
           if (error) {
             console.error("[ERROR] Failed to launch .exe:", error);
             throw new ActionError({
@@ -251,8 +335,6 @@ export const server = {
         // TODO: output message to the user to download the asset first
         console.log("File does not exist at the specified path.");
       }
-
-      //const houdiniFile = 'C:/Users/0cfer/Documents/upenn/cs7000/houdini_usd_template/houdini_usd_template/houdini_usd_template.hiplc';
 
       return { message: "Application launched successfully" };
 

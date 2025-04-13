@@ -247,8 +247,9 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     console.log("It's time to launch Houdini.");
 
     console.log("[DEBUG] API: launchDCC called");
+    const houdiniFile = 'C:/Users/0cfer/Documents/upenn/cs7000/houdini_usd_template/houdini_usd_template/houdini_usd_template.hiplc';
 
-    const { data, error } = await actions.launchDCC({assetName});
+    const { data, error } = await actions.launchDCC({assetName, houdiniFile});
     
     return { message: "Application launched successfully" };
   };

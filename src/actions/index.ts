@@ -198,8 +198,9 @@ export const server = {
   launchDCC: defineAction({
     input: z.object({
       assetName: z.string(),
+      houdiniFile: z.string(),
     }),
-    handler: async ({ assetName }) => {
+    handler: async ({ assetName, houdiniFile }) => {
       console.log("[DEBUG] API: launchDCC called");
 
       const foundPath = findHoudiniPath();
@@ -208,7 +209,7 @@ export const server = {
       const exePath = foundPath || path.join(os.homedir(), "Desktop", "houdini.exe"); // Replace with the actual path to the .exe file
       console.log("[DEBUG] final exePath:", exePath);
 
-      execFile(exePath, (error, stdout, stderr) => {
+      execFile(exePath, [houdiniFile], (error, stdout, stderr) => {
         if (error) {
           console.error("[ERROR] Failed to launch .exe:", error);
           throw new ActionError({

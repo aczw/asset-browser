@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { USDZLoader } from "three-usdz-loader";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 type DisplayOptions = "window" | "fullscreen";
@@ -28,22 +29,33 @@ function resizeRendererToDisplaySize(
 /**
  * Should only be called once.
  */
-function initModelViewers(windowCanvas: HTMLCanvasElement, fullscreenCanvas: HTMLCanvasElement) {
+async function initModelViewers(
+  windowCanvas: HTMLCanvasElement,
+  fullscreenCanvas: HTMLCanvasElement
+) {
   const windowRenderer = new THREE.WebGLRenderer({ antialias: true, canvas: windowCanvas });
   const fullscreenRenderer = new THREE.WebGLRenderer({ antialias: true, canvas: fullscreenCanvas });
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 5);
+  const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 1000);
   const controls = new OrbitControls(camera);
 
-  const box = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshBasicMaterial({ color: 0x44aa88 });
-  const cube = new THREE.Mesh(box, material);
+  const response = await fetch("/campfire.usdz");
+  const blob = await response.blob();
+  const file = new File([blob], "campfire.usdz", { type: "model/vnd.usdz+zip" });
 
-  camera.position.z = 2;
+  const usdzLoader = new USDZLoader("");
+  const assetGroup = new THREE.Group();
+  await usdzLoader.loadFile(file, assetGroup);
+
+  console.log("Asset group:", assetGroup);
+
+  camera.position.set(0, 200, 200);
   controls.autoRotate = true;
   controls.enableDamping = true;
-  scene.add(cube);
+
+  scene.background = new THREE.Color(0xffffff);
+  scene.add(assetGroup);
 
   function render(time: number, renderer: THREE.WebGLRenderer) {
     time *= 0.001;

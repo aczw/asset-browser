@@ -112,12 +112,12 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
         <div className="flex items-center justify-center rounded-2xl gap-3">
           <Button
             className="w-[225px]"
-            onClick={() => {
+            onClick={async () => {
               if (isFirstLoad) {
                 setIsFirstLoad(false);
 
                 if (windowCanvasRef.current && fullscreenCanvasRef.current) {
-                  controller.current = initModelViewers(
+                  controller.current = await initModelViewers(
                     windowCanvasRef.current,
                     fullscreenCanvasRef.current
                   );

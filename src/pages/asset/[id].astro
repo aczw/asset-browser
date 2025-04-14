@@ -1,6 +1,9 @@
 ---
 import AssetDetailReactApp from "../../components/AssetDetailReactApp";
 import Layout from "../../layouts/Layout.astro";
+
+Astro.response.headers.set("Cross-Origin-Embedder-Policy", "credentialless");
+Astro.response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
 ---
 
 <Layout>

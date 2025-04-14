@@ -51,7 +51,13 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
       closeFullscreen();
     }
 
-    if (stateRef.current.display === "window" && event.code === "KeyF") {
+    const noModifiers =
+      !event.getModifierState("Control") &&
+      !event.getModifierState("Shift") &&
+      !event.getModifierState("Alt") &&
+      !event.getModifierState("Meta");
+
+    if (stateRef.current.display === "window" && noModifiers && event.code === "KeyF") {
       openFullscreen();
     }
   }

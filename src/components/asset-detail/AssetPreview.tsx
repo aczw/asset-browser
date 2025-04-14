@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { loadModelViewer } from "@/lib/model-viewer";
+import { type DisplayOptions, type ViewController, initModelViewers } from "@/lib/model-viewer";
 import type { AssetWithDetails } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import * as Portal from "@radix-ui/react-portal";
@@ -8,7 +8,7 @@ import { useRef, useState } from "react";
 
 type ModelViewerState = {
   visible: boolean;
-  display: "window" | "fullscreen";
+  display: DisplayOptions;
 };
 
 const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
@@ -21,8 +21,12 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
 
   const windowCanvasRef = useRef<HTMLCanvasElement>(null);
   const fullscreenCanvasRef = useRef<HTMLCanvasElement>(null);
+  const controller = useRef<ViewController>({
+    switchTo: () => console.log("Fake controller called switchTo()!"),
+  });
 
   function closeFullscreen() {
+    controller.current.switchTo("window");
     setState({ visible: true, display: "window" });
     setTimeout(() => setPortalOpen(false), 130);
   }
@@ -93,15 +97,26 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
             onClick={() => {
               if (isFirstLoad) {
                 setIsFirstLoad(false);
-                loadModelViewer(windowCanvasRef.current!);
+
+                if (windowCanvasRef.current && fullscreenCanvasRef.current) {
+                  controller.current = initModelViewers(
+                    windowCanvasRef.current,
+                    fullscreenCanvasRef.current
+                  );
+                } else {
+                  console.error("[DEBUG] Could not find window/fullscreen <canvas> elements!");
+                }
+
+                controller.current.switchTo("window");
               }
+
               setState({ visible: !state.visible, display: "window" });
             }}
             className="w-[225px]"
           >
             {state.visible ? (
               <>
-                <ImageIcon /> Return to thumbnail
+                <ImageIcon /> View thumbnail
               </>
             ) : (
               <>
@@ -114,6 +129,7 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
             <Button
               variant="outline"
               onClick={() => {
+                controller.current.switchTo("fullscreen");
                 setPortalOpen(true);
                 setState({ visible: true, display: "fullscreen" });
                 window.addEventListener("keydown", handleEscape);

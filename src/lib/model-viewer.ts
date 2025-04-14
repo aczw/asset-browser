@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 type DisplayOptions = "window" | "fullscreen";
 
@@ -31,13 +32,17 @@ function initModelViewers(windowCanvas: HTMLCanvasElement, fullscreenCanvas: HTM
   const windowRenderer = new THREE.WebGLRenderer({ antialias: true, canvas: windowCanvas });
   const fullscreenRenderer = new THREE.WebGLRenderer({ antialias: true, canvas: fullscreenCanvas });
 
-  const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 5);
   const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 5);
+  const controls = new OrbitControls(camera);
+
   const box = new THREE.BoxGeometry(1, 1, 1);
   const material = new THREE.MeshBasicMaterial({ color: 0x44aa88 });
   const cube = new THREE.Mesh(box, material);
 
   camera.position.z = 2;
+  controls.autoRotate = true;
+  controls.enableDamping = true;
   scene.add(cube);
 
   function render(time: number, renderer: THREE.WebGLRenderer) {
@@ -45,9 +50,7 @@ function initModelViewers(windowCanvas: HTMLCanvasElement, fullscreenCanvas: HTM
 
     resizeRendererToDisplaySize(renderer, camera, false);
 
-    cube.rotation.x = time;
-    cube.rotation.y = time;
-
+    controls.update();
     renderer.render(scene, camera);
   }
 
@@ -56,12 +59,14 @@ function initModelViewers(windowCanvas: HTMLCanvasElement, fullscreenCanvas: HTM
       if (display === "window") {
         fullscreenRenderer.setAnimationLoop(null);
         resizeRendererToDisplaySize(windowRenderer, camera, true);
+        controls.connect(windowRenderer.domElement);
         windowRenderer.setAnimationLoop((time) => render(time, windowRenderer));
       }
 
       if (display === "fullscreen") {
         windowRenderer.setAnimationLoop(null);
         resizeRendererToDisplaySize(fullscreenRenderer, camera, true);
+        controls.connect(fullscreenRenderer.domElement);
         fullscreenRenderer.setAnimationLoop((time) => render(time, fullscreenRenderer));
       }
     },

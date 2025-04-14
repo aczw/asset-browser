@@ -1,12 +1,11 @@
 import type { AssetWithDetails } from "@/lib/types";
+import { ChevronLeft, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Separator } from "../ui/separator";
-import { toast } from "../ui/use-toast";
-import { Button } from "../ui/button";
-import { ChevronLeft } from "lucide-react";
 import { Badge } from "../ui/badge";
-import { Lock } from "lucide-react";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
 
+import { useToast } from "@/hooks/use-toast";
 import { type Metadata } from "@/lib/types";
 import { actions } from "astro:actions";
 import AssetControlPanel from "../asset-detail/AssetControlPanel";
@@ -19,6 +18,8 @@ interface AssetDetailPageProps {
 }
 
 const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
+  const { toast } = useToast();
+
   const [asset, setAsset] = useState<AssetWithDetails | null>(null);
   const [userFiles, setUserFiles] = useState<File[]>([]);
   const [metadata, setMetadata] = useState<Metadata>({
@@ -271,7 +272,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
           Back to Assets
         </Button>
       </div>
-      
+
       <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10 px-4">
         <div className="flex-1 space-y-5">
           <div className="flex items-center justify-between">

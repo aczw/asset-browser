@@ -1,8 +1,10 @@
-import { MetadataSchema, type VersionMap } from "@/lib/types";
+import { MetadataSchema } from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 
-const API_URL = import.meta.env.DEV ? "http://127.0.0.1:8000" : "https://usd-asset-library.up.railway.app/api";
+const API_URL = import.meta.env.DEV
+  ? "http://127.0.0.1:8000/api"
+  : "https://usd-asset-library.up.railway.app/api";
 
 export const server = {
   getAssets: defineAction({
@@ -65,12 +67,12 @@ export const server = {
 
   createAsset: defineAction({
     accept: "form",
-    input: z.object({ 
+    input: z.object({
       assetName: z.string(),
       version: z.string(),
-      file: z.instanceof(File)
+      file: z.instanceof(File),
     }),
-    handler: async ({ assetName, version, file })  => {
+    handler: async ({ assetName, version, file }) => {
       console.log("[DEBUG] API: assetName type:", typeof assetName);
       console.log("[DEBUG] API: API URL:", API_URL);
 
@@ -79,9 +81,9 @@ export const server = {
       formData.append("version", version);
 
       const response = await fetch(`${API_URL}/api/assets/${assetName}/upload/`, {
-        method: 'POST',
+        method: "POST",
         body: formData,
-      })
+      });
 
       if (!response.ok) {
         throw new ActionError({

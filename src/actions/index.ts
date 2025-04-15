@@ -80,8 +80,8 @@ export const server = {
       formData.append("file", file);
       formData.append("version", version);
 
-      const response = await fetch(`${API_URL}/api/assets/${assetName}/upload/`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
+        method: 'POST',
         body: formData,
       });
 

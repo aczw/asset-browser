@@ -246,6 +246,17 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     }
   };
 
+  const handleLaunchDCC = async () => {
+
+    console.log("It's time to launch Houdini.");
+
+    console.log("[DEBUG] API: launchDCC called");
+
+    const { data, error } = await actions.launchDCC({assetName});
+    
+    return { message: "Application launched successfully" };
+  };
+
   if (isLoading) {
     return <AssetDetailSkeleton />;
   }
@@ -295,15 +306,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
             onDownload={handleDownload}
             onFilesChange={handleUserFilesChange}
             onMetadataChange={handleMetadataChange}
-            onLaunchDCC={() => {
-              toast({
-                title: "Not implemented",
-                description: "TODO",
-                variant: "destructive",
-              });
-
-              window.open(`/asset-preview?name=${encodeURIComponent(asset.name)}`, "_blank");
-            }}
+            onLaunchDCC={handleLaunchDCC}
           />
           <Separator />
 

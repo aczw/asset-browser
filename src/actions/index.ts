@@ -13,17 +13,26 @@ const API_URL = "https://usd-asset-library.up.railway.app/api";
 const houdiniPath = process.env.HFS 
   ? path.win32.join(process.env.HFS, 'bin', 'houdini.exe'): null;
 function findHoudiniPath(): string | null {
-  const programFiles = process.env.PROGRAMFILES || 'C:/Program Files';
+
+  const isWindows = os.platform() === 'win32';
+  const programFiles = isWindows
+    ? process.env.PROGRAMFILES || 'C:/Program Files'
+    : '/Applications';
   
-  // This pattern allows it to find any version of Houdini installed
-  const basePath = path.join(programFiles, 'Side Effects Software');
+    // Base path for Houdini installation
+    const basePath = isWindows
+    ? path.join(programFiles, 'Side Effects Software')
+    : path.join(programFiles, 'Houdini');
+
   
   // Here you'd need to scan for Houdini folders - just an example
   // In a real implementation, you'd use fs.readdirSync to scan the directory
   const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410'];
   
   for (const version of possibleVersions) {
-    const testPath = path.join(basePath, version, 'bin', 'houdini.exe');
+    const testPath = isWindows
+    ? path.join(basePath, version, 'bin', 'houdini.exe')
+    : path.join(basePath, version, 'Houdini.app', 'Contents', 'MacOS', 'houdini');
     if (fs.existsSync(testPath)) {
       return testPath; // Return the first match
     }
@@ -36,17 +45,25 @@ function findHoudiniPath(): string | null {
 }
 
 function findHythonPath(): string | null {
-  const programFiles = process.env.PROGRAMFILES || 'C:/Program Files';
+  const isWindows = os.platform() === 'win32';
+  const programFiles = isWindows
+    ? process.env.PROGRAMFILES || 'C:/Program Files'
+    : '/Applications';
   
-  // This pattern allows it to find any version of Houdini installed
-  const basePath = path.join(programFiles, 'Side Effects Software');
+    // Base path for Houdini installation
+    const basePath = isWindows
+    ? path.join(programFiles, 'Side Effects Software')
+    : path.join(programFiles, 'Houdini');
+
   
   // Here you'd need to scan for Houdini folders - just an example
   // In a real implementation, you'd use fs.readdirSync to scan the directory
   const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410'];
   
   for (const version of possibleVersions) {
-    const testPath = path.join(basePath, version, 'bin', 'hython.exe');
+    const testPath = isWindows
+    ? path.join(basePath, version, 'bin', 'hython.exe')
+    : path.join(basePath, version, 'Houdini.app', 'Contents', 'MacOS', 'houdini');
     if (fs.existsSync(testPath)) {
       return testPath; // Return the first match
     }

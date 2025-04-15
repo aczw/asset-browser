@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { actions } from "astro:actions";
 import CheckInStep2 from "./CheckInStep2";
 import CheckInStep3 from "./CheckInStep3";
 
@@ -90,6 +91,22 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
       onComplete();
       onOpenChange(false);
 
+      console.log(`uploaded: ${uploadedFiles[0].name}`);
+      console.log(typeof(uploadedFiles[0]));
+      console.log(`metadata: ${metadata.assetStructureVersion}`);
+
+      // Temporary code for now, most direct way to upload assets
+      const formData = new FormData();
+      formData.append("assetName", assetName);
+      formData.append("version", "1.00.00");
+      formData.append("file", uploadedFiles[0] as File);
+
+      const { data, error } = await actions.createAsset(formData);
+
+      if (error) {
+        console.log("Error: ", error.message);
+      }
+
       // Reset the form
       setStep(1);
       setAssetName("");
@@ -161,7 +178,7 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
           <CheckInStep3
             asset={mockAsset}
             onComplete={handleNextStep}
-            onMetadataChange={handleMetadataChange}
+            onMetadataChange={setMetadata}
           />
         )}
       </DialogContent>

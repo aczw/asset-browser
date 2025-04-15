@@ -8,7 +8,7 @@ def create_simple_scene():
     
     # Create a simple geometry node
     obj = hou.node('/obj')
-    geo = obj.createNode('geo', 'my_geometry')
+    geo = obj.createNode('geo', 'beegCrab')
     
     # Add a sphere inside the geo node
     sphere = geo.createNode('sphere')

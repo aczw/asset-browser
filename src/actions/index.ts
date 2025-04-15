@@ -20,11 +20,16 @@ function findHoudiniPath(): string | null {
   
   // Here you'd need to scan for Houdini folders - just an example
   // In a real implementation, you'd use fs.readdirSync to scan the directory
-  const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.0', 'Houdini 19.5'];
+  const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410'];
   
   for (const version of possibleVersions) {
     const testPath = path.join(basePath, version, 'bin', 'houdini.exe');
-    return testPath; // Return the first match
+    if (fs.existsSync(testPath)) {
+      return testPath; // Return the first match
+    }
+    else{
+      console.log("File does not exist at the specified path.");
+    }
   }
   
   return null;
@@ -38,17 +43,22 @@ function findHythonPath(): string | null {
   
   // Here you'd need to scan for Houdini folders - just an example
   // In a real implementation, you'd use fs.readdirSync to scan the directory
-  const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.0', 'Houdini 19.5'];
+  const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410'];
   
   for (const version of possibleVersions) {
     const testPath = path.join(basePath, version, 'bin', 'hython.exe');
-    return testPath; // Return the first match
+    if (fs.existsSync(testPath)) {
+      return testPath; // Return the first match
+    }
+    else{
+      console.log("File does not exist at the specified path.");
+    }
   }
   
   return null;
 }
 
-function writePythonHipFile(filePath:string) {
+function writePythonHipFile(filePath:string, assetName:string) {
 
   const content = `
 import hou
@@ -60,7 +70,7 @@ def create_simple_scene():
     
     # Create a simple geometry node
     obj = hou.node('/obj')
-    geo = obj.createNode('geo', 'my_geometry')
+    geo = obj.createNode('geo', '` + assetName + `')
     
     # Add a sphere inside the geo node
     sphere = geo.createNode('sphere')
@@ -262,10 +272,9 @@ export const server = {
     handler: async ({ assetName }) => {
       console.log("[DEBUG] API: launchDCC called");
 
-      const foundPath = findHoudiniPath();
-      console.log("[DEBUG] Found Houdini path:", foundPath);
-      console.log("[DEBUG] " + os.homedir());
-      const exePath = foundPath || path.join(os.homedir(), "Desktop", "houdini.exe"); // Replace with the actual path to the .exe file
+      const exePath = findHoudiniPath();
+
+      ; // Replace with the actual path to the .exe file
       console.log("[DEBUG] final exePath:", exePath);
 
       const assetZip = os.homedir()+"\\Downloads\\"+ assetName + ".zip"
@@ -273,7 +282,6 @@ export const server = {
       
       // if the zip file exists
       if (fs.existsSync(assetZip)) {
-        console.log("File exists at the specified path.");
         
         if (!fs.existsSync(outputDir)) {
           // unzip the file
@@ -282,6 +290,7 @@ export const server = {
             .on('close', () => {
               console.log('Extraction complete.');
             })
+
             .on('error', () => {
               console.error('Error during extraction:');
           });
@@ -289,46 +298,47 @@ export const server = {
 
         const houdiniFile = path.join(outputDir, assetName + ".fbx");
 
-        const hythonExe = findHythonPath() || 'C:\\Program Files\\Side Effects Software\\Houdini 20.5.550\\bin\\hython.exe';
-
+        const hythonExe = findHythonPath();
         console.log("[DEBUG] hythonExe path:", hythonExe);
              
         // create python generation file here
-        writePythonHipFile(process.cwd()+"\\writtenPythonScript.py");
+
+        writePythonHipFile(process.cwd()+"\\writtenPythonScript.py",assetName);
         const pythonScript = process.cwd() + "\\writtenPythonScript.py";
         const outputHipFile = outputDir +'\generated_scene.hip';
 
-        execFile(hythonExe, [pythonScript, outputHipFile], (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Error running Hython: ${error.message}`);
-            return;
-          }
+        if (hythonExe) {
+          execFile(hythonExe, [pythonScript, outputHipFile], (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Error running Hython: ${error.message}`);
+              return;
+            }
+            
+            if (stderr && stderr.trim()) {
+              console.error(`Hython stderr: ${stderr}`);
+            }
+            
+            if (stdout && stdout.trim()) {
+              console.log(`Hython stdout: ${stdout}`);
+            }
+            
+            console.log(`Hip file generated successfully at: ${outputHipFile}`);
+          });
+        }
+        if (exePath) {
+          execFile(exePath, [outputHipFile], (error, stdout, stderr) => {
+            if (error) {
+              console.error("[ERROR] Failed to launch .exe:", error);
+              throw new ActionError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Failed to launch application: ${error.message}`,
+              });
+            }
+    
+            console.log("[DEBUG] Application launched successfully. Output:", stdout);
           
-          if (stderr && stderr.trim()) {
-            console.error(`Hython stderr: ${stderr}`);
-          }
-          
-          if (stdout && stdout.trim()) {
-            console.log(`Hython stdout: ${stdout}`);
-          }
-          
-          console.log(`Hip file generated successfully at: ${outputHipFile}`);
-        });
-        
-
-        execFile(exePath, [outputHipFile], (error, stdout, stderr) => {
-          if (error) {
-            console.error("[ERROR] Failed to launch .exe:", error);
-            throw new ActionError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: `Failed to launch application: ${error.message}`,
-            });
-          }
-  
-          console.log("[DEBUG] Application launched successfully. Output:", stdout);
-        
-        });
-
+          });
+        }
       }
       else {
 

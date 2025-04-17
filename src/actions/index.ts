@@ -104,6 +104,7 @@ if __name__ == "__main__":
     create_simple_scene()
 `;
 
+
   fs.writeFile(filePath, content, (err) => {
     if (err) {
       console.error("Error writing to Python file:", err);
@@ -295,7 +296,7 @@ export const server = {
       console.log("[DEBUG] final exePath:", exePath);
 
       const assetZip = os.homedir()+"\\Downloads\\"+ assetName + ".zip"
-      const outputDir = os.homedir()+"\\Downloads\\"+ assetName +"\\";
+      const outputDir = os.homedir()+"\\Downloads\\assetImport\\"+ assetName +"\\";
       
       // if the zip file exists
       if (fs.existsSync(assetZip)) {

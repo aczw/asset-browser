@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 
 
-const API_URL = "https://usd-asset-library.up.railway.app/api";
+const API_URL = import.meta.env.DEV ? "http://127.0.0.1:8000" : "https://usd-asset-library.up.railway.app/api";
 
 const houdiniPath = process.env.HFS 
   ? path.win32.join(process.env.HFS, 'bin', 'houdini.exe'): null;
@@ -151,7 +151,7 @@ export const server = {
       }
 
       const data = await response.json();
-      console.log("[DEBUG] API: Received response:", data);
+      //console.log("[DEBUG] API: Received response:", data);
       return data;
     },
   }),
@@ -171,6 +171,37 @@ export const server = {
 
       const data = await response.json();
       return data;
+    },
+  }),
+
+  createAsset: defineAction({
+    accept: "form",
+    input: z.object({ 
+      assetName: z.string(),
+      version: z.string(),
+      file: z.instanceof(File)
+    }),
+    handler: async ({ assetName, version, file })  => {
+      console.log("[DEBUG] API: assetName type:", typeof assetName);
+      console.log("[DEBUG] API: API URL:", API_URL);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("version", version);
+
+      const response = await fetch(`${API_URL}/api/assets/${assetName}/upload/`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: response.statusText
+            ? `Failed to create asset. Error message: ${response.statusText}`
+            : "Failed to create asset",
+        });
+      }
     },
   }),
 
@@ -199,56 +230,33 @@ export const server = {
   }),
 
   checkinAsset: defineAction({
+    accept: "form",
     input: z.object({
       assetName: z.string(),
       pennKey: z.string(),
-      files: z.instanceof(File).array(),
+      file: z.instanceof(File), // used to be an array, now just one because ZIP
       metadata: MetadataSchema,
     }),
-    handler: async ({ assetName, pennKey, files, metadata }) => {
+    handler: async ({ assetName, pennKey, file, metadata }) => {
       const formData = new FormData();
+      formData.append("file", file);
 
-      for (const file in files) {
-        formData.append("files", file);
-      }
-
-      // S3 update, returns Version IDs
-      const responseVersionIds = await fetch(`${API_URL}/assets/${assetName}/`, {
+      // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
+      const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
         method: "POST",
         body: formData,
       });
 
-      if (!responseVersionIds.ok) {
+      if (!response.ok) {
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
-          message: responseVersionIds.statusText
-            ? `Failed to check in asset. Error message: ${responseVersionIds.statusText}`
-            : "Failed to check in asset",
+          message: response.statusText || "Failed to check in asset",
         });
       }
 
-      const versionData = await responseVersionIds.json();
-      const versionMap = versionData.version_map as VersionMap;
+      // TO DO: Handle metadata updates and version ID control should it happen
 
-      console.log("version_map:", versionMap);
-      metadata.versionMap = versionMap;
-
-      // Metadata update, adds new AssetVersions based on Commit
-      const responseMetadata = await fetch(`${API_URL}/metadata/${assetName}/`, {
-        method: "POST",
-        body: JSON.stringify(metadata),
-      });
-
-      if (!responseMetadata.ok) {
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: responseMetadata.statusText
-            ? `Failed to check in asset. Error message: ${responseMetadata.statusText}`
-            : "Failed to check in asset",
-        });
-      }
-
-      const data = await responseMetadata.json();
+      const data = await response.json();
       return data;
     },
   }),

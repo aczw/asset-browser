@@ -10,11 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
 import type { AssetWithDetails } from "@/lib/types";
 import AssetGrid from "../AssetGrid";
 import UploadAssetFlow from "../asset-detail/UploadAssetFlow";
 
+import { useToast } from "@/hooks/use-toast";
 import { actions } from "astro:actions";
 import { Check, ChevronDown, Filter, Plus, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -27,6 +27,8 @@ interface SearchBarProps {
 }
 
 const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: SearchBarProps) => {
+  const { toast } = useToast();
+
   const [searchValue, setSearchValue] = useState("");
   const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
   const [authors, setAuthors] = useState<string[]>([]);
@@ -107,10 +109,10 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
             </Button>
           </form>
         </div>
-        
+
         <div className="ml-auto">
-          <Button 
-            variant="default" 
+          <Button
+            variant="default"
             size="sm"
             onClick={() => setCreateAssetOpen(true)}
             className="flex items-center gap-1"
@@ -202,13 +204,15 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
 };
 
 const AssetsPage = () => {
+  const { toast } = useToast();
+
   const [assets, setAssets] = useState<AssetWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAuthor, setFilterAuthor] = useState<string | null>(null);
   const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
   const [sortBy, setSortBy] = useState("updated");
-  
+
   // Mock user for demonstration purposes
   const user = { pennId: "willcai", fullName: "Will Cai" };
 
@@ -272,13 +276,9 @@ const AssetsPage = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="cursor-pointer">
-                My Commits
-              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => window.location.href = "/user"}>My Commits</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
-                Sign Out
-              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">Sign Out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -1,36 +1,64 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { loadModelViewer } from "@/lib/model-viewer";
+import { type DisplayOptions, type ViewController, initModelViewers } from "@/lib/model-viewer";
 import type { AssetWithDetails } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import * as Portal from "@radix-ui/react-portal";
 import { EyeIcon, ImageIcon, MaximizeIcon, MinimizeIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type ModelViewerState = {
   visible: boolean;
-  display: "window" | "fullscreen";
+  display: DisplayOptions;
 };
 
 const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [portalOpen, setPortalOpen] = useState(false);
+
   const [state, setState] = useState<ModelViewerState>({
     visible: false,
     display: "window",
   });
+  const stateRef = useRef<ModelViewerState>(state);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const windowCanvasRef = useRef<HTMLCanvasElement>(null);
   const fullscreenCanvasRef = useRef<HTMLCanvasElement>(null);
+  const controller = useRef<ViewController>({
+    switchTo: () => console.log("Fake controller called switchTo()!"),
+  });
+
+  function openFullscreen() {
+    controller.current.switchTo("fullscreen");
+    setState({ visible: true, display: "fullscreen" });
+    setPortalOpen(true);
+  }
 
   function closeFullscreen() {
+    controller.current.switchTo("window");
     setState({ visible: true, display: "window" });
     setTimeout(() => setPortalOpen(false), 130);
   }
 
-  function handleEscape(event: KeyboardEvent) {
-    if (event.key === "Escape") {
+  function handleKeyDown(event: KeyboardEvent) {
+    if (!stateRef.current.visible) return;
+
+    if (stateRef.current.display === "fullscreen" && event.key === "Escape") {
       closeFullscreen();
-      window.removeEventListener("keydown", handleEscape);
+    }
+
+    const noModifiers =
+      !event.getModifierState("Control") &&
+      !event.getModifierState("Shift") &&
+      !event.getModifierState("Alt") &&
+      !event.getModifierState("Meta");
+
+    if (stateRef.current.display === "window" && noModifiers && event.code === "KeyF") {
+      openFullscreen();
     }
   }
 
@@ -70,38 +98,43 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
           />
 
           <Button
-            className="top-5 right-5 absolute"
-            onClick={() => {
-              closeFullscreen();
-              window.removeEventListener("keydown", handleEscape);
-            }}
+            variant="secondary"
+            className="top-5 right-5 absolute w-[160px]"
+            onClick={closeFullscreen}
           >
             <MinimizeIcon />
-            Minimize (Esc)
+            Minimize <Badge variant="outline">Esc</Badge>
           </Button>
         </div>
       </Portal.Root>
 
       <div className="absolute bottom-5 inset-x-0 w-full px-5 flex items-center justify-center">
-        <div
-          className={cn(
-            "flex items-center justify-center rounded-2xl gap-3 p-3",
-            state.visible ? "bg-card/30 backdrop-blur-lg" : "bg-card"
-          )}
-        >
+        <div className="flex items-center justify-center rounded-2xl gap-3">
           <Button
+            className="w-[225px]"
             onClick={() => {
               if (isFirstLoad) {
                 setIsFirstLoad(false);
-                loadModelViewer(windowCanvasRef.current!);
+
+                if (windowCanvasRef.current && fullscreenCanvasRef.current) {
+                  controller.current = initModelViewers(
+                    windowCanvasRef.current,
+                    fullscreenCanvasRef.current
+                  );
+                } else {
+                  console.error("[DEBUG] Could not find window/fullscreen <canvas> elements!");
+                }
+
+                controller.current.switchTo("window");
+                window.addEventListener("keydown", handleKeyDown);
               }
+
               setState({ visible: !state.visible, display: "window" });
             }}
-            className="w-[225px]"
           >
             {state.visible ? (
               <>
-                <ImageIcon /> Return to thumbnail
+                <ImageIcon /> View thumbnail
               </>
             ) : (
               <>
@@ -109,21 +142,19 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
               </>
             )}
           </Button>
-
-          {state.visible ? (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPortalOpen(true);
-                setState({ visible: true, display: "fullscreen" });
-                window.addEventListener("keydown", handleEscape);
-              }}
-            >
-              <MaximizeIcon /> Fullscreen
-            </Button>
-          ) : null}
         </div>
       </div>
+
+      {state.visible ? (
+        <Button
+          variant="secondary"
+          onClick={openFullscreen}
+          className="absolute top-5 right-5 w-[160px]"
+        >
+          <MaximizeIcon />
+          Fullscreen <Badge variant="outline">F</Badge>
+        </Button>
+      ) : null}
     </div>
   );
 };

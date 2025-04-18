@@ -230,6 +230,31 @@ export const server = {
     },
   }),
 
+  verifyAsset: defineAction({
+    accept: "form",
+    input: z.object({
+      assetName: z.string(),
+      file: z.instanceof(File),
+    }),
+    handler: async({ assetName, file}) => {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${API_URL}/assets/${assetName}/verify/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const results = await response.json();
+
+      return results;
+    }
+  }),
+
   checkinAsset: defineAction({
     accept: "form",
     input: z.object({

@@ -2,6 +2,7 @@ import type { AssetWithDetails } from "@/lib/types";
 import { FileUp, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "../../components/ui/button";
+import { actions } from "astro:actions";
 import { DialogHeader, DialogTitle } from "../../components/ui/dialog";
 
 interface CheckInStep2Props {
@@ -55,7 +56,7 @@ const CheckInStep2 = ({
     setInvalidFiles([]);
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const assetName = asset.name.toLowerCase();
     const invalidFilesList: string[] = [];
 
@@ -81,15 +82,32 @@ const CheckInStep2 = ({
 
     setInvalidFiles(invalidFilesList);
 
+    // fun api request
+    const formData = new FormData();
+    formData.append("assetName", assetName);
+    formData.append("file", uploadedFiles[0]);
+    const verified = (await actions.verifyAsset(formData)).data;
+
+    console.log('hwefgwuif: ', verified);
+
     if (invalidFilesList.length > 0) {
       setVerificationMessage(
         `${invalidFilesList.length} file(s) have invalid names. Please fix them.`
       );
       setVerificationComplete(false);
-    } else {
-      setVerificationMessage("All files have valid names!");
-      setVerificationComplete(true);
+      return;
     }
+
+    if (!verified.result) {
+      setVerificationMessage(
+        `Files did not verify! ${verified.error_msg}`
+      );
+      setVerificationComplete(false);
+      return;
+    }
+    
+    setVerificationMessage("All files have valid names!");
+    setVerificationComplete(true);
   };
 
   return (

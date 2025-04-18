@@ -171,14 +171,16 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
             verificationComplete={verificationComplete}
             setVerificationComplete={setVerificationComplete}
             onNext={handleNextStep}
+            onBack={() => setStep(1)}
           />
         )}
 
         {step === 3 && (
           <CheckInStep3
             asset={mockAsset}
-            onComplete={handleNextStep}
+            onComplete={handleComplete}
             onMetadataChange={setMetadata}
+            onBack={() => setStep(2)}
           />
         )}
       </DialogContent>

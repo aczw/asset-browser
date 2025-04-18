@@ -1,5 +1,5 @@
 import type { AssetWithDetails } from "@/lib/types";
-import { FileUp, X } from "lucide-react";
+import { FileUp, X, ArrowLeft } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "../../components/ui/button";
 import { actions } from "astro:actions";
@@ -12,6 +12,7 @@ interface CheckInStep2Props {
   verificationComplete: boolean;
   setVerificationComplete: (complete: boolean) => void;
   onNext: () => void;
+  onBack: () => void;
 }
 
 const CheckInStep2 = ({
@@ -21,6 +22,7 @@ const CheckInStep2 = ({
   verificationComplete,
   setVerificationComplete,
   onNext,
+  onBack,
 }: CheckInStep2Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
@@ -200,7 +202,11 @@ const CheckInStep2 = ({
         )}
       </div>
 
-      <div className="flex justify-end mt-6">
+      <div className="flex justify-between mt-6 gap-2">
+        <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
+          <ArrowLeft size={16} />
+          Back
+        </Button>
         <Button onClick={onNext} disabled={!verificationComplete}>
           Proceed
         </Button>

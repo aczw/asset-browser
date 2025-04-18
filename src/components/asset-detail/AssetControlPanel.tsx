@@ -153,6 +153,7 @@ const AssetControlPanel = ({
               verificationComplete={verificationComplete}
               setVerificationComplete={setVerificationComplete}
               onNext={handleNextStep}
+              onBack={() => setStep(1)}
             />
           )}
 
@@ -161,6 +162,7 @@ const AssetControlPanel = ({
               asset={asset}
               onComplete={handleComplete}
               onMetadataChange={onMetadataChange}
+              onBack={() => setStep(2)}
             />
           )}
         </DialogContent>

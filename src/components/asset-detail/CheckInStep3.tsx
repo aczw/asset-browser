@@ -15,16 +15,17 @@ import { Textarea } from "@/components/ui/textarea";
 import type { AssetWithDetails, Commit, Metadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, ArrowLeft } from "lucide-react";
 import React, { useState } from "react";
 
 interface CheckInStep3Props {
   asset: AssetWithDetails;
   onComplete: () => void;
   onMetadataChange: (newMetadata: Metadata) => void;
+  onBack: () => void;
 }
 
-const CheckInStep3 = ({ asset, onComplete, onMetadataChange }: CheckInStep3Props) => {
+const CheckInStep3 = ({ asset, onComplete, onMetadataChange, onBack }: CheckInStep3Props) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [version, setVersion] = useState<string>("");
   const [materials, setMaterials] = useState<string>("None");
@@ -207,7 +208,11 @@ const CheckInStep3 = ({ asset, onComplete, onMetadataChange }: CheckInStep3Props
         </div>
       </ScrollArea>
 
-      <div className="flex justify-end pt-4 mt-auto border-t">
+      <div className="flex justify-between pt-4 mt-auto border-t gap-2">
+        <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
+          <ArrowLeft size={16} />
+          Back
+        </Button>
         <Button onClick={onSubmit} disabled={!isFormValid()}>
           Submit
         </Button>

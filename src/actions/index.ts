@@ -7,6 +7,8 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 import type { AssetWithDetails } from "@/lib/types";
+import * as prom from 'fs/promises';
+import { exec } from 'child_process';
 
 interface AssetCardProps {
   asset: AssetWithDetails;
@@ -40,7 +42,7 @@ function findHoudiniPath(): string | null {
   // Here you'd need to scan for Houdini folders - just an example
   // In a real implementation, you'd use fs.readdirSync to scan the directory
   const possibleVersions = isWindows
-  ? ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410', 'Houdini 20.5.332'] : ['20.5.550', '20.5.370', '20.5.410', '20.5.332'];
+  ? ['Houdini 20.5.332', 'Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410'] : ['20.5.332', '20.5.550', '20.5.370', '20.5.410'];
   
   for (const version of possibleVersions) {
     const testPath = isWindows
@@ -48,18 +50,38 @@ function findHoudiniPath(): string | null {
     : path.join(
       basePath,
       `Houdini${version}`,
-      `Houdini\ Apprentice\ ${version}.app`
+      `Houdini Apprentice ${version}.app`
     );
-    if (fs.existsSync(testPath)) {
-      return testPath; // Return the first match
-    }
-    else{
-      console.log("File does not exist at the specified path.");
-    }
+    prom.access(testPath)
+      .then(() => {
+        console.log("File exists at the specified path.");
+        return testPath; // Return the first match
+      })
+      .catch(() => {
+        //console.log("File does not exist at the specified path.");
+      });
+
     console.log(testPath);
   }
   
-  return null;
+  // for (const version of possibleVersions) {
+  //   const testPath = isWindows
+  //   ? path.join(basePath, version, 'bin', 'houdini.exe')
+  //   : path.join(
+  //     basePath,
+  //     `Houdini${version}`,
+  //     `Houdini\ Apprentice\ ${version}.app`
+  //   );
+  //   if (fs.existsSync(testPath)) {
+  //     return testPath; // Return the first match
+  //   }
+  //   else{
+  //     console.log("File does not exist at the specified path.");
+  //   }
+  //   console.log(testPath);
+  // }
+  
+  //return null;
 }
 
 function findHythonPath(): string | null {
@@ -77,14 +99,14 @@ function findHythonPath(): string | null {
   // Here you'd need to scan for Houdini folders - just an example
   // In a real implementation, you'd use fs.readdirSync to scan the directory
   const possibleVersions = isWindows
-  ? ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410', 'Houdini 20.5.332'] : ['20.5.550', '20.5.370', '20.5.410', '20.5.332'];  
+  ? ['Houdini 20.5.332', 'Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410'] : ['20.5.332', '20.5.550', '20.5.370', '20.5.410'];  
   for (const version of possibleVersions) {
     const testPath = isWindows
     ? path.join(basePath, version, 'bin', 'hython.exe')
     : path.join(
       basePath,
-      `Houdini ${version}`,
-      `Houdini\ Apprentice\ ${version}.app`
+      `Houdini${version}`,
+      `Houdini Apprentice ${version}.app`
     );
     if (fs.existsSync(testPath)) {
       return testPath; // Return the first match
@@ -325,33 +347,37 @@ export const server = {
     handler: async ({ assetName }) => {
       console.log("[DEBUG] API: launchDCC called");
 
-      const exePath = findHoudiniPath();
+      const isWindows = os.platform() === 'win32';
 
-      ; // Replace with the actual path to the .exe file
-      console.log("[DEBUG] final exePath:", exePath);
+      const assetZip = isWindows ? os.homedir()+"\\Downloads\\"+ assetName + ".zip" : os.homedir()+"/Downloads/"+ assetName + ".zip";
+      console.log("[DEBUG] assetZip path:", assetZip);
+      const outputDir = isWindows ? os.homedir()+"\\Downloads\\"+ assetName +"\\" : os.homedir()+"/Downloads/"+ assetName +"/";
 
-      const assetZip = os.homedir()+"\\Downloads\\"+ assetName + ".zip"
-      const outputDir = os.homedir()+"\\Downloads\\"+ assetName +"\\";
+      //const houdiniFile = path.join(outputDir, assetName + ".fbx");
+      const exePath = '/Applications/Houdini/Houdini20.5.332/Houdini Apprentice 20.5.332.app';
       
       // if the zip file exists
       if (fs.existsSync(assetZip)) {
         
         if (!fs.existsSync(outputDir)) {
           // unzip the file
-          fs.createReadStream(assetZip)
-            .pipe(unzipper.Extract({ path: outputDir }))
-            .on('close', () => {
-              console.log('Extraction complete.');
-            })
+          console.log("[DEBUG] Unzipping the file...");
 
-            .on('error', () => {
-              console.error('Error during extraction:');
-          });
+          fs.createReadStream(assetZip)
+    .pipe(unzipper.Extract({ path: outputDir }))
+    .on('close', () => {
+      console.log('Extraction complete.');
+    })
+    .on('error', (err) => {
+      console.error('Error during extraction:', err);
+    });
         }
 
-        const houdiniFile = path.join(outputDir, assetName + ".fbx");
-
-        const hythonExe = findHythonPath();
+        //const hythonExe = findHythonPath();
+        //const hythonExe = isWindows ? findHythonPath() : '/Applications/Houdini/Houdini20.5.332/Houdini Apprentice 20.5.332.app/Contents/bin/hython';
+        ///Applications/Houdini/Houdini20.5.332/Frameworks/Houdini.framework/Versions/20.5/Resources/bin/hython 
+        const hythonExe = '/Applications/Houdini/Houdini20.5.332/Frameworks/Houdini.framework/Versions/20.5/Resources/bin/hython';
+        
         console.log("[DEBUG] hythonExe path:", hythonExe);
              
         // create python generation file here
@@ -361,51 +387,91 @@ export const server = {
         const json = await res.json();
         const isCheckedOut = json.asset?.isCheckedOut ?? false;
 
-        writePythonHipFile(process.cwd()+"\\writtenPythonScript.py",assetName,isCheckedOut);
-        const pythonScript = process.cwd() + "\\writtenPythonScript.py";
-        const outputHipFile = outputDir +'\generated_scene.hip';
 
-        if (hythonExe) {
-          execFile(hythonExe, [pythonScript, outputHipFile], (error, stdout, stderr) => {
-            if (error) {
-              console.error(`Error running Hython: ${error.message}`);
-              return;
-            }
+
+      //   if (hythonExe) {
+      //     execFile(hythonExe, [pythonScript, outputHipFile], (error, stdout, stderr) => {
+      //       if (error) {
+      //         console.error(`Error running Hython: ${error.message}`);
+      //         return;
+      //       }
             
-            if (stderr && stderr.trim()) {
-              console.error(`Hython stderr: ${stderr}`);
-            }
+      //       if (stderr && stderr.trim()) {
+      //         console.error(`Hython stderr: ${stderr}`);
+      //       }
             
-            if (stdout && stdout.trim()) {
-              console.log(`Hython stdout: ${stdout}`);
-            }
+      //       if (stdout && stdout.trim()) {
+      //         console.log(`Hython stdout: ${stdout}`);
+      //       }
             
-            console.log(`Hip file generated successfully at: ${outputHipFile}`);
-          });
-        }
-        if (exePath) {
-          execFile(exePath, [outputHipFile], (error, stdout, stderr) => {
-            if (error) {
-              console.error("[ERROR] Failed to launch .exe:", error);
-              throw new ActionError({
-                code: "INTERNAL_SERVER_ERROR",
-                message: `Failed to launch application: ${error.message}`,
-              });
-            }
+      //       console.log(`Hip file generated successfully at: ${outputHipFile}`);
+      //     });
+      //   }
+      
+      //   if (exePath) {
+      //     execFile(exePath, [outputHipFile], (error, stdout, stderr) => {
+      //       if (error) {
+      //         console.error("[ERROR] Failed to launch .exe:", error);
+      //         throw new ActionError({
+      //           code: "INTERNAL_SERVER_ERROR",
+      //           message: `Failed to launch application: ${error.message}`,
+      //         });
+      //       }
     
-            console.log("[DEBUG] Application launched successfully. Output:", stdout);
+      //       console.log("[DEBUG] Application launched successfully. Output:", stdout);
           
-          });
-        }
-      }
-      else {
+      //     });
+      //   }
+      // }
+      // else {
 
-        // TODO: output message to the user to download the asset first
-        console.log("File does not exist at the specified path.");
-      }
+      //   // TODO: output message to the user to download the asset first
+      //   console.log("File does not exist at the specified path.");
+      // }
+
+      //const exePath = findHoudiniPath();
+      //const outputHipFile = outputDir +'\generated_scene.hip';
+
+      writePythonHipFile(process.cwd()+"\\writtenPythonScript.py",assetName,isCheckedOut);
+      const pythonScript = process.cwd() + "\\writtenPythonScript.py";
+      const outputHipFile = outputDir +'\generated_scene.hip';
+      
+      execFile(hythonExe, [pythonScript, outputHipFile], (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error running Hython: ${error.message}`);
+          return;
+        }
+        
+        if (stderr && stderr.trim()) {
+          console.error(`Hython stderr: ${stderr}`);
+        }
+        
+        if (stdout && stdout.trim()) {
+          console.log(`Hython stdout: ${stdout}`);
+        }
+        
+        console.log(`Hip file generated successfully at: ${outputHipFile}`);
+      });
+      
+      exec(`open "${exePath}" --args "${outputHipFile}"`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error launching .app file: ${error.message}`);
+          return;
+        }
+      
+        if (stderr) {
+          console.error(`stderr: ${stderr}`);
+        }
+      
+        console.log(`stdout: ${stdout}`);
+        console.log(`Successfully launched ${exePath}`);
+      });
+
+      // Replace with the actual path to the .exe file
+      console.log("[DEBUG] final exePath:", exePath);
 
       return { message: "Application launched successfully" };
-
+    }
     },
 }),
 

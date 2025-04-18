@@ -193,6 +193,9 @@ export const server = {
             : "Failed to create asset",
         });
       }
+
+      const data = await response.json();
+      return data;
     },
   }),
 

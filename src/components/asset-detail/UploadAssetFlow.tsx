@@ -101,10 +101,10 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
       formData.append("version", "1.00.00");
       formData.append("file", uploadedFiles[0] as File);
 
-      const { data, error } = await actions.createAsset(formData);
+      const data = (await actions.createAsset(formData)).data;
 
-      if (error) {
-        console.log("Error: ", error.message);
+      if (!data.result) {
+        throw new Error(data.error_msg);
       }
 
       // Reset the form

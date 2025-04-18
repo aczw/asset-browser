@@ -1,4 +1,4 @@
-import { MetadataSchema, type VersionMap } from "@/lib/types";
+import { MetadataSchema } from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { execFile } from "child_process";
@@ -6,9 +6,22 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
+import type { AssetWithDetails } from "@/lib/types";
+
+interface AssetCardProps {
+  asset: AssetWithDetails;
+}
+
+const AssetCard = ({ asset }: AssetCardProps) => {
+  // Now you can use asset.isCheckedOut anywhere inside
+  console.log(asset.isCheckedOut); // true or false
+}
 
 
-const API_URL = import.meta.env.DEV ? "http://127.0.0.1:8000" : "https://usd-asset-library.up.railway.app/api";
+// const API_URL = import.meta.env.DEV
+//   ? "http://127.0.0.1:8000/api"
+//   : "https://usd-asset-library.up.railway.app/api";
+const API_URL = "https://usd-asset-library.up.railway.app/api";
 
 const houdiniPath = process.env.HFS 
   ? path.win32.join(process.env.HFS, 'bin', 'houdini.exe'): null;
@@ -18,7 +31,6 @@ function findHoudiniPath(): string | null {
   const programFiles = isWindows
     ? process.env.PROGRAMFILES || 'C:/Program Files'
     : '/Applications';
-  
     // Base path for Houdini installation
     const basePath = isWindows
     ? path.join(programFiles, 'Side Effects Software')
@@ -27,18 +39,24 @@ function findHoudiniPath(): string | null {
   
   // Here you'd need to scan for Houdini folders - just an example
   // In a real implementation, you'd use fs.readdirSync to scan the directory
-  const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410'];
+  const possibleVersions = isWindows
+  ? ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410', 'Houdini 20.5.332'] : ['20.5.550', '20.5.370', '20.5.410', '20.5.332'];
   
   for (const version of possibleVersions) {
     const testPath = isWindows
     ? path.join(basePath, version, 'bin', 'houdini.exe')
-    : path.join(basePath, version, 'Houdini.app', 'Contents', 'MacOS', 'houdini');
+    : path.join(
+      basePath,
+      `Houdini${version}`,
+      `Houdini\ Apprentice\ ${version}.app`
+    );
     if (fs.existsSync(testPath)) {
       return testPath; // Return the first match
     }
     else{
       console.log("File does not exist at the specified path.");
     }
+    console.log(testPath);
   }
   
   return null;
@@ -58,12 +76,16 @@ function findHythonPath(): string | null {
   
   // Here you'd need to scan for Houdini folders - just an example
   // In a real implementation, you'd use fs.readdirSync to scan the directory
-  const possibleVersions = ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410'];
-  
+  const possibleVersions = isWindows
+  ? ['Houdini 20.5.550', 'Houdini 20.5.370', 'Houdini 20.5.410', 'Houdini 20.5.332'] : ['20.5.550', '20.5.370', '20.5.410', '20.5.332'];  
   for (const version of possibleVersions) {
     const testPath = isWindows
     ? path.join(basePath, version, 'bin', 'hython.exe')
-    : path.join(basePath, version, 'Houdini.app', 'Contents', 'MacOS', 'houdini');
+    : path.join(
+      basePath,
+      `Houdini ${version}`,
+      `Houdini\ Apprentice\ ${version}.app`
+    );
     if (fs.existsSync(testPath)) {
       return testPath; // Return the first match
     }
@@ -75,7 +97,7 @@ function findHythonPath(): string | null {
   return null;
 }
 
-function writePythonHipFile(filePath:string, assetName:string) {
+function writePythonHipFile(filePath:string, assetName:string, checkedOut: boolean) {
 
   const content = `
 import hou
@@ -94,6 +116,12 @@ def create_simple_scene():
     
     # Connect and layout
     sphere.moveToGoodPosition()
+
+    # Create null node with checkedOut status
+    null_node = obj.createNode('null', 'status')
+    null_node.addSpareParmTuple(hou.ToggleParmTemplate("checked_out", "Checked Out"))
+    null_node.parm("checked_out").set(${checkedOut ? "True" : "False"})
+    null_node.moveToGoodPosition()
     
     # Save the file
     output_path = sys.argv[1] if len(sys.argv) > 1 else "C:/temp/generated_scene.hip"
@@ -103,7 +131,6 @@ def create_simple_scene():
 if __name__ == "__main__":
     create_simple_scene()
 `;
-
 
   fs.writeFile(filePath, content, (err) => {
     if (err) {
@@ -176,12 +203,12 @@ export const server = {
 
   createAsset: defineAction({
     accept: "form",
-    input: z.object({ 
+    input: z.object({
       assetName: z.string(),
       version: z.string(),
-      file: z.instanceof(File)
+      file: z.instanceof(File),
     }),
-    handler: async ({ assetName, version, file })  => {
+    handler: async ({ assetName, version, file }) => {
       console.log("[DEBUG] API: assetName type:", typeof assetName);
       console.log("[DEBUG] API: API URL:", API_URL);
 
@@ -189,10 +216,10 @@ export const server = {
       formData.append("file", file);
       formData.append("version", version);
 
-      const response = await fetch(`${API_URL}/api/assets/${assetName}/upload/`, {
+      const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
         method: 'POST',
         body: formData,
-      })
+      });
 
       if (!response.ok) {
         throw new ActionError({
@@ -304,7 +331,7 @@ export const server = {
       console.log("[DEBUG] final exePath:", exePath);
 
       const assetZip = os.homedir()+"\\Downloads\\"+ assetName + ".zip"
-      const outputDir = os.homedir()+"\\Downloads\\assetImport\\"+ assetName +"\\";
+      const outputDir = os.homedir()+"\\Downloads\\"+ assetName +"\\";
       
       // if the zip file exists
       if (fs.existsSync(assetZip)) {
@@ -329,7 +356,12 @@ export const server = {
              
         // create python generation file here
 
-        writePythonHipFile(process.cwd()+"\\writtenPythonScript.py",assetName);
+
+        const res = await fetch(`${API_URL}/assets/${assetName}`);
+        const json = await res.json();
+        const isCheckedOut = json.asset?.isCheckedOut ?? false;
+
+        writePythonHipFile(process.cwd()+"\\writtenPythonScript.py",assetName,isCheckedOut);
         const pythonScript = process.cwd() + "\\writtenPythonScript.py";
         const outputHipFile = outputDir +'\generated_scene.hip';
 

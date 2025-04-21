@@ -264,7 +264,11 @@ const AssetsPage = () => {
     <div className="container mx-auto py-14 px-4 max-w-7xl">
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold mb-2 text-left">Asset Browser</h1>
+          <h1 className="text-3xl font-bold mb-2 text-left">
+            <a href="/" className="hover:underline underline-offset-[6px]">
+              Asset Browser
+            </a>
+          </h1>
           <p className="text-muted-foreground text-left">Browse and search for assets</p>
         </div>
         <div className="flex items-center gap-2">

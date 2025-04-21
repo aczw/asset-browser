@@ -180,7 +180,6 @@ export const server = {
       }
 
       // TO DO: Handle metadata updates and version ID control should it happen
-
       const data = await response.json();
       return data;
     },
@@ -332,8 +331,6 @@ export const server = {
       }
 
       const data = (await response.json()) as GetUserBody;
-      console.log(`[DEBUG] getUser():`, data);
-
       return data;
     },
   }),

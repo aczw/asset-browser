@@ -21,11 +21,12 @@ interface UserDetails {}
 const UserPage = ({ pennKey, data, error }: UserPageProps) => {
   const { toast } = useToast();
   const [asset, setAsset] = useState<AssetWithDetails | null>(null);
+  const [selectedTab, setSelectedTab] = useState<"commits" | "created" | "checkedOut">("commits");
 
   console.log(data);
 
   const handleBack = () => {
-    window.history.back();
+    window.location.href = "/";
   };
 
   const formatDate = (dateString: string) => {
@@ -136,43 +137,130 @@ const UserPage = ({ pennKey, data, error }: UserPageProps) => {
         <Separator />
 
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Recent Commits</h2>
+          {/* Tab Headers */}
+          <div className="flex gap-6 items-center mb-2">
+            <button
+              className={`text-xl font-semibold border-b-2 px-1 transition-all ${
+                selectedTab === "commits"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-primary"
+              }`}
+              onClick={() => setSelectedTab("commits")}
+            >
+              Recent Commits
+            </button>
+            <button
+              className={`text-xl font-semibold border-b-2 px-1 transition-all ${
+                selectedTab === "created"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-primary"
+              }`}
+              onClick={() => setSelectedTab("created")}
+            >
+              Assets Created
+            </button>
+            <button
+              className={`text-xl font-semibold border-b-2 px-1 transition-all ${
+                selectedTab === "checkedOut"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-primary"
+              }`}
+              onClick={() => setSelectedTab("checkedOut")}
+            >
+              Checked Out Assets
+            </button>
+          </div>
 
-          {data.user.recentCommits.length === 0 ? (
-            <div className="text-center py-8 border rounded-lg">
-              <p className="text-muted-foreground">No commits found for this user.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {data.user.recentCommits.map((commit, index) => (
-                <div
-                  key={index}
-                  className="border rounded-lg p-4 hover:bg-secondary/30 transition-colors"
-                >
-                  <div className="flex items-start gap-4">
-                    {/* <div className="h-16 w-16 rounded-md bg-secondary overflow-hidden flex-shrink-0">
-                      <img
-                        src={commit.assetName.thumbnailUrl}
-                        alt={commit.assetName}
-                        className="h-full w-full object-cover"
-                      />
-                    </div> */}
-
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium">{commit.assetName}</h3>
-                        <span className="text-sm text-muted-foreground">v{commit.version}</span>
-                      </div>
-
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {formatDate(commit.timestamp)}
-                      </p>
-
-                      <p className="text-sm">{commit.note}</p>
-                    </div>
-                  </div>
+          {/* Tab Content */}
+          {selectedTab === "commits" && (
+            <div className="space-y-6">
+              {data.user.recentCommits.length === 0 ? (
+                <div className="text-center py-8 border rounded-lg">
+                  <p className="text-muted-foreground">No commits found for this user.</p>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-4">
+                  {data.user.recentCommits.map((commit, index) => (
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 hover:bg-secondary/30 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium">{commit.assetName}</h3>
+                            <span className="text-sm text-muted-foreground">v{commit.version}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {formatDate(commit.timestamp)}
+                          </p>
+                          <p className="text-sm">{commit.note}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {selectedTab === "created" && (
+            <div className="space-y-6">
+              {data.user.assetsCreated.length === 0 ? (
+                <div className="text-center py-8 border rounded-lg">
+                  <p className="text-muted-foreground">No assets created by this user.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.user.assetsCreated.map((asset, index) => (
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 hover:bg-secondary/30 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium">{asset.name}</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Created: {formatDate(asset.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {selectedTab === "checkedOut" && (
+            <div className="space-y-6">
+              {data.user.checkedOutAssets.length === 0 ? (
+                <div className="text-center py-8 border rounded-lg">
+                  <p className="text-muted-foreground">
+                    No assets currently checked out by this user.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.user.checkedOutAssets.map((asset, index) => (
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 hover:bg-secondary/30 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium">{asset.name}</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Checked Out: {formatDate(asset.checkedOutAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

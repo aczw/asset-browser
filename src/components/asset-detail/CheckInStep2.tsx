@@ -1,8 +1,8 @@
 import type { AssetWithDetails } from "@/lib/types";
-import { FileUp, X, ArrowLeft } from "lucide-react";
+import { actions } from "astro:actions";
+import { ArrowLeft, FileUp, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "../../components/ui/button";
-import { actions } from "astro:actions";
 import { DialogHeader, DialogTitle } from "../../components/ui/dialog";
 
 interface CheckInStep2Props {
@@ -71,11 +71,7 @@ const CheckInStep2 = ({
       // 2. assetName_variantName.usda (eg. skateboard_LOD2.usda)
       // 3. thumbnail.png
 
-      const isValid =
-        fileName === `${assetName}.usda` ||
-        fileName.endsWith(".zip") || 
-        (fileName.startsWith(`${assetName}_`) && fileName.endsWith(".usda")) ||
-        fileName === "thumbnail.png";
+      const isValid = fileName.endsWith(".zip");
 
       if (!isValid) {
         invalidFilesList.push(file.name);
@@ -90,7 +86,7 @@ const CheckInStep2 = ({
     formData.append("file", uploadedFiles[0]);
     const verified = (await actions.verifyAsset(formData)).data;
 
-    console.log('hwefgwuif: ', verified);
+    console.log("hwefgwuif: ", verified);
 
     if (invalidFilesList.length > 0) {
       setVerificationMessage(
@@ -101,13 +97,11 @@ const CheckInStep2 = ({
     }
 
     if (!verified.result) {
-      setVerificationMessage(
-        `Files did not verify! ${verified.error_msg}`
-      );
+      setVerificationMessage(`Files did not verify! ${verified.error_msg}`);
       setVerificationComplete(false);
       return;
     }
-    
+
     setVerificationMessage("All files have valid names!");
     setVerificationComplete(true);
   };
@@ -121,12 +115,12 @@ const CheckInStep2 = ({
 
       <div className="space-y-4">
         <div className="text-sm">
-          <p className="font-medium mb-1">Valid file names:</p>
-          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+          <p className="font-medium mb-1">Upload a .zip file!</p>
+          {/* <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
             <li>{asset.name}.usda (main asset file)</li>
             <li>{asset.name}_variantName.usda (variant files)</li>
             <li>thumbnail.png (preview image)</li>
-          </ul>
+          </ul> */}
         </div>
 
         <Button

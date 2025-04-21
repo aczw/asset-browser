@@ -266,7 +266,13 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
         <div className="text-center py-16">
           <h2 className="text-2xl font-bold mb-2">Asset Not Found</h2>
           <p className="text-muted-foreground mb-6">The requested asset could not be found.</p>
-          <Button onClick={() => window.history.back()}>Return to Asset Browser</Button>
+          <Button
+            onClick={() => {
+              window.location.href = "/";
+            }}
+          >
+            Return to Asset Browser
+          </Button>
         </div>
       </div>
     );

@@ -48,11 +48,14 @@ type GetUserBody = {
   };
 };
 
+type GetUsersBody = { users: { pennId: string; fullName: string }[] };
+
 export {
   MetadataSchema,
   type AssetWithDetails,
   type Commit,
   type GetUserBody,
+  type GetUsersBody,
   type Metadata,
   type VersionMap,
 };

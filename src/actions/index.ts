@@ -1,5 +1,5 @@
 import { findHoudiniPath, findHythonPath, writePythonHipFile } from "@/lib/launch-dcc";
-import { MetadataSchema, type GetUserBody } from "@/lib/types";
+import { MetadataSchema, type GetUserBody, type GetUsersBody } from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { execFile } from "child_process";
@@ -305,6 +305,25 @@ export const server = {
         code: "FORBIDDEN",
         message: "To do",
       });
+    },
+  }),
+
+  getUsers: defineAction({
+    input: undefined,
+    handler: async () => {
+      const response = await fetch(`${API_URL}/users/`);
+
+      if (!response.ok) {
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            "Failed to fetch all users! " +
+            (response.statusText.length > 0 ? response.statusText : ""),
+        });
+      }
+
+      const data = (await response.json()) as GetUsersBody;
+      return data;
     },
   }),
 

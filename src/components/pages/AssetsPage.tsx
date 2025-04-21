@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import type { AssetWithDetails } from "@/lib/types";
+import type { AssetWithDetails, GetUsersBody } from "@/lib/types";
 import AssetGrid from "../AssetGrid";
 import UploadAssetFlow from "../asset-detail/UploadAssetFlow";
 
@@ -203,7 +203,7 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
   );
 };
 
-const AssetsPage = () => {
+const AssetsPage = ({ data, error }: { data: GetUsersBody; error: any }) => {
   const { toast } = useToast();
 
   const [assets, setAssets] = useState<AssetWithDetails[]>([]);
@@ -213,8 +213,15 @@ const AssetsPage = () => {
   const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
   const [sortBy, setSortBy] = useState("updated");
 
-  // Mock user for demonstration purposes
-  const user = { pennKey: "soominp", fullName: "Jacky Park" };
+  if (error) {
+    toast({
+      title: "Failed to fetch all users",
+      description: "This is very bad",
+      variant: "destructive",
+    });
+
+    return null;
+  }
 
   const fetchAssets = async () => {
     setIsLoading(true);
@@ -272,7 +279,7 @@ const AssetsPage = () => {
           <p className="text-muted-foreground text-left">Browse and search for assets</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{user.fullName}</span>
+          <span className="text-sm font-medium">Select user {"->"}</span>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -281,13 +288,14 @@ const AssetsPage = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => (window.location.href = `/user/${user.pennKey}`)}
-              >
-                My Commits
-              </DropdownMenuItem>
+              {data.users.map((user) => (
+                <DropdownMenuItem className="cursor-pointer">
+                  <a href={`/user/${user.pennId}`}>{user.pennId}</a>
+                </DropdownMenuItem>
+              ))}
+
               <DropdownMenuSeparator />
+
               <DropdownMenuItem className="cursor-pointer">Sign Out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

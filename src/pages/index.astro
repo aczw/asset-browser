@@ -1,8 +1,12 @@
 ---
 import AssetsPage from "@/components/pages/AssetsPage";
-import Layout from "../layouts/Layout.astro";
+import Layout from "@/layouts/Layout.astro";
+import { actions } from "astro:actions";
+
+const {data, error} = await Astro.callAction(actions.getUsers, undefined);
+console.log(data);
 ---
 
 <Layout>
-  <AssetsPage client:only="react" />
+  <AssetsPage client:only="react" data={data!} error={error} />
 </Layout>

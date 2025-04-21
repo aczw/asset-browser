@@ -28,7 +28,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // Mock user for demonstration purposes
-  const user = { pennId: "willcai", fullName: "Will Cai" };
+  const user = { pennId: "soominp", fullName: "Jacky Park" };
 
   // Helper function to get user full name
   const getUserFullName = (pennId: string | null): string | null => {
@@ -247,13 +247,12 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   };
 
   const handleLaunchDCC = async () => {
-
     console.log("It's time to launch Houdini.");
 
     console.log("[DEBUG] API: launchDCC called");
 
-    const { data, error } = await actions.launchDCC({assetName});
-    
+    const { data, error } = await actions.launchDCC({ assetName });
+
     return { message: "Application launched successfully" };
   };
 

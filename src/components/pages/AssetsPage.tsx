@@ -214,7 +214,7 @@ const AssetsPage = () => {
   const [sortBy, setSortBy] = useState("updated");
 
   // Mock user for demonstration purposes
-  const user = { pennId: "willcai", fullName: "Will Cai" };
+  const user = { pennKey: "soominp", fullName: "Jacky Park" };
 
   const fetchAssets = async () => {
     setIsLoading(true);
@@ -269,6 +269,7 @@ const AssetsPage = () => {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{user.fullName}</span>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center cursor-pointer hover:bg-secondary/80">
@@ -276,7 +277,12 @@ const AssetsPage = () => {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.location.href = "/user"}>My Commits</DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => (window.location.href = `/user/${user.pennKey}`)}
+              >
+                My Commits
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer">Sign Out</DropdownMenuItem>
             </DropdownMenuContent>

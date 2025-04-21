@@ -1,4 +1,5 @@
-import { MetadataSchema } from "@/lib/types";
+import { findHoudiniPath, findHythonPath, writePythonHipFile } from "@/lib/launch-dcc";
+import { MetadataSchema, type GetUserBody } from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { execFile } from "child_process";
@@ -10,101 +11,6 @@ import * as unzipper from "unzipper";
 const API_URL = import.meta.env.DEV
   ? "http://127.0.0.1:8000/api"
   : "https://usd-asset-library.up.railway.app/api";
-
-const houdiniPath = process.env.HFS ? path.win32.join(process.env.HFS, "bin", "houdini.exe") : null;
-function findHoudiniPath(): string | null {
-  const isWindows = os.platform() === "win32";
-  const programFiles = isWindows ? process.env.PROGRAMFILES || "C:/Program Files" : "/Applications";
-
-  // Base path for Houdini installation
-  const basePath = isWindows
-    ? path.join(programFiles, "Side Effects Software")
-    : path.join(programFiles, "Houdini");
-
-  // Here you'd need to scan for Houdini folders - just an example
-  // In a real implementation, you'd use fs.readdirSync to scan the directory
-  const possibleVersions = ["Houdini 20.5.550", "Houdini 20.5.370", "Houdini 20.5.410"];
-
-  for (const version of possibleVersions) {
-    const testPath = isWindows
-      ? path.join(basePath, version, "bin", "houdini.exe")
-      : path.join(basePath, version, "Houdini.app", "Contents", "MacOS", "houdini");
-    if (fs.existsSync(testPath)) {
-      return testPath; // Return the first match
-    } else {
-      console.log("File does not exist at the specified path.");
-    }
-  }
-
-  return null;
-}
-
-function findHythonPath(): string | null {
-  const isWindows = os.platform() === "win32";
-  const programFiles = isWindows ? process.env.PROGRAMFILES || "C:/Program Files" : "/Applications";
-
-  // Base path for Houdini installation
-  const basePath = isWindows
-    ? path.join(programFiles, "Side Effects Software")
-    : path.join(programFiles, "Houdini");
-
-  // Here you'd need to scan for Houdini folders - just an example
-  // In a real implementation, you'd use fs.readdirSync to scan the directory
-  const possibleVersions = ["Houdini 20.5.550", "Houdini 20.5.370", "Houdini 20.5.410"];
-
-  for (const version of possibleVersions) {
-    const testPath = isWindows
-      ? path.join(basePath, version, "bin", "hython.exe")
-      : path.join(basePath, version, "Houdini.app", "Contents", "MacOS", "houdini");
-    if (fs.existsSync(testPath)) {
-      return testPath; // Return the first match
-    } else {
-      console.log("File does not exist at the specified path.");
-    }
-  }
-
-  return null;
-}
-
-function writePythonHipFile(filePath: string, assetName: string) {
-  const content =
-    `
-import hou
-import sys
-
-def create_simple_scene():
-    # Clear the current scene
-    hou.hipFile.clear()
-    
-    # Create a simple geometry node
-    obj = hou.node('/obj')
-    geo = obj.createNode('geo', '` +
-    assetName +
-    `')
-    
-    # Add a sphere inside the geo node
-    sphere = geo.createNode('sphere')
-    
-    # Connect and layout
-    sphere.moveToGoodPosition()
-    
-    # Save the file
-    output_path = sys.argv[1] if len(sys.argv) > 1 else "C:/temp/generated_scene.hip"
-    hou.hipFile.save(output_path)
-    print(f"Scene saved to {output_path}")
-
-if __name__ == "__main__":
-    create_simple_scene()
-`;
-
-  fs.writeFile(filePath, content, (err) => {
-    if (err) {
-      console.error("Error writing to Python file:", err);
-      return;
-    }
-    console.log("Python file written successfully at:", filePath);
-  });
-}
 
 export const server = {
   getAssets: defineAction({
@@ -229,7 +135,7 @@ export const server = {
       assetName: z.string(),
       file: z.instanceof(File),
     }),
-    handler: async({ assetName, file}) => {
+    handler: async ({ assetName, file }) => {
       const formData = new FormData();
       formData.append("file", file);
 
@@ -245,7 +151,7 @@ export const server = {
       const results = await response.json();
 
       return results;
-    }
+    },
   }),
 
   checkinAsset: defineAction({
@@ -400,6 +306,35 @@ export const server = {
         code: "FORBIDDEN",
         message: "To do",
       });
+    },
+  }),
+
+  getUser: defineAction({
+    input: z.object({
+      pennKey: z.string(),
+      recentCommits: z.number().optional(),
+    }),
+    handler: async ({ pennKey, recentCommits }) => {
+      const recentCommitsParam = recentCommits ? `?recent_commits=${recentCommits}` : "";
+      const response = await fetch(`${API_URL}/users/${pennKey}/${recentCommitsParam}`);
+
+      if (!response.ok) {
+        console.log(
+          `[DEBUG] Could not get user "${pennKey}" with recent_commits = ${recentCommits}, status code: ${response.status}`
+        );
+
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to get user! ${
+            response.statusText.length > 0 ? response.statusText : ""
+          }`,
+        });
+      }
+
+      const data = (await response.json()) as GetUserBody;
+      console.log(`[DEBUG] getUser():`, data);
+
+      return data;
     },
   }),
 };

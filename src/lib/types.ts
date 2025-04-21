@@ -38,4 +38,21 @@ type AssetWithDetails = {
   updatedAt: string;
 };
 
-export { MetadataSchema, type AssetWithDetails, type Commit, type Metadata, type VersionMap };
+type GetUserBody = {
+  user: {
+    pennKey: string;
+    fullName: string;
+    assetsCreated: { name: string; createdAt: string }[];
+    checkedOutAssets: { name: string; checkedOutAt: string }[];
+    recentCommits: { assetName: string; version: string; note: string; timestamp: string }[];
+  };
+};
+
+export {
+  MetadataSchema,
+  type AssetWithDetails,
+  type Commit,
+  type GetUserBody,
+  type Metadata,
+  type VersionMap,
+};

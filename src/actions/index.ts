@@ -311,7 +311,7 @@ export const server = {
   getUsers: defineAction({
     input: undefined,
     handler: async () => {
-      const response = await fetch(`${API_URL}/users/`);
+      const response = await fetch(`${API_URL}/users/`, { method: "GET" });
 
       if (!response.ok) {
         throw new ActionError({
@@ -334,7 +334,9 @@ export const server = {
     }),
     handler: async ({ pennKey, recentCommits }) => {
       const recentCommitsParam = recentCommits ? `?recent_commits=${recentCommits}` : "";
-      const response = await fetch(`${API_URL}/users/${pennKey}/${recentCommitsParam}`);
+      const response = await fetch(`${API_URL}/users/${pennKey}/${recentCommitsParam}`, {
+        method: "GET",
+      });
 
       if (!response.ok) {
         console.log(
@@ -350,6 +352,30 @@ export const server = {
       }
 
       const data = (await response.json()) as GetUserBody;
+      return data;
+    },
+  }),
+
+  downloadGlb: defineAction({
+    input: z.object({
+      assetName: z.string(),
+    }),
+    handler: async ({ assetName }) => {
+      const response = await fetch(`${API_URL}/assets/${assetName}/download/glb/`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        console.log("[DEBUG] downloadGlb(): failed to download .glb file");
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to download .glb file for "${assetName}!" ${
+            response.statusText.length > 0 ? response.statusText : `Code: ${response.status}`
+          }`,
+        });
+      }
+
+      const data = await response.arrayBuffer();
       return data;
     },
   }),

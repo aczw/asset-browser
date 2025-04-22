@@ -1,10 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { type DisplayOptions, type ViewController, initModelViewers } from "@/lib/model-viewer";
 import type { AssetWithDetails } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import * as Portal from "@radix-ui/react-portal";
-import { EyeIcon, ImageIcon, MaximizeIcon, MinimizeIcon } from "lucide-react";
+import { actions } from "astro:actions";
+import { EyeIcon, ImageIcon, Loader2Icon, MaximizeIcon, MinimizeIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type ModelViewerState = {
@@ -13,7 +15,10 @@ type ModelViewerState = {
 };
 
 const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
+  const { toast } = useToast();
+
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isFetchingModel, setIsFetchingModel] = useState(false);
   const [portalOpen, setPortalOpen] = useState(false);
 
   const [state, setState] = useState<ModelViewerState>({
@@ -70,7 +75,7 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
         src={asset.thumbnailUrl}
         alt={asset.name}
         loading="eager"
-        className={cn("w-full h-full object-cover")}
+        className="w-full h-full object-cover"
       />
 
       <canvas
@@ -112,18 +117,38 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
         <div className="flex items-center justify-center rounded-2xl gap-3">
           <Button
             className="w-[225px]"
-            onClick={() => {
+            onClick={async () => {
               if (isFirstLoad) {
                 setIsFirstLoad(false);
 
-                if (windowCanvasRef.current && fullscreenCanvasRef.current) {
-                  controller.current = initModelViewers(
-                    windowCanvasRef.current,
-                    fullscreenCanvasRef.current
-                  );
-                } else {
+                if (!windowCanvasRef.current || !fullscreenCanvasRef.current) {
                   console.error("[DEBUG] Could not find window/fullscreen <canvas> elements!");
+                  return;
                 }
+
+                setIsFetchingModel(true);
+                const { data: modelData, error } = await actions.downloadGlb({
+                  assetName: asset.name,
+                });
+
+                if (error) {
+                  toast({
+                    title: "Downloading .glb file failed",
+                    description: `An error occurred while fetching the model. Error: ${error.message}`,
+                    variant: "destructive",
+                  });
+
+                  setIsFetchingModel(false);
+                  setIsFirstLoad(true);
+                  return;
+                }
+
+                controller.current = await initModelViewers(
+                  windowCanvasRef.current,
+                  fullscreenCanvasRef.current,
+                  modelData,
+                  () => setIsFetchingModel(false)
+                );
 
                 controller.current.switchTo("window");
                 window.addEventListener("keydown", handleKeyDown);
@@ -131,10 +156,15 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
 
               setState({ visible: !state.visible, display: "window" });
             }}
+            disabled={isFetchingModel}
           >
             {state.visible ? (
               <>
                 <ImageIcon /> View thumbnail
+              </>
+            ) : isFetchingModel ? (
+              <>
+                <Loader2Icon className="animate-spin" /> Fetching model...
               </>
             ) : (
               <>

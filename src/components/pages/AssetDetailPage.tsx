@@ -271,7 +271,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
               window.location.href = "/";
             }}
           >
-            Return to Asset Browser
+            Return to home
           </Button>
         </div>
       </div>

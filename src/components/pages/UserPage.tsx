@@ -87,7 +87,7 @@ const UserPage = ({ pennKey, data, error }: UserPageProps) => {
           <p className="text-muted-foreground mb-6">
             The requested user profile could not be found.
           </p>
-          <Button onClick={handleBack}>Return to Asset Browser</Button>
+          <Button onClick={handleBack}>Return to home</Button>
         </div>
       </div>
     );

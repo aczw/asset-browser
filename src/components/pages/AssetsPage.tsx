@@ -256,7 +256,7 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
         <div>
           <h1 className="text-3xl font-bold mb-2 text-left">
             <a href="/" className="hover:underline underline-offset-[6px]">
-              Asset Browser
+              Papaya
             </a>
           </h1>
           <p className="text-muted-foreground text-left">Browse and search for assets</p>

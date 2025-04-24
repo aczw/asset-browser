@@ -69,6 +69,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.175.0",
+    "@types/unzipper": "^0.10.11",
     "tw-animate-css": "^1.2.5",
     "typescript": "^5.5.3"
   }

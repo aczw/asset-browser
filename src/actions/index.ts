@@ -119,7 +119,18 @@ function findHythonPath(): string | null {
   return null;
 }
 
-function writePythonHipFile(filePath:string, assetName:string, checkedOut: boolean) {
+async function writePythonHipFile(filePath:string, assetName:string, checkedOut:boolean) {
+
+  const response = await fetch(`${API_URL}/assets/${assetName}`);
+  if (!response.ok) {
+    throw new Error("Unable to fetch");
+  }
+
+  const data = await response.json();
+  let checked : boolean = data.checkedOutBy !== data.userName;
+
+
+
 
   const content = `
 import hou
@@ -142,7 +153,7 @@ def create_simple_scene():
     # Create null node with checkedOut status
     null_node = obj.createNode('null', 'status')
     null_node.addSpareParmTuple(hou.ToggleParmTemplate("checked_out", "Checked Out"))
-    null_node.parm("checked_out").set(${checkedOut ? "True" : "False"})
+    null_node.parm("checked_out").set(${checked ? "True" : "False"})
     null_node.moveToGoodPosition()
     
     # Save the file

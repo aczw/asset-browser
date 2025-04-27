@@ -39,7 +39,7 @@ const AssetControlPanel = ({
   onMetadataChange,
 }: AssetControlPanelProps) => {
   const [checkInOpen, setCheckInOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(2);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({
     materials: false,
     visualCheck: false,

@@ -75,17 +75,28 @@ export const server = {
   createAsset: defineAction({
     accept: "form",
     input: z.object({
+      file: z.instanceof(File),
+      pennKey: z.string(),
       assetName: z.string(),
       version: z.string(),
-      file: z.instanceof(File),
+      note: z.string(),
+      hasTexture: z.boolean(),
+      keywordsRawList: z.array(z.string()),
     }),
-    handler: async ({ assetName, version, file }) => {
+    handler: async ({ file, pennKey, assetName, version, note, hasTexture, keywordsRawList }) => {
       console.log("[DEBUG] API: assetName type:", typeof assetName);
       console.log("[DEBUG] API: API URL:", API_URL);
 
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("pennKey", pennKey);
+      formData.append("note", note);
       formData.append("version", version);
+      formData.append("hasTexture", String(hasTexture));
+      for (const keyword of keywordsRawList) {
+        formData.append("keywordsRawList[]", keyword); 
+      }
+      formData.append("assetName", assetName);
 
       const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
         method: "POST",
@@ -107,7 +118,9 @@ export const server = {
   }),
 
   checkoutAsset: defineAction({
-    input: z.object({ assetName: z.string(), pennKey: z.string() }),
+    input: z.object({
+      assetName: z.string(),
+      pennKey: z.string() }),
     handler: async ({ assetName, pennKey }) => {
       const response = await fetch(`${API_URL}/assets/${assetName}/checkout/`, {
         method: "POST",

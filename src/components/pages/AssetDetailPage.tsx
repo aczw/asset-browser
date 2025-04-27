@@ -173,6 +173,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     formData.append("assetName", assetName);
     formData.append("pennKey", user.pennId);
     formData.append("file", userFiles[0]);
+    formData.append("file", userFiles[0]);
+
     // formData.append("metadata", metadata); // TO DO: formData cannot append custom metadata type?
 
     const { data, error } = await actions.checkinAsset(formData);

@@ -66,11 +66,6 @@ const CheckInStep2 = ({
     uploadedFiles.forEach((file) => {
       const fileName = file.name.toLowerCase();
 
-      // Valid patterns:
-      // 1. assetName.usda (eg. skateboard.usda)
-      // 2. assetName_variantName.usda (eg. skateboard_LOD2.usda)
-      // 3. thumbnail.png
-
       const isValid = fileName.endsWith(".zip");
 
       if (!isValid) {
@@ -102,8 +97,15 @@ const CheckInStep2 = ({
       return;
     }
 
+    if (!verified.success) {
+      setVerificationMessage(`Files did not verify! ${verified.message}`);
+      setVerificationComplete(false);
+      return;
+    }
+
     setVerificationMessage("All files have valid names!");
     setVerificationComplete(true);
+
   };
 
   return (

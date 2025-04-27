@@ -25,7 +25,9 @@ const CheckInStep2 = ({
   onBack,
 }: CheckInStep2Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(
+    null
+  );
   const [invalidFiles, setInvalidFiles] = useState<string[]>([]);
 
   const handleUploadClick = () => {
@@ -91,12 +93,6 @@ const CheckInStep2 = ({
       return;
     }
 
-    if (!verified.result) {
-      setVerificationMessage(`Files did not verify! \n${verified.error_msg}`);
-      setVerificationComplete(false);
-      return;
-    }
-
     if (!verified.success) {
       setVerificationMessage(`Files did not verify! ${verified.message}`);
       setVerificationComplete(false);
@@ -105,14 +101,15 @@ const CheckInStep2 = ({
 
     setVerificationMessage("All files have valid names!");
     setVerificationComplete(true);
-
   };
 
   return (
     <div className="space-y-4">
       <DialogHeader>
         <p className="text-sm text-muted-foreground">Check-in Step 2 of 3</p>
-        <DialogTitle className="text-xl">Upload and Automatic Checks</DialogTitle>
+        <DialogTitle className="text-xl">
+          Upload and Automatic Checks
+        </DialogTitle>
       </DialogHeader>
 
       <div className="space-y-4">
@@ -182,17 +179,21 @@ const CheckInStep2 = ({
               verificationComplete ? "text-green-600" : "text-red-500"
             }`}
             dangerouslySetInnerHTML={{
-              __html: verificationMessage.replace(/\n/g, '<br />')
+              __html: verificationMessage.replace(/\n/g, "<br />"),
             }}
           />
         )}
 
         {invalidFiles.length > 0 && (
           <div className="border border-red-200 bg-red-50 rounded-md p-3">
-            <p className="text-sm font-medium text-red-700 mb-2">Invalid file names:</p>
+            <p className="text-sm font-medium text-red-700 mb-2">
+              Invalid file names:
+            </p>
             <ul className="space-y-1 text-sm text-red-600">
               {invalidFiles.map((fileName, index) => (
-                <li key={index}>• {fileName} - should follow one of the valid patterns</li>
+                <li key={index}>
+                  • {fileName} - should follow one of the valid patterns
+                </li>
               ))}
             </ul>
           </div>
@@ -200,7 +201,11 @@ const CheckInStep2 = ({
       </div>
 
       <div className="flex justify-between mt-6 gap-2">
-        <Button variant="outline" onClick={onBack} className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          onClick={onBack}
+          className="flex items-center gap-2"
+        >
           <ArrowLeft size={16} />
           Back
         </Button>

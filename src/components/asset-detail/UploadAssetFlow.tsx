@@ -27,7 +27,11 @@ interface UploadAssetFlowProps {
   onComplete: () => void;
 }
 
-const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProps) => {
+const UploadAssetFlow = ({
+  open,
+  onOpenChange,
+  onComplete,
+}: UploadAssetFlowProps) => {
   const { toast } = useToast();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -36,7 +40,9 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
   // Step 2 states
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [verificationComplete, setVerificationComplete] = useState(false);
-  const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
+  const [verificationMessage, setVerificationMessage] = useState<string | null>(
+    null
+  );
   const [invalidFiles, setInvalidFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -138,7 +144,7 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
       const formData = new FormData();
       formData.append("assetName", assetNameToVerify);
       formData.append("file", uploadedFiles[0]);
-      
+
       const { data, error } = await actions.verifyAsset(formData);
 
       if (error) {
@@ -146,9 +152,11 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
         setVerificationComplete(false);
         return;
       }
-      
-      if (!data.result) {
-        setVerificationMessage(`Files did not verify! ${data.error_msg || "Unknown error"}`);
+
+      if (!data.success) {
+        setVerificationMessage(
+          `Files did not verify! ${data.message || "Unknown error"}`
+        );
         setVerificationComplete(false);
         return;
       }
@@ -157,7 +165,9 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
       setVerificationComplete(true);
     } catch (error) {
       console.error("Verification error:", error);
-      setVerificationMessage("An error occurred during verification. Please try again.");
+      setVerificationMessage(
+        "An error occurred during verification. Please try again."
+      );
       setVerificationComplete(false);
     }
   };
@@ -174,7 +184,9 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
     return [
       `${major + 1}.00.00`, // Major update
       `${major}.${(minor + 1).toString().padStart(2, "0")}.00`, // Minor update
-      `${major}.${minor.toString().padStart(2, "0")}.${(patch + 1).toString().padStart(2, "0")}`, // Patch update
+      `${major}.${minor.toString().padStart(2, "0")}.${(patch + 1)
+        .toString()
+        .padStart(2, "0")}`, // Patch update
     ];
   };
 
@@ -266,7 +278,7 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
       });
 
       console.log(`uploaded: ${uploadedFiles[0].name}`);
-      console.log(typeof(uploadedFiles[0]));
+      console.log(typeof uploadedFiles[0]);
       console.log(`metadata: ${metadata.assetStructureVersion}`);
 
       // Prepare form data with all required fields from the createAsset action
@@ -277,8 +289,11 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
       formData.append("version", version);
       formData.append("note", description);
       formData.append("hasTexture", materials === "Yes" ? "true" : "false");
-      
-      const keywordsArray = keywords.split(",").map(k => k.trim()).filter(k => k !== "");
+
+      const keywordsArray = keywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter((k) => k !== "");
       for (const keyword of keywordsArray) {
         formData.append("keywordsRawList[]", keyword);
       }
@@ -344,8 +359,12 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
         {step === 2 && (
           <div className="space-y-4">
             <DialogHeader>
-              <p className="text-sm text-muted-foreground">Check-in Step 2 of 3</p>
-              <DialogTitle className="text-xl">Upload and Automatic Checks</DialogTitle>
+              <p className="text-sm text-muted-foreground">
+                Check-in Step 2 of 3
+              </p>
+              <DialogTitle className="text-xl">
+                Upload and Automatic Checks
+              </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
@@ -410,17 +429,21 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
                     verificationComplete ? "text-green-600" : "text-red-500"
                   }`}
                   dangerouslySetInnerHTML={{
-                    __html: verificationMessage.replace(/\n/g, '<br />')
+                    __html: verificationMessage.replace(/\n/g, "<br />"),
                   }}
                 />
               )}
 
               {invalidFiles.length > 0 && (
                 <div className="border border-red-200 bg-red-50 rounded-md p-3">
-                  <p className="text-sm font-medium text-red-700 mb-2">Invalid file names:</p>
+                  <p className="text-sm font-medium text-red-700 mb-2">
+                    Invalid file names:
+                  </p>
                   <ul className="space-y-1 text-sm text-red-600">
                     {invalidFiles.map((fileName, index) => (
-                      <li key={index}>• {fileName} - should follow one of the valid patterns</li>
+                      <li key={index}>
+                        • {fileName} - should follow one of the valid patterns
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -428,7 +451,11 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
             </div>
 
             <div className="flex justify-between mt-6 gap-2">
-              <Button variant="outline" onClick={() => setStep(1)} className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="flex items-center gap-2"
+              >
                 <ArrowLeft size={16} />
                 Back
               </Button>
@@ -443,7 +470,9 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
           <div className="flex flex-col h-full max-h-[75vh]">
             <DialogHeader className="pb-4">
               <div>
-                <p className="text-sm text-muted-foreground">Check-in Step 3 of 3</p>
+                <p className="text-sm text-muted-foreground">
+                  Check-in Step 3 of 3
+                </p>
                 <DialogTitle className="text-xl">Metadata Update</DialogTitle>
               </div>
             </DialogHeader>
@@ -455,7 +484,12 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
                   <label htmlFor="author" className="text-sm font-medium">
                     Author *
                   </label>
-                  <Input id="author" value={user?.name || ""} readOnly className="bg-muted" />
+                  <Input
+                    id="author"
+                    value={user?.name || ""}
+                    readOnly
+                    className="bg-muted"
+                  />
                 </div>
 
                 {/* Date Field */}
@@ -477,7 +511,12 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                      />
                     </PopoverContent>
                   </Popover>
                 </div>
@@ -548,7 +587,11 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
             </ScrollArea>
 
             <div className="flex justify-between pt-4 mt-auto border-t gap-2">
-              <Button variant="outline" onClick={() => setStep(2)} className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setStep(2)}
+                className="flex items-center gap-2"
+              >
                 <ArrowLeft size={16} />
                 Back
               </Button>

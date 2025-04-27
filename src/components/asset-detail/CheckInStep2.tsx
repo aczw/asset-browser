@@ -92,7 +92,7 @@ const CheckInStep2 = ({
     }
 
     if (!verified.result) {
-      setVerificationMessage(`Files did not verify! ${verified.error_msg}`);
+      setVerificationMessage(`Files did not verify! \n${verified.error_msg}`);
       setVerificationComplete(false);
       return;
     }
@@ -181,9 +181,10 @@ const CheckInStep2 = ({
             className={`p-2 text-center text-sm font-medium ${
               verificationComplete ? "text-green-600" : "text-red-500"
             }`}
-          >
-            {verificationMessage}
-          </div>
+            dangerouslySetInnerHTML={{
+              __html: verificationMessage.replace(/\n/g, '<br />')
+            }}
+          />
         )}
 
         {invalidFiles.length > 0 && (

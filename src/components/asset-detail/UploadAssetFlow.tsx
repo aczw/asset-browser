@@ -409,9 +409,10 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
                   className={`p-2 text-center text-sm font-medium ${
                     verificationComplete ? "text-green-600" : "text-red-500"
                   }`}
-                >
-                  {verificationMessage}
-                </div>
+                  dangerouslySetInnerHTML={{
+                    __html: verificationMessage.replace(/\n/g, '<br />')
+                  }}
+                />
               )}
 
               {invalidFiles.length > 0 && (

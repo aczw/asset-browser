@@ -155,7 +155,7 @@ const UploadAssetFlow = ({
 
       if (!data.success) {
         setVerificationMessage(
-          `Files did not verify! ${data.message || "Unknown error"}`
+          `Files did not verify! \n ${data.message || "Unknown error"}`
         );
         setVerificationComplete(false);
         return;

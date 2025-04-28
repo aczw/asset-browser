@@ -80,8 +80,9 @@ export const server = {
       hasTexture: z.boolean(),
       pennKey: z.string(),
       keywordsRawList: z.array(z.string()),
+      assetName: z.string(),
     }),
-    handler: async ({ file, pennKey, note, hasTexture, keywordsRawList }) => {
+    handler: async ({ file, pennKey, note, hasTexture, keywordsRawList, assetName }) => {
       console.log("[DEBUG] API: API URL:", API_URL);
 
       const formData = new FormData();
@@ -121,8 +122,9 @@ export const server = {
       hasTexture: z.boolean(),
       pennKey: z.string(),
       keywordsRawList: z.array(z.string()),
+      assetName: z.string(),
     }),
-    handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList }) => {
+    handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList, assetName }) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("note", note);

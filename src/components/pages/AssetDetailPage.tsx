@@ -172,6 +172,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     formData.append("version", metadata.commit.version);
     formData.append("hasTexture", metadata.hasTexture.toString());
     formData.append("pennKey", user.pennId);
+    formData.append("assetName", assetName);
 
     // Add keywords as an array
     metadata.keywords.forEach(keyword => {

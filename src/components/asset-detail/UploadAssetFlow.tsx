@@ -592,7 +592,7 @@ const UploadAssetFlow = ({
                 <ArrowLeft size={16} />
                 Back
               </Button>
-              <Button onClick={handleNextStep} disabled={!isFormValid()}>
+              <Button onClick={handleComplete} disabled={!isFormValid()}>
                 Submit
               </Button>
             </div>

@@ -160,7 +160,6 @@ const UploadAssetFlow = ({
         setVerificationComplete(false);
         return;
       }
-
       setVerificationMessage("All files have been successfully verified!");
       setVerificationComplete(true);
     } catch (error) {
@@ -337,7 +336,14 @@ const UploadAssetFlow = ({
       <DialogContent className="sm:max-w-[500px]">
         {step === 1 && (
           <>
-            <DialogTitle>Upload New Asset</DialogTitle>
+            <DialogHeader>
+              <p className="text-sm text-muted-foreground">
+                Upload Step 1 of 3
+              </p>
+              <DialogTitle className="text-xl">
+                Upload New Asset
+              </DialogTitle>
+            </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="asset-name">Asset Name</Label>
@@ -360,7 +366,7 @@ const UploadAssetFlow = ({
           <div className="space-y-4">
             <DialogHeader>
               <p className="text-sm text-muted-foreground">
-                Check-in Step 2 of 3
+                Upload Step 2 of 3
               </p>
               <DialogTitle className="text-xl">
                 Upload and Automatic Checks
@@ -471,7 +477,7 @@ const UploadAssetFlow = ({
             <DialogHeader className="pb-4">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Check-in Step 3 of 3
+                  Upload Step 3 of 3
                 </p>
                 <DialogTitle className="text-xl">Metadata Update</DialogTitle>
               </div>

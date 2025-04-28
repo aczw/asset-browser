@@ -117,6 +117,48 @@ export const server = {
     },
   }),
 
+  checkinAsset: defineAction({
+    accept: "form",
+    input: z.object({
+      file: z.instanceof(File),
+      pennKey: z.string(),
+      assetName: z.string(),
+      version: z.string(),
+      note: z.string(),
+      hasTexture: z.boolean(),
+      keywordsRawList: z.array(z.string()),
+    }),
+    handler: async ({ file, pennKey, assetName, version, note, hasTexture, keywordsRawList }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("pennKey", pennKey);
+      formData.append("note", note);
+      formData.append("version", version);
+      formData.append("hasTexture", String(hasTexture));
+      for (const keyword of keywordsRawList) {
+        formData.append("keywordsRawList[]", keyword); 
+      }
+      formData.append("assetName", assetName);
+      
+      // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
+      const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: response.statusText || "Failed to check in asset",
+        });
+      }
+
+      // TO DO: Handle metadata updates and version ID control should it happen
+      const data = await response.json();
+      return data;
+    },
+  }),
+
   checkoutAsset: defineAction({
     input: z.object({
       assetName: z.string(),
@@ -143,6 +185,8 @@ export const server = {
     },
   }),
 
+
+
   verifyAsset: defineAction({
     accept: "form",
     input: z.object({
@@ -165,37 +209,6 @@ export const server = {
       const results = await response.json();
 
       return results;
-    },
-  }),
-
-  checkinAsset: defineAction({
-    accept: "form",
-    input: z.object({
-      assetName: z.string(),
-      pennKey: z.string(),
-      file: z.instanceof(File), // used to be an array, now just one because ZIP
-      metadata: MetadataSchema,
-    }),
-    handler: async ({ assetName, pennKey, file, metadata }) => {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
-      const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: response.statusText || "Failed to check in asset",
-        });
-      }
-
-      // TO DO: Handle metadata updates and version ID control should it happen
-      const data = await response.json();
-      return data;
     },
   }),
 

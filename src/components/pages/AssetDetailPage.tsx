@@ -50,7 +50,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
   const handleMetadataChange = (newMetadata: Metadata) => {
     console.log("Metadata changed:", newMetadata);
-    setMetadata(metadata);
+    setMetadata(newMetadata);
   };
 
   const fetchAsset = async () => {
@@ -160,22 +160,24 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const handleCheckIn = async () => {
     console.log("It's time to check in.");
 
-    if (!assetName || !user || !asset || !metadata || userFiles.length === 0 || !metadata) return;
+    if (!assetName || !user || !asset || !metadata || userFiles.length === 0) return;
 
-    console.log("good job on making it this far");
-    console.log(`Metadata: ${metadata}`);
-    console.log(`Files: ${userFiles}`);
-    console.log("Asset name:", assetName);
-    console.log("User:", user);
+    console.log("Preparing check-in data");
+    console.log("Metadata:", metadata);
+    console.log("Files:", userFiles);
 
-    // TO DO: Replace userFiles with a single file, not an array
     const formData = new FormData();
     formData.append("assetName", assetName);
     formData.append("pennKey", user.pennId);
     formData.append("file", userFiles[0]);
-    formData.append("file", userFiles[0]);
-
-    // formData.append("metadata", metadata); // TO DO: formData cannot append custom metadata type?
+    formData.append("version", metadata.commit.version);
+    formData.append("note", metadata.commit.note);
+    formData.append("hasTexture", metadata.hasTexture.toString());
+    
+    // Add keywords as an array
+    metadata.keywords.forEach(keyword => {
+      formData.append("keywordsRawList[]", keyword);
+    });
 
     const { data, error } = await actions.checkinAsset(formData);
 

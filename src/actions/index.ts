@@ -76,27 +76,22 @@ export const server = {
     accept: "form",
     input: z.object({
       file: z.instanceof(File),
-      pennKey: z.string(),
-      assetName: z.string(),
-      version: z.string(),
       note: z.string(),
       hasTexture: z.boolean(),
+      pennKey: z.string(),
       keywordsRawList: z.array(z.string()),
     }),
-    handler: async ({ file, pennKey, assetName, version, note, hasTexture, keywordsRawList }) => {
-      console.log("[DEBUG] API: assetName type:", typeof assetName);
+    handler: async ({ file, pennKey, note, hasTexture, keywordsRawList }) => {
       console.log("[DEBUG] API: API URL:", API_URL);
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("pennKey", pennKey);
       formData.append("note", note);
-      formData.append("version", version);
       formData.append("hasTexture", String(hasTexture));
+      formData.append("pennKey", pennKey);
       for (const keyword of keywordsRawList) {
         formData.append("keywordsRawList[]", keyword); 
       }
-      formData.append("assetName", assetName);
 
       const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
         method: "POST",
@@ -121,25 +116,23 @@ export const server = {
     accept: "form",
     input: z.object({
       file: z.instanceof(File),
-      pennKey: z.string(),
-      assetName: z.string(),
-      version: z.string(),
       note: z.string(),
+      version: z.string(),
       hasTexture: z.boolean(),
+      pennKey: z.string(),
       keywordsRawList: z.array(z.string()),
     }),
-    handler: async ({ file, pennKey, assetName, version, note, hasTexture, keywordsRawList }) => {
+    handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList }) => {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("pennKey", pennKey);
       formData.append("note", note);
       formData.append("version", version);
       formData.append("hasTexture", String(hasTexture));
+      formData.append("pennKey", pennKey);
       for (const keyword of keywordsRawList) {
         formData.append("keywordsRawList[]", keyword); 
       }
-      formData.append("assetName", assetName);
-      
+
       // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
       const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
         method: "POST",

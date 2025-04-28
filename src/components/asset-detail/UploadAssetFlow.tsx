@@ -48,7 +48,7 @@ const UploadAssetFlow = ({
 
   // Step 3 states
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [version, setVersion] = useState<string>("");
+  const [version, setVersion] = useState<string>("1.00.00");
   const [materials, setMaterials] = useState<string>("None");
   const [keywords, setKeywords] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -193,15 +193,13 @@ const UploadAssetFlow = ({
 
   // Hardcoded user for now
   const user = {
-    pennId: "fakepennkey",
-    name: "Fake User",
+    pennId: "soominp",
+    name: "Jacky Park",
   };
 
-  // Set default version to major update
+  // Set default version to 1.00.00 for new assets
   useState(() => {
-    if (versionOptions.length > 0 && !version) {
-      setVersion(versionOptions[0]);
-    }
+    setVersion("1.00.00");
     setKeywords(mockAsset.keywords.join(", "));
   });
 
@@ -285,7 +283,6 @@ const UploadAssetFlow = ({
       formData.append("file", uploadedFiles[0] as File);
       formData.append("pennKey", user.pennId);
       formData.append("assetName", assetName);
-      formData.append("version", version);
       formData.append("note", description);
       formData.append("hasTexture", materials === "Yes" ? "true" : "false");
 
@@ -532,18 +529,12 @@ const UploadAssetFlow = ({
                   <label htmlFor="version" className="text-sm font-medium">
                     Version *
                   </label>
-                  <Select value={version} onValueChange={setVersion}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select version" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {versionOptions.map((v) => (
-                        <SelectItem key={v} value={v}>
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="version"
+                    value={version}
+                    readOnly
+                    className="bg-muted"
+                  />
                 </div>
 
                 {/* Materials Field */}

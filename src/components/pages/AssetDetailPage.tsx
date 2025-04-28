@@ -167,13 +167,12 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     console.log("Files:", userFiles);
 
     const formData = new FormData();
-    formData.append("assetName", assetName);
-    formData.append("pennKey", user.pennId);
     formData.append("file", userFiles[0]);
-    formData.append("version", metadata.commit.version);
     formData.append("note", metadata.commit.note);
+    formData.append("version", metadata.commit.version);
     formData.append("hasTexture", metadata.hasTexture.toString());
-    
+    formData.append("pennKey", user.pennId);
+
     // Add keywords as an array
     metadata.keywords.forEach(keyword => {
       formData.append("keywordsRawList[]", keyword);

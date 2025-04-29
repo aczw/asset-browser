@@ -4,13 +4,13 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import type { AssetWithDetails } from "@/lib/types";
 import { type Metadata } from "@/lib/types";
+import { getAccessToken } from "@/utils/utils";
 import { actions } from "astro:actions";
 import { Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
 import AssetInfoFlow from "../asset-detail/AssetInfoFlow";
 import AssetPreview from "../asset-detail/AssetPreview";
-import { getAccessToken } from "@/utils/utils";
 
 interface AssetDetailPageProps {
   assetName: string;
@@ -101,7 +101,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
     setIsCheckingOut(true);
 
-    let token = await getAccessToken()
+    let token = await getAccessToken();
     if (!token.success) {
       console.error("Error checking out asset:", "No authentication.");
       toast({
@@ -109,12 +109,14 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
         description: `You must be logged in to check out asset "${assetName}".`,
         variant: "destructive",
       });
-      setTimeout(()=>{window.location.href = '/login/';}, 1500)
+      setTimeout(() => {
+        window.location.href = "/login/";
+      }, 1500);
       return;
-    } 
+    }
 
     let accessToken = token.accessToken;
-    
+
     const { data, error } = await actions.checkoutAsset({
       assetName,
       pennKey: user.pennId,
@@ -130,6 +132,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       });
     } else {
       const { asset: updatedAsset, downloadUrl } = data;
+
+      console.log("updated asset:", updatedAsset);
 
       setAsset(updatedAsset);
       toast({
@@ -188,7 +192,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   }) => {
     console.log("It's time to check in.");
 
-    let token = await getAccessToken()
+    let token = await getAccessToken();
     if (!token.success) {
       console.error("Error checking in asset:", "No authentication.");
       toast({
@@ -196,9 +200,11 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
         description: `You must be logged in to check in asset "${assetName}".`,
         variant: "destructive",
       });
-      setTimeout(()=>{window.location.href = '/login/';}, 1500)
+      setTimeout(() => {
+        window.location.href = "/login/";
+      }, 1500);
       return;
-    } 
+    }
 
     let accessToken = token.accessToken;
 
@@ -245,18 +251,18 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
   const handleDownload = async (version?: string) => {
     console.log("[DEBUG] handleDownload called with assetName:", assetName, "version:", version);
-  
+
     if (!assetName) {
       console.log("[DEBUG] No assetName provided, returning early");
       return;
     }
-  
+
     console.log("[DEBUG] Calling downloadAsset");
     const { data, error } = await actions.downloadAsset({ assetName, version });
-  
+
     if (error) {
       console.error("[DEBUG] Error in handleDownload:", error.message);
-  
+
       toast({
         title: "Download Error",
         description: "Failed to download the asset. Please try again.",
@@ -265,14 +271,14 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     } else {
       // Convert array buffer to blob for easier usage
       const blob = new Blob([data], { type: "application/zip" });
-  
+
       // Get the blob from the response
       console.log("[DEBUG] Received blob of size:", blob.size);
-  
+
       // Create a URL for the blob
       const url = window.URL.createObjectURL(blob);
       console.log("[DEBUG] Created blob URL");
-  
+
       // Create a link and click it to download the file
       const link = document.createElement("a");
       link.href = url;
@@ -280,7 +286,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       document.body.appendChild(link);
       link.click();
       console.log("[DEBUG] Triggered download");
-  
+
       // Clean up
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);

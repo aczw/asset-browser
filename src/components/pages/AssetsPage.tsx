@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast, useToast } from "@/hooks/use-toast";
+import { getAccessToken } from "@/utils/utils";
 import { actions } from "astro:actions";
 import {
   ArrowUpDownIcon,
@@ -34,13 +35,12 @@ import {
   UserIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAccessToken } from "@/utils/utils";
 
 interface SearchBarProps {
   users: GetUsersBody["users"];
   onSearch: (search: string) => void;
   onAuthorFilter: (author: string | null) => void;
-  onAssetStatusFilter: (assetStatus: string) => void;
+  onAssetStatusFilter: (assetStatus: "none" | "check-in" | "check-out") => void;
   onSort: (sortBy: string) => void;
 }
 
@@ -65,7 +65,7 @@ const SearchBar = ({
     { label: "Recently created", value: "created" },
   ];
 
-  const checkInOptions = [
+  const checkInOptions: { label: string; value: "none" | "check-in" | "check-out" }[] = [
     { label: "None", value: "none" },
     { label: "Checked-in only", value: "check-in" },
     { label: "Checked-out only", value: "check-out" },
@@ -76,7 +76,7 @@ const SearchBar = ({
     onSearch(searchValue);
   };
 
-  const handleCheckedInToggle = (status: string) => {
+  const handleCheckedInToggle = (status: "none" | "check-in" | "check-out") => {
     setAssetStatus(status);
     onAssetStatusFilter(status);
   };
@@ -210,17 +210,19 @@ const SearchBar = ({
         <Button
           variant="default"
           onClick={async () => {
-            let token = await getAccessToken()
+            let token = await getAccessToken();
             if (!token.success) {
               toast({
                 title: "Upload Error",
                 description: `You must be logged in to upload an asset.`,
                 variant: "destructive",
               });
-              setTimeout(()=>{window.location.href = '/login/';}, 1500)
+              setTimeout(() => {
+                window.location.href = "/login/";
+              }, 1500);
               return;
-            } 
-            setCreateAssetOpen(true)
+            }
+            setCreateAssetOpen(true);
           }}
           className="flex items-center gap-1"
         >
@@ -248,7 +250,7 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAuthor, setFilterAuthor] = useState<string | null>(null);
-  const [assetStatus, setAssetStatus] = useState("none");
+  const [assetStatus, setAssetStatus] = useState<"none" | "check-in" | "check-out">("none");
   const [sortBy, setSortBy] = useState("updated");
 
   if (error) {
@@ -267,7 +269,7 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
     const payload = {
       search: searchTerm,
       author: filterAuthor || undefined,
-      assetStatus: assetStatus === "none" ? undefined : assetStatus === "check-in" ? true : false,
+      assetStatus,
       sortBy,
     };
 

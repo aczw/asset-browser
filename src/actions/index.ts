@@ -1,9 +1,8 @@
 import { findHoudiniPath, findHythonPath, writePythonHipFile } from "@/lib/launch-dcc";
-import { MetadataSchema, type GetUserBody, type GetUsersBody, type SingleUser } from "@/lib/types";
+import { type AssetWithDetails, type GetUserBody, type GetUsersBody, type SingleUser } from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { execFile } from "child_process";
-//import jwt_decode from 'jwt-decode';
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -19,7 +18,7 @@ export const server = {
       .object({
         search: z.string().optional(),
         author: z.string().optional(),
-        assetStatus: z.boolean().optional(),
+        assetStatus: z.enum(["none", "check-in", "check-out"]),
         sortBy: z.string().optional(),
       })
       .optional(),
@@ -32,13 +31,7 @@ export const server = {
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
       if (params?.author) queryParams.append("author", params.author);
-      if (params?.assetStatus !== undefined) {
-        if (params.assetStatus) {
-          queryParams.append("checkedInOnly", "true");
-        } else {
-          queryParams.append("checkedInOnly", "false");
-        }
-      }
+      if (params?.assetStatus) queryParams.append("assetStatus", params.assetStatus);
       if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
 
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
@@ -54,8 +47,7 @@ export const server = {
         });
       }
 
-      const data = await response.json();
-      //console.log("[DEBUG] API: Received response:", data);
+      const data = (await response.json()) as { assets: AssetWithDetails[] };
       return data;
     },
   }),
@@ -90,7 +82,15 @@ export const server = {
       accessToken: z.string(),
     }),
 
-    handler: async ({ file, pennKey, note, hasTexture, keywordsRawList, assetName, accessToken }) => {
+    handler: async ({
+      file,
+      pennKey,
+      note,
+      hasTexture,
+      keywordsRawList,
+      assetName,
+      accessToken,
+    }) => {
       console.log("[DEBUG] API: API URL:", API_URL);
       if (typeof keywordsRawList === "string") {
         keywordsRawList = JSON.parse(keywordsRawList);
@@ -108,7 +108,7 @@ export const server = {
 
       const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}`},
+        headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,
       });
 
@@ -142,7 +142,16 @@ export const server = {
       accessToken: z.string(),
     }),
 
-    handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList, assetName, accessToken }) => {
+    handler: async ({
+      file,
+      pennKey,
+      version,
+      note,
+      hasTexture,
+      keywordsRawList,
+      assetName,
+      accessToken,
+    }) => {
       if (typeof keywordsRawList === "string") {
         keywordsRawList = JSON.parse(keywordsRawList);
       }
@@ -155,14 +164,14 @@ export const server = {
       for (const keyword of keywordsRawList) {
         formData.append("keywordsRawList", keyword);
       }
-      formData.append("accessToken", accessToken)
+      formData.append("accessToken", accessToken);
 
-      console.log('formdata = ', formData);
+      console.log("formdata = ", formData);
 
       // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
       const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
         method: "PUT",
-        headers: { Authorization: `Bearer ${accessToken}`},
+        headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,
       });
 
@@ -192,7 +201,7 @@ export const server = {
       const response = await fetch(`${API_URL}/assets/${assetName}/checkout/`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         // Note: backend expects 'pennkey' not 'pennKey' (lowercase "K")
@@ -247,30 +256,30 @@ export const server = {
     }),
     handler: async ({ assetName, version }) => {
       console.log("[DEBUG] downloadAsset called with assetName:", assetName, "version:", version);
-  
+
       // Construct the endpoint URL based on whether a version is provided
       let endpoint = `${API_URL}/assets/${assetName}/download`;
       if (version) {
         endpoint = `${API_URL}/assets/${assetName}/download/commit/${version}/`;
       }
-  
+
       // Call API in both development and production
       console.log("[DEBUG] Making API call to:", endpoint);
       const response = await fetch(endpoint);
-  
+
       if (!response.ok) {
         console.log("[DEBUG] Error occurred! API response status code:", response.status);
-  
+
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to download asset",
         });
       }
-  
+
       // Get the blob from the response
       const blob = await response.blob();
       console.log("[DEBUG] Received blob of size:", blob.size);
-  
+
       // Action handlers don't support directly returning blobs. See https://github.com/rich-harris/devalue
       const arrayBuffer = await blob.arrayBuffer();
       return arrayBuffer;

@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import type { AssetWithDetails, Commit, Metadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "../../components/ui/checkbox";
 import { actions } from "astro:actions";
 import { format } from "date-fns";
 import {
@@ -84,6 +85,7 @@ const AssetInfoFlow = ({
   const [verificationComplete, setVerificationComplete] = useState(false);
   const [verificationMessage, setVerificationMessage] = useState<string | null>(null);
   const [invalidFiles, setInvalidFiles] = useState<string[]>([]);
+  const [isStrict, setIsStrict] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Step 3 states
@@ -176,56 +178,59 @@ const AssetInfoFlow = ({
       setVerificationComplete(false);
       return;
     }
-
+  
     // Get the asset name for verification
     const assetNameToVerify = asset.name;
-
+  
     const invalidFilesList: string[] = [];
-
+  
     if (!assetNameToVerify) {
       setVerificationMessage("Asset name is required for verification");
       setVerificationComplete(false);
       return;
     }
-
+  
     // Check if any files don't match the expected pattern
     const validFilePatterns = [
       new RegExp(`^${assetNameToVerify}\\.zip$`, "i"),
       new RegExp(`^${assetNameToVerify}_v\\d+\\.zip$`, "i"),
       new RegExp(`^${assetNameToVerify}_\\d+\\.\\d+\\.\\d+\\.zip$`, "i"),
     ];
-
+  
     for (const file of uploadedFiles) {
       const isValid = validFilePatterns.some((pattern) => pattern.test(file.name));
       if (!isValid) {
         invalidFilesList.push(file.name);
       }
     }
-
+  
     if (invalidFilesList.length > 0) {
       setInvalidFiles(invalidFilesList);
       setVerificationMessage("Some files do not follow the required naming pattern.");
       setVerificationComplete(false);
       return;
     }
-
+  
     setInvalidFiles([]);
-
+  
     // Verify files with backend
     try {
       const formData = new FormData();
       formData.append("assetName", assetNameToVerify);
       formData.append("file", uploadedFiles[0]);
+      formData.append("isStrict", isStrict.toString()); // Add this line
+      
       const { data, error } = await actions.verifyAsset(formData);
+      
       if (!data.success) {
         setVerificationMessage(`Files did not verify! \n${data.message || "Unknown error"}`);
         setVerificationComplete(false);
         return;
       }
-
+  
       setVerificationMessage("Files verified successfully!");
       setVerificationComplete(true);
-
+  
       // Prepare metadata for the next step
       onFilesChange(uploadedFiles);
     } catch (error) {
@@ -486,6 +491,17 @@ const AssetInfoFlow = ({
                   Verify files
                 </Button>
 
+                <div className="w-full flex items-center justify-center gap-2 pb-1">
+                  <div>
+                    Verification Strict Mode?
+                  </div>
+                  <Checkbox
+                    checked={isStrict}
+                    onCheckedChange={(checked) =>
+                      setIsStrict(checked as boolean)
+                    }
+                  />
+                </div>
                 {verificationMessage && (
                   <div
                     className={`p-2 text-center text-sm font-medium ${

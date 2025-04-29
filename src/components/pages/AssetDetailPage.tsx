@@ -378,9 +378,6 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       </div>
     );
   }
-  console.log(asset.checkedOutBy === user.pennId);
-  console.log(asset.checkedOutBy);
-  console.log(user.pennId);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-14 space-y-6">

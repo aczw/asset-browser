@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { actions } from "astro:actions";
 import { format } from "date-fns";
 import { ArrowLeft, Calendar as CalendarIcon, FileUp, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Checkbox } from "../../components/ui/checkbox";
 import { getAccessToken } from "../../utils/utils";
 import { Button } from "../ui/button";
@@ -45,7 +45,28 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
   const [keywords, setKeywords] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [metadata, setMetadata] = useState<Metadata>({} as Metadata);
+  const [user, setUser] = useState<{ pennId: string; fullName: string }>({
+    pennId: "anonymous",
+    fullName: "Anonymous",
+  });
 
+  useEffect(() => {
+    const getSelf = async () => {
+      let token = await getAccessToken();
+      if (token.success) {
+        let accessToken = token.accessToken;
+        let response = await actions.getMe({ accessToken });
+
+        setUser({
+          pennId: response.data!.pennkey,
+          fullName: response.data!.firstName + " " + response.data!.lastName,
+        });
+      }
+    };
+
+    getSelf();
+  }, []);
+  
   // Mock asset for steps 2 and 3
   const mockAsset = {
     name: assetName || "New Asset",
@@ -177,12 +198,6 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
   };
 
   const versionOptions = getVersionOptions();
-
-  // Hardcoded user for now
-  const user = {
-    pennId: "soominp",
-    name: "Jacky Park",
-  };
 
   // Set default version to 1.00.00 for new assets
   useState(() => {

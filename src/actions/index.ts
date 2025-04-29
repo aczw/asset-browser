@@ -469,6 +469,24 @@ export const server = {
     }
   }),
 
+  // assetExists: defineAction({
+  //   input: z.object({ assetName: z.string() }),
+  //   handler: async ({ assetName }) => {
+  //     console.log("[DEBUG] API: assetName type:", typeof assetName);
+
+  //     const response = await fetch(`${API_URL}/assets/${assetName}/exists`);
+  //     if (!response.ok) {
+  //       throw new ActionError({
+  //         code: "INTERNAL_SERVER_ERROR",
+  //         message: "Failed to fetch asset details",
+  //       });
+  //     }
+
+  //     const data = await response.json();
+  //     return data;
+  //   },
+  // }),
+
   assetExists: defineAction({
     input: z.object({
       assetName: z.string(),
@@ -478,19 +496,19 @@ export const server = {
       
       try {
         // Try the first endpoint format
-        
-        let response = await fetch(`${API_URL}/assets/${assetName}/exists/`, {
+        let response = await fetch(`${API_URL}/assets/${assetName}/exists`, {
           method: "GET",
         });
         
         if (!response.ok) {
           console.error(`Endpoint failed. Returning default response.`);
-          return { exists: false };
+          // return { exists: true };
         }
 
         const data = await response.json();
         console.log(`Response data:`, data);
         return data;
+        
       } catch (error) {
         console.error(`Fetch error:`, error);
         // Return a default response that allows the user to proceed

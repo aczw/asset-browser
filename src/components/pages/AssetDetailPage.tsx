@@ -280,12 +280,16 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     }
   };
 
-  const handleLaunchDCC = async () => {
+  const handleLaunchDCC = async (version?: string) => {
     console.log("It's time to launch Houdini.");
 
     console.log("[DEBUG] API: launchDCC called");
 
-    const { data, error } = await actions.launchDCC({ assetName });
+    const { data, error } = await actions.launchDCC({ assetName, version });
+
+    const launchURL = `houdini-launch://${assetName}?assetVersion=${version}`;
+    window.open(launchURL, "_blank");
+
 
     return { message: "Application launched successfully" };
   };

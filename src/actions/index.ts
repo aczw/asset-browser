@@ -120,7 +120,7 @@ function findHythonPath(): string | null {
   return null;
 }
 
-async function writePythonHipFile(filePath:string, assetName:string, checkedOut:boolean) {
+async function writePythonHipFile(filePath:string, assetName:string, version:string) {
 
   const response = await fetch(`${API_URL}/assets/${assetName}`);
   if (!response.ok) {
@@ -128,7 +128,7 @@ async function writePythonHipFile(filePath:string, assetName:string, checkedOut:
   }
 
   const data = await response.json();
-  let checked : boolean = data.checkedOutBy !== data.userName;
+  //let checked : boolean = data.checkedOutBy !== data.userName;
 
 
 
@@ -151,11 +151,11 @@ def create_simple_scene():
     # Connect and layout
     sphere.moveToGoodPosition()
 
-    # Create null node with checkedOut status
-    null_node = obj.createNode('null', 'status')
-    null_node.addSpareParmTuple(hou.ToggleParmTemplate("checked_out", "Checked Out"))
-    null_node.parm("checked_out").set(${checked ? "True" : "False"})
-    null_node.moveToGoodPosition()
+    # Create null node with version 
+    # null_node = obj.createNode('null', 'status')
+    # null_node.addSpareParmTuple(hou.ToggleParmTemplate("checked_out", "Checked Out"))
+    # null_node.parm("checked_out").set(${checked ? "True" : "False"})
+    # null_node.moveToGoodPosition()
     
     # Save the file
     output_path = sys.argv[1] if len(sys.argv) > 1 else "C:/temp/generated_scene.hip"
@@ -453,8 +453,9 @@ export const server = {
   launchDCC: defineAction({
     input: z.object({
       assetName: z.string(),
+      version: z.string().optional(),
     }),
-    handler: async ({ assetName }) => {
+    handler: async ({ assetName, version }) => {
       console.log("[DEBUG] API: launchDCC called");
 
       const isWindows = os.platform() === 'win32';
@@ -542,7 +543,7 @@ export const server = {
       //const exePath = findHoudiniPath();
       //const outputHipFile = outputDir +'\generated_scene.hip';
 
-      writePythonHipFile(process.cwd()+"\\writtenPythonScript.py",assetName,isCheckedOut);
+      writePythonHipFile(process.cwd()+"\\writtenPythonScript.py",assetName,version);
       const pythonScript = process.cwd() + "\\writtenPythonScript.py";
       const outputHipFile = outputDir +'\generated_scene.hip';
       

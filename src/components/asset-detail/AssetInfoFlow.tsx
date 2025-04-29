@@ -407,9 +407,10 @@ const AssetInfoFlow = ({
           <PlayCircle className="h-4 w-4" />
           Launch DCC
         </Button>
+
         <Button
           variant="outline"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 col-span-2"
           onClick={() => onDownloadByTag("approved")}
           disabled={isDownloading}
         >

@@ -2,6 +2,8 @@ import GUI from "lil-gui";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OutlineEffect } from "three/addons/effects/OutlineEffect.js";
+import { color, instance } from "three/src/nodes/TSL.js";
 
 type DisplayOptions = "window" | "fullscreen";
 
@@ -36,8 +38,14 @@ async function initModelViewers(
   model: ArrayBuffer,
   callbackWhenFinished: () => void
 ) {
-  const windowRenderer = new THREE.WebGLRenderer({ antialias: true, canvas: windowCanvas });
-  const fullscreenRenderer = new THREE.WebGLRenderer({ antialias: true, canvas: fullscreenCanvas });
+  const windowRenderer = new THREE.WebGLRenderer({
+    antialias: true,
+    canvas: windowCanvas,
+  });
+  const fullscreenRenderer = new THREE.WebGLRenderer({
+    antialias: true,
+    canvas: fullscreenCanvas,
+  });
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, 2, 0.1, 2000);
@@ -86,11 +94,85 @@ async function initModelViewers(
   camera.add(dirLight);
   scene.add(camera);
 
+  const effect = new OutlineEffect(fullscreenRenderer);
+  let diffuseColor = new THREE.Color(0x707070);
+
+  const materials = {
+    Phong: new THREE.MeshPhongMaterial({ color: diffuseColor }),
+    Toon: new THREE.MeshToonMaterial({ color: diffuseColor }),
+    Lambert: new THREE.MeshLambertMaterial({ color: diffuseColor }),
+    Standard: new THREE.MeshStandardMaterial({ color: diffuseColor }),
+    Physical: new THREE.MeshPhysicalMaterial({ color: diffuseColor }),
+    Normals: new THREE.MeshNormalMaterial(),
+    Wireframe: new THREE.MeshBasicMaterial({ wireframe: true })
+  };
+
+  const backgrounds = {
+    Field: new THREE.CubeTextureLoader().setPath('https://sbcode.net/img/').load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'])
+  };
+  let backgroundColor = new THREE.Color(0x191919);
+  scene.environment = backgrounds.Field;
+
+  let mainMeshes: THREE.Mesh[] = [];
+  const meshMatMap = new Map<THREE.Mesh, THREE.MeshStandardMaterial>();
+
+  // Based off of this discussion: https://discourse.threejs.org/t/adding-multiple-materials-layers-to-a-loaded-object/14117/14
+  gltfScene.traverse((child) => {
+    if (child instanceof THREE.Mesh && child.geometry) {
+      const geometry = child.geometry;
+
+      geometry.clearGroups();
+      geometry.addGroup(0, Infinity, 0);
+      geometry.addGroup(0, Infinity, 1);
+
+      const mesh = child as THREE.Mesh;
+      mainMeshes.push(child); // Keep track of meshes in scene to dynamically update materials later
+
+      const originalMaterial = child.material.clone();
+      meshMatMap.set(mesh, child.material.clone());
+
+      if (originalMaterial instanceof THREE.MeshStandardMaterial) {
+        const physicalMaterial = materials.Physical.clone();
+
+        physicalMaterial.color = originalMaterial.color;
+        physicalMaterial.emissive = originalMaterial.emissive;
+        physicalMaterial.roughness = originalMaterial.roughness;
+        physicalMaterial.metalness = originalMaterial.metalness;
+        
+        if (originalMaterial.transparent) {
+          physicalMaterial.transmission = 1;
+          physicalMaterial.clearcoat = 1;
+          physicalMaterial.ior = 1.17;
+          physicalMaterial.thickness = 5.12;
+        }
+
+        //phongMaterial.shininess = (1 - originalMaterial.roughness) * 100;
+  
+        const map = originalMaterial.map;
+        const normalMap = originalMaterial.normalMap;
+        if (map) physicalMaterial.map = originalMaterial.map;
+        if (normalMap) physicalMaterial.normalMap = originalMaterial.normalMap;
+  
+        child.material = physicalMaterial;
+      }
+    }
+  });
+
+  scene.fog = new THREE.Fog(0xcccccc, 1, 10);
+
   const guiOptions = {
     "Background Color": 0x191919,
     "Light Color": 0xffffff,
-    "Light Intensity": 3,
+    "Diffuse Color": 0xffffff,
+    "Light Intensity": 1,
+    "Show GLB colors": true,
+    "Show Environment Map": false,
+    "Enable Environment Lighting": true,
     "Auto Rotate": true,
+    "Use Outline Effect": true,
+    "Material Applied": "Physical",
+    "Fog Enabled": true,
+    "Fog Color": 0xcccccc,
   };
 
   const gui = new GUI({
@@ -100,14 +182,110 @@ async function initModelViewers(
 
   gui
     .addColor(guiOptions, "Background Color")
-    .onChange((value: number) => (scene.background = new THREE.Color(value)));
-  gui.addColor(guiOptions, "Light Color").onChange((value: number) => dirLight.color.set(value));
+    .onChange((value: number) => {
+      backgroundColor = new THREE.Color(value);
+
+      if (!guiOptions['Show Environment Map']) {
+        scene.background = new THREE.Color(value)}
+      }
+    );
+  gui
+    .add(guiOptions, "Show Environment Map")
+    .onChange((value: boolean) => {
+      scene.background = value ? backgrounds.Field : backgroundColor;
+    });
+
+  gui
+    .add(guiOptions, "Enable Environment Lighting")
+    .onChange((value: boolean) => {
+      scene.environment = value ? backgrounds.Field : null;
+    });
+
+  gui
+    .addColor(guiOptions, "Light Color")
+    .onChange((value: number) => dirLight.color.set(value));
+  gui.addColor(guiOptions, "Diffuse Color").onChange((value: number) => {
+    diffuseColor = new THREE.Color(value);
+
+    if (guiOptions["Show GLB colors"]) {
+      return;
+    }
+
+    for (const mesh of mainMeshes) {
+      const outValue = new THREE.Color(value);
+      (mesh.material as THREE.MeshStandardMaterial).color.copy(outValue);
+    }
+  });
+  
+  gui
+    .add(guiOptions, "Show GLB colors")
+    .onChange((value: boolean) => {
+      const diffuse = diffuseColor;
+
+      for (const mesh of mainMeshes) {
+        const material = meshMatMap.get(mesh)?.clone();
+        const outColor = (material && value) ? material.color.clone() : diffuse.clone();          
+        (mesh.material as THREE.MeshStandardMaterial).color.copy(outColor);
+      }
+    });
+
   gui
     .add(guiOptions, "Light Intensity", 0, 10, 0.1)
     .onChange((value: number) => (dirLight.intensity = value));
   gui.add(guiOptions, "Auto Rotate").onChange((value: boolean) => {
     controls.autoRotate = value;
     controls.update();
+  });
+
+  gui.add(guiOptions, "Use Outline Effect");
+
+  gui
+    .add(guiOptions, "Material Applied", Object.keys(materials))
+    .onChange((selected: string) => {
+      for (const mesh of mainMeshes) {
+        const originalMaterial = meshMatMap.get(mesh)?.clone();
+        const newMaterial = materials[selected as keyof typeof materials].clone();
+        
+        if (guiOptions["Show GLB colors"] && originalMaterial instanceof THREE.MeshStandardMaterial) {
+          if ('color' in newMaterial) newMaterial.color.copy(originalMaterial.color);
+          if ('emissive' in newMaterial) newMaterial.emissive.copy(originalMaterial.emissive);
+          if ('shininess' in newMaterial) newMaterial.shininess = (1 - originalMaterial.roughness) * 100;
+
+          if (originalMaterial.transparent) {
+            if ('transmission' in newMaterial) newMaterial.transmission = 1;
+            if ('clearcoat' in newMaterial) newMaterial.clearcoat = 1;
+            if ('ior' in newMaterial) newMaterial.ior = 1.17;
+            if ('thickness' in newMaterial) newMaterial.thickness = 5.12;
+          }
+
+          const map = originalMaterial.map;
+          const normalMap = originalMaterial.normalMap;
+          if (map && 'map' in newMaterial) newMaterial.map = originalMaterial.map;
+          if (normalMap && 'normalMap' in newMaterial) newMaterial.normalMap = originalMaterial.normalMap;
+        } else {
+          if ('color' in newMaterial) newMaterial.color = diffuseColor;
+        }
+
+        mesh.material = newMaterial;
+      }
+    });
+
+  gui.add(guiOptions, "Fog Enabled").onChange((enabled: boolean) => {
+    if (enabled) {
+      scene.fog = new THREE.Fog(guiOptions["Fog Color"], 1, 15);
+    } else {
+      scene.fog = null;
+    }
+  });
+
+  gui.addColor(guiOptions, "Fog Color").onChange((color: number) => {
+    if (guiOptions["Fog Enabled"]) {
+      if (!scene.fog) {
+        scene.fog = new THREE.Fog(color, 1, 15);
+      } else {
+        scene.fog.color.set(color);
+      }
+    }
   });
 
   callbackWhenFinished();
@@ -118,7 +296,13 @@ async function initModelViewers(
     resizeRendererToDisplaySize(renderer, camera, false);
 
     controls.update();
-    renderer.render(scene, camera);
+    // renderer.render(scene, camera);
+
+    if (guiOptions["Use Outline Effect"] && renderer === fullscreenRenderer) {
+      effect.render(scene, camera);
+    } else {
+      renderer.render(scene, camera);
+    }
   }
 
   const controller = {
@@ -134,7 +318,9 @@ async function initModelViewers(
         windowRenderer.setAnimationLoop(null);
         resizeRendererToDisplaySize(fullscreenRenderer, camera, true);
         controls.connect(fullscreenRenderer.domElement);
-        fullscreenRenderer.setAnimationLoop((time) => render(time, fullscreenRenderer));
+        fullscreenRenderer.setAnimationLoop((time) =>
+          render(time, fullscreenRenderer)
+        );
       }
     },
   };

@@ -31,7 +31,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col min-h-svh items-center justify-center p-6 md:p-10 gap-10 min-w-svw">
       <h1 className="text-3xl font-bold mb-2 text-left -translate-x-3">
-        <a href="/" className="hover:text-muted-foreground transition-colors font-extrabold ">
+        <a href="/" className="hover:opacity-60 transition-opacity font-extrabold opacity-100">
           🍓Papaya
         </a>
       </h1>

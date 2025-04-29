@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
 import AssetInfoFlow from "../asset-detail/AssetInfoFlow";
 import AssetPreview from "../asset-detail/AssetPreview";
+import { getAccessToken } from "@/utils/utils";
 
 interface AssetDetailPageProps {
   assetName: string;
@@ -23,6 +24,10 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const [asset, setAsset] = useState<AssetWithDetails | null>(null);
   const [userFiles, setUserFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Terrible hack! :D
+  const [firstThumbnailFetch, setFirstThumbnailFetch] = useState(true);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
 
   // Mock user for demonstration purposes
   const user = { pennId: "soominp", fullName: "Jacky Park" };
@@ -46,7 +51,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
     if (error) {
       console.error("Error fetching asset:", error);
-      setIsLoading(false);
+
       toast({
         title: "Error",
         description: "Failed to load asset details. Please try again.",
@@ -55,8 +60,14 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     } else {
       console.log("API response:", data);
       setAsset(data.asset);
-      setIsLoading(false);
+
+      if (firstThumbnailFetch) {
+        setThumbnailUrl(data.asset.thumbnailUrl);
+        setFirstThumbnailFetch(false);
+      }
     }
+
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -76,9 +87,24 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
     setIsCheckingOut(true);
 
+    let token = await getAccessToken()
+    if (!token.success) {
+      console.error("Error checking out asset:", "No authentication.");
+      toast({
+        title: "Checkout Error",
+        description: `You must be logged in to check out asset "${assetName}".`,
+        variant: "destructive",
+      });
+      setTimeout(()=>{window.location.href = '/login/';}, 1500)
+      return;
+    } 
+
+    let accessToken = token.accessToken;
+    
     const { data, error } = await actions.checkoutAsset({
       assetName,
       pennKey: user.pennId,
+      accessToken: accessToken,
     });
 
     if (error) {
@@ -146,6 +172,22 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     hasTexture: boolean;
     keywords: string;
   }) => {
+    console.log("It's time to check in.");
+
+    let token = await getAccessToken()
+    if (!token.success) {
+      console.error("Error checking in asset:", "No authentication.");
+      toast({
+        title: "Checkin Error",
+        description: `You must be logged in to check in asset "${assetName}".`,
+        variant: "destructive",
+      });
+      setTimeout(()=>{window.location.href = '/login/';}, 1500)
+      return;
+    } 
+
+    let accessToken = token.accessToken;
+
     if (!assetName || !user || !asset || userFiles.length === 0 || !checkInData) {
       return;
     }
@@ -160,11 +202,13 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     formData.append("version", checkInData.version);
     formData.append("hasTexture", checkInData.hasTexture.toString());
     formData.append("pennKey", user.pennId);
-    
+
     // Pass the keywords string directly without any further processing
     formData.append("keywordsRawList", checkInData.keywords);
-    
+
     formData.append("assetName", assetName);
+
+    formData.append("accessToken", accessToken);
 
     const { data, error } = await actions.checkinAsset(formData);
 
@@ -292,7 +336,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
         <div className="flex justify-center lg:block mt-4 lg:mt-0">
           <div className="w-[80vh] h-[80vh] bg-secondary rounded-xl overflow-hidden relative">
-            <AssetPreview asset={asset} />
+            <AssetPreview asset={asset} thumbnailUrl={thumbnailUrl} />
           </div>
         </div>
       </div>

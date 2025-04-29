@@ -14,7 +14,13 @@ type ModelViewerState = {
   display: DisplayOptions;
 };
 
-const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
+const AssetPreview = ({
+  asset,
+  thumbnailUrl,
+}: {
+  asset: AssetWithDetails;
+  thumbnailUrl: string;
+}) => {
   const { toast } = useToast();
 
   const [isFirstLoad, setIsFirstLoad] = useState(true);
@@ -72,7 +78,7 @@ const AssetPreview = ({ asset }: { asset: AssetWithDetails }) => {
   return (
     <div className="w-[80vh] h-[80vh] bg-secondary rounded-xl overflow-hidden relative">
       <img
-        src={asset.thumbnailUrl}
+        src={thumbnailUrl}
         alt={asset.name}
         loading="eager"
         className="w-full h-full object-cover"

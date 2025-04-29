@@ -2,6 +2,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { AssetWithDetails, Commit, Metadata } from "@/lib/types";
 import { useRef, useState } from "react";
 import { Button } from "../ui/button";
+import { Checkbox } from "../../components/ui/checkbox";
 import { Calendar } from "../ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
@@ -20,6 +21,7 @@ import { actions } from "astro:actions";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, ArrowLeft, FileUp, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {getAccessToken } from "../../utils/utils.tsx"
 
 interface UploadAssetFlowProps {
   open: boolean;
@@ -46,6 +48,7 @@ const UploadAssetFlow = ({
   );
   const [invalidFiles, setInvalidFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isStrict, setIsStrict] = useState<boolean>(true);
 
   // Step 3 states
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -145,6 +148,7 @@ const UploadAssetFlow = ({
       const formData = new FormData();
       formData.append("assetName", assetNameToVerify);
       formData.append("file", uploadedFiles[0]);
+      formData.append("isStrict", isStrict.toString());
 
       const { data, error } = await actions.verifyAsset(formData);
 
@@ -302,7 +306,22 @@ const UploadAssetFlow = ({
 
       console.log(`uploaded: ${uploadedFiles[0].name}`);
       console.log(typeof uploadedFiles[0]);
+      
+      let token = await getAccessToken()
+      if (!token.success) {
+        if (!token.success) {
+          toast({
+            title: "Upload Error",
+            description: `You must be logged in to upload assets.`,
+            variant: "destructive",
+          });
+          setTimeout(()=>{window.location.href = '/login/';}, 1500)
+          return;
+        } 
+      } 
 
+      let accessToken = token.accessToken;
+      
       // Prepare form data with all required fields from the createAsset action
       const formData = new FormData();
       formData.append("file", uploadedFiles[0] as File);
@@ -316,6 +335,8 @@ const UploadAssetFlow = ({
         .split(", ");
       formData.append("keywordsRawList", JSON.stringify(keywordsArray));
       console.log('strigified', JSON.stringify(keywordsArray));
+
+      formData.append("accessToken", accessToken);
 
       const { data, error } = await actions.createAsset(formData);
       console.log('Response:', data);
@@ -344,9 +365,8 @@ const UploadAssetFlow = ({
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to create asset. ${
-          error instanceof Error ? error.message : "Please try again."
-        }`,
+        description: `Failed to create asset. ${error instanceof Error ? error.message : "Please try again."
+          }`,
         variant: "destructive",
       });
     }
@@ -425,9 +445,8 @@ const UploadAssetFlow = ({
                     {uploadedFiles.map((file, index) => (
                       <li
                         key={index}
-                        className={`flex items-center justify-between border-b pb-1 ${
-                          invalidFiles.includes(file.name) ? "text-red-500" : ""
-                        }`}
+                        className={`flex items-center justify-between border-b pb-1 ${invalidFiles.includes(file.name) ? "text-red-500" : ""
+                          }`}
                       >
                         <span className="text-sm truncate">{file.name}</span>
                         <Button
@@ -453,11 +472,22 @@ const UploadAssetFlow = ({
                 Verify files
               </Button>
 
+              <div className="w-full flex items-center justify-center gap-2 pb-1">
+                <div>
+                  Verification Strict Mode?
+                </div>
+                <Checkbox
+                  checked={isStrict}
+                  onCheckedChange={(checked) =>
+                    setIsStrict(checked as boolean)
+                  }
+                />
+              </div>
+
               {verificationMessage && (
                 <div
-                  className={`p-2 text-center text-sm font-medium ${
-                    verificationComplete ? "text-green-600" : "text-red-500"
-                  }`}
+                  className={`p-2 text-center text-sm font-medium ${verificationComplete ? "text-green-600" : "text-red-500"
+                    }`}
                   dangerouslySetInnerHTML={{
                     __html: verificationMessage.replace(/\n/g, "<br />"),
                   }}

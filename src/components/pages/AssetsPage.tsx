@@ -21,7 +21,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useToast } from "@/hooks/use-toast";
+import { toast, useToast } from "@/hooks/use-toast";
 import { actions } from "astro:actions";
 import {
   ArrowUpDownIcon,
@@ -34,6 +34,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getAccessToken } from "@/utils/utils";
 
 interface SearchBarProps {
   users: GetUsersBody["users"];
@@ -208,7 +209,19 @@ const SearchBar = ({
 
         <Button
           variant="default"
-          onClick={() => setCreateAssetOpen(true)}
+          onClick={async () => {
+            let token = await getAccessToken()
+            if (!token.success) {
+              toast({
+                title: "Upload Error",
+                description: `You must be logged in to upload an asset.`,
+                variant: "destructive",
+              });
+              setTimeout(()=>{window.location.href = '/login/';}, 1500)
+              return;
+            } 
+            setCreateAssetOpen(true)
+          }}
           className="flex items-center gap-1"
         >
           <Plus className="h-4 w-4" />

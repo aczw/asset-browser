@@ -11,6 +11,7 @@ import type { AssetWithDetails, GetUsersBody } from "@/lib/types";
 import AssetGrid from "../AssetGrid";
 import UploadAssetFlow from "../asset-detail/UploadAssetFlow";
 
+import { Header } from "@/components/Header";
 import {
   Command,
   CommandEmpty,
@@ -288,41 +289,8 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
   }, [searchTerm, filterAuthor, assetStatus, sortBy]);
 
   return (
-    <div className="container mx-auto py-14 px-4 max-w-7xl">
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 text-left">
-            <a href="/" className="hover:text-muted-foreground transition-colors font-extrabold">
-              🍓Papaya
-            </a>
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Select user {"->"}</span>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center cursor-pointer hover:bg-secondary/80">
-                <User className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {users.map((user, index) => (
-                <DropdownMenuItem
-                  key={`${user.pennId}-${user.fullName}-${index}`}
-                  className="cursor-pointer"
-                >
-                  <a href={`/user/${user.pennId}`}>{user.pennId}</a>
-                </DropdownMenuItem>
-              ))}
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem className="cursor-pointer">Sign Out</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+    <div className="container mx-auto py-14 px-4 max-w-7xl space-y-6">
+      <Header users={users} />
 
       <SearchBar
         users={users}
@@ -332,9 +300,7 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
         onSort={setSortBy}
       />
 
-      <div className="mt-6">
-        <AssetGrid assets={assets} isLoading={isLoading} />
-      </div>
+      <AssetGrid assets={assets} isLoading={isLoading} />
     </div>
   );
 };

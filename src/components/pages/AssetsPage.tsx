@@ -121,9 +121,9 @@ const SearchBar = ({
               <DropdownMenuSeparator />
               <div className="max-h-[300px] overflow-y-auto">
                 <DropdownMenuGroup>
-                  {users.map((user) => (
+                  {users.map((user, index) => (
                     <DropdownMenuItem
-                      key={user.pennId}
+                      key={`${user.pennId}-${user.fullName}-${index}`}
                       onClick={() => handleAuthorSelect(user.pennId)}
                       className="flex items-center justify-between cursor-pointer"
                     >
@@ -271,8 +271,11 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {users.map((user) => (
-                <DropdownMenuItem className="cursor-pointer">
+              {users.map((user, index) => (
+                <DropdownMenuItem
+                  key={`${user.pennId}-${user.fullName}-${index}`}
+                  className="cursor-pointer"
+                >
                   <a href={`/user/${user.pennId}`}>{user.pennId}</a>
                 </DropdownMenuItem>
               ))}

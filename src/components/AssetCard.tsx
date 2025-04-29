@@ -67,9 +67,14 @@ const AssetCard = ({ asset }: AssetCardProps) => {
                   try {
                     let dateStr = asset.updatedAt;
 
-                    dateStr = dateStr.replace(/([+-]\d{2})$/, "$1:00");
+                    if (dateStr) {
+                      dateStr = dateStr.replace(/([+-]\d{2})$/, "$1:00");
+                    } else {
+                      dateStr = "UnknownDate";
+                    }
 
                     const date = new Date(dateStr);
+
                     if (!isNaN(date.getTime())) {
                       return date.toLocaleString("en-US", {
                         month: "long", // "February", "March", etc.

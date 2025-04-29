@@ -1,12 +1,30 @@
-import type { AssetWithDetails, Commit } from "@/lib/types";
 import { useRef, useState, useEffect } from "react";
+import { Separator } from "@/components/ui/separator";
+import type { AssetWithDetails, Commit, Metadata } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { actions } from "astro:actions";
+import { format } from "date-fns";
+import {
+  ArrowLeft,
+  Calendar as CalendarIcon,
+  Download,
+  FileUp,
+  GitCommit,
+  Info,
+  Loader2Icon,
+  Lock,
+  LockOpen,
+  PlayCircle,
+  Tag,
+  User,
+  X,
+} from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Calendar } from "../../components/ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
-import { ScrollArea } from "../../components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -15,24 +33,6 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import { Textarea } from "../../components/ui/textarea";
-import { actions } from "astro:actions";
-import { format } from "date-fns";
-import { 
-  Calendar as CalendarIcon, 
-  Download, 
-  Lock, 
-  LockOpen, 
-  PlayCircle, 
-  ArrowLeft, 
-  FileUp, 
-  X,
-  GitCommit,
-  Info,
-  Tag,
-  User
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 
 interface AssetInfoFlowProps {
   asset: AssetWithDetails;
@@ -48,6 +48,9 @@ interface AssetInfoFlowProps {
   onDownload: () => void;
   onFilesChange: (files: File[]) => void;
   onLaunchDCC: () => void;
+  isDownloading: boolean;
+  isCheckingOut: boolean;
+  hideTitle?: boolean;
 }
 
 const AssetInfoFlow = ({
@@ -59,6 +62,9 @@ const AssetInfoFlow = ({
   onDownload,
   onFilesChange,
   onLaunchDCC,
+  isDownloading,
+  isCheckingOut,
+  hideTitle = false,
 }: AssetInfoFlowProps) => {
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [step, setStep] = useState<2 | 3>(2);
@@ -210,9 +216,7 @@ const AssetInfoFlow = ({
       formData.append("file", uploadedFiles[0]);
       const { data, error } = await actions.verifyAsset(formData);
       if (!data.success) {
-        setVerificationMessage(
-          `Files did not verify! \n${data.message || "Unknown error"}`
-        );
+        setVerificationMessage(`Files did not verify! \n${data.message || "Unknown error"}`);
         setVerificationComplete(false);
         return;
       }
@@ -237,7 +241,7 @@ const AssetInfoFlow = ({
     }
 
     // Return all versions from the commit history
-    return commitHistory.map(commit => commit.version);
+    return commitHistory.map((commit) => commit.version);
   };
   const versionOptions = getVersionOptions();
 
@@ -276,12 +280,7 @@ const AssetInfoFlow = ({
   };
 
   const isFormValid = () => {
-    return (
-      !!version &&
-      !!description &&
-      !!keywords.trim() &&
-      !!date
-    );
+    return !!version && !!description && !!keywords.trim() && !!date;
   };
 
   const handleMetadataSubmit = () => {
@@ -322,7 +321,7 @@ const AssetInfoFlow = ({
 
   useEffect(() => {
     if (version && commitHistory.length > 0) {
-      const selectedCommit = commitHistory.find(commit => commit.version === version);
+      const selectedCommit = commitHistory.find((commit) => commit.version === version);
       setSelectedCommit(selectedCommit || null);
     }
   }, [version, commitHistory]);
@@ -331,12 +330,15 @@ const AssetInfoFlow = ({
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <div className="text-sm text-muted-foreground">Version</div>
-        <Select value={selectedCommit?.version || asset?.version} onValueChange={(value) => {
-          const commit = commitHistory.find(c => c.version === value);
-          if (commit) {
-            setSelectedCommit(commit);
-          }
-        }}>
+        <Select
+          value={selectedCommit?.version || asset?.version}
+          onValueChange={(value) => {
+            const commit = commitHistory.find((c) => c.version === value);
+            if (commit) {
+              setSelectedCommit(commit);
+            }
+          }}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder={asset?.version} />
           </SelectTrigger>
@@ -351,9 +353,21 @@ const AssetInfoFlow = ({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Button className="flex items-center gap-2" onClick={onCheckout} disabled={!canCheckout}>
-          <LockOpen className="h-4 w-4" />
-          Check Out
+        <Button
+          className="flex items-center gap-2"
+          onClick={onCheckout}
+          disabled={!canCheckout || isCheckingOut}
+        >
+          {isCheckingOut ? (
+            <>
+              <Loader2Icon /> Checking out...
+            </>
+          ) : (
+            <>
+              <LockOpen className="h-4 w-4" />
+              Check Out
+            </>
+          )}
         </Button>
 
         <Button
@@ -365,9 +379,22 @@ const AssetInfoFlow = ({
           Check In
         </Button>
 
-        <Button variant="outline" className="flex items-center gap-2" onClick={onDownload}>
-          <Download className="h-4 w-4" />
-          Download Copy
+        <Button
+          variant="outline"
+          className="flex items-center gap-2"
+          onClick={onDownload}
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <Loader2Icon className="animate-spin" /> Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              Download Copy
+            </>
+          )}
         </Button>
 
         <Button variant="outline" className="flex items-center gap-2" onClick={onLaunchDCC}>
@@ -495,7 +522,12 @@ const AssetInfoFlow = ({
                     <label htmlFor="author" className="text-sm font-medium">
                       Author *
                     </label>
-                    <Input id="author" value={asset.checkedOutBy || ""} readOnly className="bg-muted" />
+                    <Input
+                      id="author"
+                      value={asset.checkedOutBy || ""}
+                      readOnly
+                      className="bg-muted"
+                    />
                   </div>
 
                   {/* Date Field */}
@@ -588,7 +620,11 @@ const AssetInfoFlow = ({
               </div>
 
               <div className="flex justify-between pt-4 mt-auto border-t gap-2">
-                <Button variant="outline" onClick={() => setStep(2)} className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(2)}
+                  className="flex items-center gap-2"
+                >
                   <ArrowLeft size={16} />
                   Back
                 </Button>
@@ -603,7 +639,7 @@ const AssetInfoFlow = ({
 
       {/* Asset Metadata Section */}
       <Separator className="my-4" />
-      
+
       <div className="space-y-4 text-left">
         {/* {!hideTitle && <h3 className="text-lg font-medium text-left">{asset?.name}</h3>} */}
 
@@ -624,26 +660,26 @@ const AssetInfoFlow = ({
                 {selectedCommit ? (selectedCommit as any).authorPennkey : asset?.lastModifiedBy}
               </div>
               <div className="text-sm text-muted-foreground">
-                {selectedCommit ? new Date(selectedCommit.timestamp).toLocaleDateString(undefined, {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }) : (
-                  asset?.updatedAt
-                    ? new Date(
-                        // If the date ends with +HH or -HH (two digits, no :00), append :00
-                        asset.updatedAt.replace(/([+-]\d{2})$/, "$1:00")
-                      ).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : ""
-                )}
+                {selectedCommit
+                  ? new Date(selectedCommit.timestamp).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : asset?.updatedAt
+                  ? new Date(
+                      // If the date ends with +HH or -HH (two digits, no :00), append :00
+                      asset.updatedAt.replace(/([+-]\d{2})$/, "$1:00")
+                    ).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : ""}
               </div>
             </div>
           </div>

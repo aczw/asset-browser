@@ -2,6 +2,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { AssetWithDetails, Commit, Metadata } from "@/lib/types";
 import { useRef, useState } from "react";
 import { Button } from "../ui/button";
+import { Checkbox } from "../../components/ui/checkbox";
 import { Calendar } from "../ui/calendar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
@@ -46,6 +47,7 @@ const UploadAssetFlow = ({
   );
   const [invalidFiles, setInvalidFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isStrict, setIsStrict] = useState<boolean>(true);
 
   // Step 3 states
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -145,6 +147,7 @@ const UploadAssetFlow = ({
       const formData = new FormData();
       formData.append("assetName", assetNameToVerify);
       formData.append("file", uploadedFiles[0]);
+      formData.append("isStrict", isStrict.toString());
 
       const { data, error } = await actions.verifyAsset(formData);
 
@@ -344,9 +347,8 @@ const UploadAssetFlow = ({
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to create asset. ${
-          error instanceof Error ? error.message : "Please try again."
-        }`,
+        description: `Failed to create asset. ${error instanceof Error ? error.message : "Please try again."
+          }`,
         variant: "destructive",
       });
     }
@@ -425,9 +427,8 @@ const UploadAssetFlow = ({
                     {uploadedFiles.map((file, index) => (
                       <li
                         key={index}
-                        className={`flex items-center justify-between border-b pb-1 ${
-                          invalidFiles.includes(file.name) ? "text-red-500" : ""
-                        }`}
+                        className={`flex items-center justify-between border-b pb-1 ${invalidFiles.includes(file.name) ? "text-red-500" : ""
+                          }`}
                       >
                         <span className="text-sm truncate">{file.name}</span>
                         <Button
@@ -453,11 +454,22 @@ const UploadAssetFlow = ({
                 Verify files
               </Button>
 
+              <div className="w-full flex items-center justify-center gap-2 pb-1">
+                <div>
+                  Verification Strict Mode?
+                </div>
+                <Checkbox
+                  checked={isStrict}
+                  onCheckedChange={(checked) =>
+                    setIsStrict(checked as boolean)
+                  }
+                />
+              </div>
+
               {verificationMessage && (
                 <div
-                  className={`p-2 text-center text-sm font-medium ${
-                    verificationComplete ? "text-green-600" : "text-red-500"
-                  }`}
+                  className={`p-2 text-center text-sm font-medium ${verificationComplete ? "text-green-600" : "text-red-500"
+                    }`}
                   dangerouslySetInnerHTML={{
                     __html: verificationMessage.replace(/\n/g, "<br />"),
                   }}

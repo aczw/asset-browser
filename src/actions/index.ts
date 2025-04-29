@@ -205,10 +205,12 @@ export const server = {
     input: z.object({
       assetName: z.string(),
       file: z.instanceof(File),
+      isStrict: z.string()
     }),
-    handler: async ({ assetName, file }) => {
+    handler: async ({ assetName, file, isStrict }) => {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("isStrict", isStrict);
 
       const response = await fetch(`${API_URL}/assets/${assetName}/verify/`, {
         method: "POST",

@@ -45,7 +45,7 @@ interface AssetInfoFlowProps {
     hasTexture: boolean;
     keywords: string;
   }) => void;
-  onDownload: () => void;
+  onDownload: (version: string) => void; // Updated to accept version parameter
   onFilesChange: (files: File[]) => void;
   onLaunchDCC: () => void;
   isDownloading: boolean;
@@ -382,7 +382,7 @@ const AssetInfoFlow = ({
         <Button
           variant="outline"
           className="flex items-center gap-2"
-          onClick={onDownload}
+          onClick={() => onDownload(selectedCommit?.version || asset?.version)}
           disabled={isDownloading}
         >
           {isDownloading ? (
@@ -392,7 +392,7 @@ const AssetInfoFlow = ({
           ) : (
             <>
               <Download className="h-4 w-4" />
-              Download Copy
+              Download Version
             </>
           )}
         </Button>

@@ -185,22 +185,20 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     }
   };
 
-  const handleDownload = async () => {
-    setIsDownloading(true);
-
-    console.log("[DEBUG] handleDownload called with assetName:", assetName);
-
+  const handleDownload = async (version?: string) => {
+    console.log("[DEBUG] handleDownload called with assetName:", assetName, "version:", version);
+  
     if (!assetName) {
       console.log("[DEBUG] No assetName provided, returning early");
       return;
     }
-
+  
     console.log("[DEBUG] Calling downloadAsset");
-    const { data, error } = await actions.downloadAsset({ assetName });
-
+    const { data, error } = await actions.downloadAsset({ assetName, version });
+  
     if (error) {
       console.error("[DEBUG] Error in handleDownload:", error.message);
-
+  
       toast({
         title: "Download Error",
         description: "Failed to download the asset. Please try again.",
@@ -209,36 +207,27 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     } else {
       // Convert array buffer to blob for easier usage
       const blob = new Blob([data], { type: "application/zip" });
-
+  
       // Get the blob from the response
       console.log("[DEBUG] Received blob of size:", blob.size);
-
+  
       // Create a URL for the blob
       const url = window.URL.createObjectURL(blob);
       console.log("[DEBUG] Created blob URL");
-
+  
       // Create a link and click it to download the file
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${assetName}.zip`;
+      link.download = `${assetName}${version ? `_${version}` : ""}.zip`;
       document.body.appendChild(link);
       link.click();
       console.log("[DEBUG] Triggered download");
-
+  
       // Clean up
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
       console.log("[DEBUG] Cleaned up resources");
-
-      toast({
-        title: "Download Complete",
-        description: "Asset has been downloaded.",
-      });
-
-      console.log("[DEBUG] downloadAsset completed successfully");
     }
-
-    setIsDownloading(false);
   };
 
   const handleLaunchDCC = async () => {

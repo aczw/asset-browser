@@ -150,6 +150,8 @@ export const server = {
         formData.append("keywordsRawList", keyword);
       }
 
+      console.log('formdata = ', formData);
+
       // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
       const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
         method: "PUT",
@@ -228,27 +230,34 @@ export const server = {
   downloadAsset: defineAction({
     input: z.object({
       assetName: z.string(),
+      version: z.string().optional(),
     }),
-    handler: async ({ assetName }) => {
-      console.log("[DEBUG] downloadAsset called with assetName:", assetName);
-
+    handler: async ({ assetName, version }) => {
+      console.log("[DEBUG] downloadAsset called with assetName:", assetName, "version:", version);
+  
+      // Construct the endpoint URL based on whether a version is provided
+      let endpoint = `${API_URL}/assets/${assetName}/download`;
+      if (version) {
+        endpoint = `${API_URL}/assets/${assetName}/download/commit/${version}/`;
+      }
+  
       // Call API in both development and production
-      console.log("[DEBUG] Making API call to:", `${API_URL}/assets/${assetName}/download`);
-      const response = await fetch(`${API_URL}/assets/${assetName}/download`);
-
+      console.log("[DEBUG] Making API call to:", endpoint);
+      const response = await fetch(endpoint);
+  
       if (!response.ok) {
         console.log("[DEBUG] Error occurred! API response status code:", response.status);
-
+  
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to download asset",
         });
       }
-
+  
       // Get the blob from the response
       const blob = await response.blob();
       console.log("[DEBUG] Received blob of size:", blob.size);
-
+  
       // Action handlers don't support directly returning blobs. See https://github.com/rich-harris/devalue
       const arrayBuffer = await blob.arrayBuffer();
       return arrayBuffer;

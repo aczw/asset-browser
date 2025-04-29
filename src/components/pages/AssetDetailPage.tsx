@@ -23,10 +23,11 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [asset, setAsset] = useState<AssetWithDetails | null>(null);
   const [userFiles, setUserFiles] = useState<File[]>([]);
-  const [metadata, setMetadata] = useState<Metadata>({
-    hi: "empty",
-  } as unknown as Metadata);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Terrible hack! :D
+  const [firstThumbnailFetch, setFirstThumbnailFetch] = useState(true);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
 
   // Mock user for demonstration purposes
   const user = { pennId: "soominp", fullName: "Jacky Park" };
@@ -34,11 +35,6 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const handleUserFilesChange = (newFiles: File[]) => {
     console.log("User files changed:", newFiles);
     setUserFiles(newFiles);
-  };
-
-  const handleMetadataChange = (newMetadata: Metadata) => {
-    console.log("Metadata changed:", newMetadata);
-    setMetadata(newMetadata);
   };
 
   const fetchAsset = async () => {
@@ -55,7 +51,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
     if (error) {
       console.error("Error fetching asset:", error);
-      setIsLoading(false);
+
       toast({
         title: "Error",
         description: "Failed to load asset details. Please try again.",
@@ -64,8 +60,14 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     } else {
       console.log("API response:", data);
       setAsset(data.asset);
-      setIsLoading(false);
+
+      if (firstThumbnailFetch) {
+        setThumbnailUrl(data.asset.thumbnailUrl);
+        setFirstThumbnailFetch(false);
+      }
     }
+
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -164,7 +166,12 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     setIsCheckingOut(false);
   };
 
-  const handleCheckIn = async () => {
+  const handleCheckIn = async (checkInData?: {
+    note: string;
+    version: string;
+    hasTexture: boolean;
+    keywords: string;
+  }) => {
     console.log("It's time to check in.");
 
     let token = await getAccessToken()
@@ -181,24 +188,25 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
     let accessToken = token.accessToken;
 
-    if (!assetName || !user || !asset || !metadata || userFiles.length === 0) return;
+    if (!assetName || !user || !asset || userFiles.length === 0 || !checkInData) {
+      return;
+    }
 
     console.log("Preparing check-in data");
-    console.log("Metadata:", metadata);
     console.log("Files:", userFiles);
+    console.log("keywords:", checkInData.keywords);
 
     const formData = new FormData();
     formData.append("file", userFiles[0]);
-    formData.append("note", metadata.commit.note);
-    formData.append("version", metadata.commit.version);
-    formData.append("hasTexture", metadata.hasTexture.toString());
+    formData.append("note", checkInData.note);
+    formData.append("version", checkInData.version);
+    formData.append("hasTexture", checkInData.hasTexture.toString());
     formData.append("pennKey", user.pennId);
-    formData.append("assetName", assetName);
 
-    // Add keywords as an array
-    metadata.keywords.forEach((keyword) => {
-      formData.append("keywordsRawList[]", keyword);
-    });
+    // Pass the keywords string directly without any further processing
+    formData.append("keywordsRawList", checkInData.keywords);
+
+    formData.append("assetName", assetName);
 
     formData.append("accessToken", accessToken);
 
@@ -330,7 +338,6 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
             onCheckin={handleCheckIn}
             onDownload={handleDownload}
             onFilesChange={handleUserFilesChange}
-            onMetadataChange={handleMetadataChange}
             onLaunchDCC={handleLaunchDCC}
             isDownloading={isDownloading}
             isCheckingOut={isCheckingOut}
@@ -340,7 +347,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
         <div className="flex justify-center lg:block mt-4 lg:mt-0">
           <div className="w-[80vh] h-[80vh] bg-secondary rounded-xl overflow-hidden relative">
-            <AssetPreview asset={asset} />
+            <AssetPreview asset={asset} thumbnailUrl={thumbnailUrl} />
           </div>
         </div>
       </div>

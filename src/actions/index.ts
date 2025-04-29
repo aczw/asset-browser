@@ -11,7 +11,7 @@ import * as unzipper from "unzipper";
 
 const API_URL = import.meta.env.DEV
   ? "http://127.0.0.1:8000/api"
-  : "https://usd-asset-library.up.railway.app/api";
+  : "https://backend-production-9a54.up.railway.app/api";
 
 export const server = {
   getAssets: defineAction({
@@ -85,20 +85,25 @@ export const server = {
       note: z.string(),
       hasTexture: z.boolean(),
       pennKey: z.string(),
-      keywordsRawList: z.array(z.string()),
+      keywordsRawList: z.string(),
       assetName: z.string(),
       accessToken: z.string(),
     }),
+
     handler: async ({ file, pennKey, note, hasTexture, keywordsRawList, assetName, accessToken }) => {
       console.log("[DEBUG] API: API URL:", API_URL);
+      if (typeof keywordsRawList === "string") {
+        keywordsRawList = JSON.parse(keywordsRawList);
+      }
 
       const formData = new FormData();
       formData.append("file", file);
       formData.append("note", note);
       formData.append("hasTexture", String(hasTexture));
-      formData.append("pennKey", pennKey);
+      formData.append("pennkey", pennKey);
+
       for (const keyword of keywordsRawList) {
-        formData.append("keywordsRawList[]", keyword);
+        formData.append("keywordsRawList", keyword);
       }
 
       const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
@@ -106,6 +111,11 @@ export const server = {
         headers: { Authorization: `Bearer ${accessToken}`},
         body: formData,
       });
+
+      const data = await response.json();
+      if (!data.success) {
+        console.log(data.message);
+      }
 
       if (!response.ok) {
         throw new ActionError({
@@ -115,8 +125,6 @@ export const server = {
             : "Failed to create asset",
         });
       }
-
-      const data = await response.json();
       return data;
     },
   }),
@@ -129,28 +137,37 @@ export const server = {
       version: z.string(),
       hasTexture: z.boolean(),
       pennKey: z.string(),
-      keywordsRawList: z.array(z.string()),
+      keywordsRawList: z.string(),
       assetName: z.string(),
       accessToken: z.string(),
     }),
+
     handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList, assetName, accessToken }) => {
+      if (typeof keywordsRawList === "string") {
+        keywordsRawList = JSON.parse(keywordsRawList);
+      }
       const formData = new FormData();
       formData.append("file", file);
       formData.append("note", note);
       formData.append("version", version);
       formData.append("hasTexture", String(hasTexture));
-      formData.append("pennKey", pennKey);
+      formData.append("pennkey", pennKey);
       for (const keyword of keywordsRawList) {
-        formData.append("keywordsRawList[]", keyword);
+        formData.append("keywordsRawList", keyword);
       }
       formData.append("accessToken", accessToken)
 
       // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
       const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
-        method: "POST",
+        method: "PUT",
         headers: { Authorization: `Bearer ${accessToken}`},
         body: formData,
       });
+
+      const data = await response.json();
+      if (!data.success) {
+        console.log("data message", data.message);
+      }
 
       if (!response.ok) {
         throw new ActionError({
@@ -159,8 +176,6 @@ export const server = {
         });
       }
 
-      // TO DO: Handle metadata updates and version ID control should it happen
-      const data = await response.json();
       return data;
     },
   }),
@@ -183,9 +198,11 @@ export const server = {
       });
 
       if (!response.ok) {
+        const data = await response.json();
+
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
-          message: response.statusText || "Failed to check out asset",
+          message: data.error || response.statusText || "Failed to check out asset",
         });
       }
 
@@ -199,10 +216,12 @@ export const server = {
     input: z.object({
       assetName: z.string(),
       file: z.instanceof(File),
+      isStrict: z.string(),
     }),
-    handler: async ({ assetName, file }) => {
+    handler: async ({ assetName, file, isStrict }) => {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("isStrict", isStrict);
 
       const response = await fetch(`${API_URL}/assets/${assetName}/verify/`, {
         method: "POST",

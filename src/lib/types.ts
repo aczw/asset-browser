@@ -50,12 +50,15 @@ type GetUserBody = {
 
 type GetUsersBody = { users: { pennId: string; fullName: string }[] };
 
+type SingleUser = {pennkey: string; firstName: string, lastName: string};
+
 export {
   MetadataSchema,
   type AssetWithDetails,
   type Commit,
   type GetUserBody,
   type GetUsersBody,
+  type SingleUser,
   type Metadata,
   type VersionMap,
 };

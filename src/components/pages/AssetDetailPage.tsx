@@ -24,13 +24,31 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const [asset, setAsset] = useState<AssetWithDetails | null>(null);
   const [userFiles, setUserFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<{ pennId: string; fullName: string }>({
+    pennId: "anonymous",
+    fullName: "Anonymous",
+  });
 
   // Terrible hack! :D
   const [firstThumbnailFetch, setFirstThumbnailFetch] = useState(true);
   const [thumbnailUrl, setThumbnailUrl] = useState("");
 
-  // Mock user for demonstration purposes
-  const user = { pennId: "soominp", fullName: "Jacky Park" };
+  useEffect(() => {
+    const getSelf = async () => {
+      let token = await getAccessToken();
+      if (token.success) {
+        let accessToken = token.accessToken;
+        let response = await actions.getMe({ accessToken });
+
+        setUser({
+          pennId: response.data!.pennkey,
+          fullName: response.data!.firstName + " " + response.data!.lastName,
+        });
+      }
+    };
+
+    getSelf();
+  }, []);
 
   const handleUserFilesChange = (newFiles: File[]) => {
     console.log("User files changed:", newFiles);
@@ -291,6 +309,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       return;
     }
 
+    setIsDownloading(true);
+
     console.log("[DEBUG] Calling downloadAsset");
     const { data, error } = await actions.downloadAsset({ assetName, version });
 
@@ -326,6 +346,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       document.body.removeChild(link);
       console.log("[DEBUG] Cleaned up resources");
     }
+
+    setIsDownloading(false);
   };
 
   const handleLaunchDCC = async () => {
@@ -356,6 +378,9 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       </div>
     );
   }
+  console.log(asset.checkedOutBy === user.pennId);
+  console.log(asset.checkedOutBy);
+  console.log(user.pennId);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-14 space-y-6">

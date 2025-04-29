@@ -1,10 +1,9 @@
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import type { GetUserBody } from "@/lib/types";
-import { ChevronLeft } from "lucide-react";
+import { removeTokens } from "@/utils/utils";
+import { LogOutIcon } from "lucide-react";
 import { useState } from "react";
 
 interface UserPageProps {
@@ -14,12 +13,7 @@ interface UserPageProps {
 }
 
 const UserPage = ({ pennKey, data, error }: UserPageProps) => {
-  const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState<"commits" | "created" | "checkedOut">("commits");
-
-  const handleBack = () => {
-    window.location.href = "/";
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -51,11 +45,21 @@ const UserPage = ({ pennKey, data, error }: UserPageProps) => {
       <Header />
 
       <div className="flex flex-col gap-8">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">{data.user.fullName}</h1>
-            <p className="text-muted-foreground">@{data.user.pennKey}</p>
+            <p className="text-muted-foreground font-mono">@{data.user.pennKey}</p>
           </div>
+
+          <Button
+            onClick={() => {
+              removeTokens();
+              window.location.href = "/";
+            }}
+          >
+            <LogOutIcon />
+            Logout
+          </Button>
         </div>
 
         <Separator />

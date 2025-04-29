@@ -1,3 +1,5 @@
+import { Skeleton } from "@/components/ui/skeleton";
+import { getAccessToken } from "@/utils/utils";
 import { UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -6,26 +8,32 @@ type UserProps = {
   pennKey: string;
 };
 
-const Header = () => {
+const Account = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<UserProps | null>(null);
 
   useEffect(() => {
     async function fetchCurrentUser() {
-      // TODO
-      // setUser({ name: "Charles Wang", pennKey: "czw" });
+      const result = await getAccessToken();
+
+      if (!result.success) {
+        setUser(null);
+        return;
+      }
+
+      setUser({ name: "Charles Wang", pennKey: "czw" });
     }
 
     fetchCurrentUser();
+    setIsLoading(false);
   }, []);
 
-  return (
-    <header className="flex justify-between items-center">
-      <h1 className="text-3xl font-bold mb-2 text-left -translate-x-2">
-        <a href="/" className="hover:opacity-60 transition-opacity font-extrabold opacity-100">
-          🍓Papaya
-        </a>
-      </h1>
+  if (isLoading) {
+    return <Skeleton className="h-8 rounded-xl w-[200px]" />;
+  }
 
+  return (
+    <>
       {user ? (
         <div className="flex flex-col items-end">
           <p>
@@ -50,6 +58,20 @@ const Header = () => {
           </a>
         </p>
       )}
+    </>
+  );
+};
+
+const Header = () => {
+  return (
+    <header className="flex justify-between items-center">
+      <h1 className="text-3xl font-bold mb-2 text-left -translate-x-2">
+        <a href="/" className="hover:opacity-60 transition-opacity font-extrabold opacity-100">
+          🍓Papaya
+        </a>
+      </h1>
+
+      <Account />
     </header>
   );
 };

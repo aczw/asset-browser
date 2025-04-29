@@ -21,7 +21,7 @@ const Header = () => {
   return (
     <header className="flex justify-between items-center">
       <h1 className="text-3xl font-bold mb-2 text-left -translate-x-2">
-        <a href="/" className="hover:text-muted-foreground transition-colors font-extrabold">
+        <a href="/" className="hover:opacity-60 transition-opacity font-extrabold opacity-100">
           🍓Papaya
         </a>
       </h1>

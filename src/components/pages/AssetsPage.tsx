@@ -14,6 +14,16 @@ import type { AssetWithDetails, GetUsersBody } from "@/lib/types";
 import AssetGrid from "../AssetGrid";
 import UploadAssetFlow from "../asset-detail/UploadAssetFlow";
 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { actions } from "astro:actions";
 import { ArrowUpDownIcon, Check, ChevronDown, Filter, Plus, Search, User } from "lucide-react";
@@ -39,12 +49,13 @@ const SearchBar = ({
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState("updated");
   const [createAssetOpen, setCreateAssetOpen] = useState(false);
+  const [authorOpen, setAuthorOpen] = useState(false);
 
   const sortOptions = [
     { label: "Name", value: "name" },
     { label: "Author", value: "author" },
-    { label: "Recently Updated", value: "updated" },
-    { label: "Recently Created", value: "created" },
+    { label: "Recently updated", value: "updated" },
+    { label: "Recently created", value: "created" },
   ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -80,10 +91,10 @@ const SearchBar = ({
           placeholder="Search assets by name or keywords..."
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
-          className="h-12"
+          className="h-12 pl-4"
         />
 
-        <Button type="submit" variant="secondary" className="h-12">
+        <Button type="submit" variant="secondary" className="h-12 w-30">
           <Search className="h-5 w-5" />
           Search
         </Button>
@@ -91,57 +102,66 @@ const SearchBar = ({
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <Popover open={authorOpen} onOpenChange={setAuthorOpen}>
+            <PopoverTrigger asChild>
               <Button variant="outline">
                 <Filter />
-                {selectedAuthor ? `Author: ${selectedAuthor}` : "Filter by Author"}
+                {selectedAuthor ? (
+                  <>
+                    <span className="font-semibold">Author:</span> {selectedAuthor}
+                  </>
+                ) : (
+                  "Filter by author"
+                )}
                 <ChevronDown className="h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuLabel>Filter by Author</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="max-h-[300px] overflow-y-auto">
-                <DropdownMenuGroup>
-                  {users.map((user, index) => (
-                    <DropdownMenuItem
-                      key={`${user.pennId}-${user.fullName}-${index}`}
-                      onClick={() => handleAuthorSelect(user.pennId)}
-                      className="flex items-center justify-between cursor-pointer"
-                    >
-                      {user.fullName}
-                      {selectedAuthor === user.pennId && <Check className="h-4 w-4" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuGroup>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 h-[300px] overflow-y-auto p-0">
+              <Command>
+                <CommandInput placeholder="Search for name..." />
+                <CommandList>
+                  <CommandEmpty>No author found.</CommandEmpty>
+                  <CommandGroup>
+                    {users.map((user, index) => (
+                      <CommandItem
+                        key={`${user.pennId}-${user.fullName}-${index}`}
+                        value={user.fullName}
+                        onSelect={() => {
+                          handleAuthorSelect(user.pennId);
+                          setAuthorOpen(false);
+                        }}
+                        className="flex items-center justify-between"
+                      >
+                        {user.fullName}
+                        {selectedAuthor === user.pennId && <Check />}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
                 <ArrowUpDownIcon />
-                Sort: {sortOptions.find((option) => option.value === sortOption)?.label}
+                <span className="font-semibold">Sorted by:</span>{" "}
+                {sortOptions.find((option) => option.value === sortOption)?.label}
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                {sortOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option.value}
-                    onClick={() => handleSortSelect(option.value)}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    {option.label}
-                    {sortOption === option.value && <Check className="h-4 w-4" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
+            <DropdownMenuContent className="w-56">
+              {sortOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handleSortSelect(option.value)}
+                  className="flex items-center justify-between"
+                >
+                  {option.label}
+                  {sortOption === option.value && <Check className="h-4 w-4" />}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -151,9 +171,9 @@ const SearchBar = ({
               checked={showCheckedInOnly}
               onCheckedChange={handleCheckedInToggle}
             />
-            <label htmlFor="checked-in-only" className="text-s cursor-pointer">
+            <Label htmlFor="checked-in-only" className="text-s cursor-pointer">
               Show checked-in assets only
-            </label>
+            </Label>
           </div>
         </div>
 

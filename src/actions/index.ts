@@ -1,5 +1,10 @@
 import { findHoudiniPath, findHythonPath, writePythonHipFile } from "@/lib/launch-dcc";
-import { type AssetWithDetails, type GetUserBody, type GetUsersBody, type SingleUser } from "@/lib/types";
+import {
+  type AssetWithDetails,
+  type GetUserBody,
+  type GetUsersBody,
+  type SingleUser,
+} from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { execFile } from "child_process";
@@ -7,10 +12,17 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as unzipper from "unzipper";
+import type { AssetWithDetails } from "@/lib/types";
+import * as prom from 'fs/promises';
+import { exec } from 'child_process';
+
+
 
 const API_URL = import.meta.env.DEV
   ? "http://127.0.0.1:8000/api"
-  : "https://backend-production-9a54.up.railway.app/api";
+  : "https://usd-asset-library.up.railway.app/api";
+//const API_URL = "https://usd-asset-library.up.railway.app/api";
+
 
 export const server = {
   getAssets: defineAction({
@@ -289,13 +301,14 @@ export const server = {
   launchDCC: defineAction({
     input: z.object({
       assetName: z.string(),
+      version: z.string().optional(),
     }),
-    handler: async ({ assetName }) => {
+    handler: async ({ assetName, version }) => {
       console.log("[DEBUG] API: launchDCC called");
 
-      const exePath = findHoudiniPath(); // Replace with the actual path to the .exe file
-
+      const exePath = findHoudiniPath();
       console.log("[DEBUG] final exePath:", exePath);
+      
 
       const assetZip = os.homedir() + "\\Downloads\\" + assetName + ".zip";
       const outputDir = os.homedir() + "\\Downloads\\" + assetName + "\\";
@@ -304,6 +317,8 @@ export const server = {
       if (fs.existsSync(assetZip)) {
         if (!fs.existsSync(outputDir)) {
           // unzip the file
+          console.log("[DEBUG] Unzipping the file...");
+
           fs.createReadStream(assetZip)
             .pipe(unzipper.Extract({ path: outputDir }))
             .on("close", () => {
@@ -318,10 +333,10 @@ export const server = {
         const houdiniFile = path.join(outputDir, assetName + ".fbx");
 
         const hythonExe = findHythonPath();
-        console.log("[DEBUG] hythonExe path:", hythonExe);
+
+        
 
         // create python generation file here
-
         writePythonHipFile(process.cwd() + "\\writtenPythonScript.py", assetName);
         const pythonScript = process.cwd() + "\\writtenPythonScript.py";
         const outputHipFile = outputDir + "generated_scene.hip";
@@ -363,6 +378,7 @@ export const server = {
       }
 
       return { message: "Application launched successfully" };
+    
     },
   }),
 
@@ -433,14 +449,12 @@ export const server = {
     }),
     handler: async ({ accessToken }) => {
       const response = await fetch(`${API_URL}/currentUser/`, {
-        headers: { Authorization: `Bearer ${accessToken}`},
+        headers: { Authorization: `Bearer ${accessToken}` },
         method: "GET",
       });
-      
+
       if (!response.ok) {
-        console.log(
-          `[DEBUG] Could not get current user, status code: ${response.status}`
-        );
+        console.log(`[DEBUG] Could not get current user, status code: ${response.status}`);
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to get current user! ${
@@ -452,7 +466,7 @@ export const server = {
       return data;
     },
   }),
-  
+
   downloadGlb: defineAction({
     input: z.object({
       assetName: z.string(),
@@ -578,33 +592,33 @@ export const server = {
     }),
     handler: async ({ assetName, tag }) => {
       console.log("[DEBUG] downloadAssetByTag called with assetName:", assetName, "tag:", tag);
-  
+
       // Construct the endpoint URL for tag-based download
       const endpoint = `${API_URL}/assets/${assetName}/download/tag/${tag}/`;
-  
+
       // Call API in both development and production
       console.log("[DEBUG] Making API call to:", endpoint);
       const response = await fetch(endpoint);
-  
+
       if (!response.ok) {
         console.log("[DEBUG] Error occurred! API response status code:", response.status);
-  
+
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to download asset by tag",
         });
       }
-  
+
       // Get the blob from the response
       const blob = await response.blob();
       console.log("[DEBUG] Received blob of size:", blob.size);
-  
+
       // Action handlers don't support directly returning blobs. See https://github.com/rich-harris/devalue
       const arrayBuffer = await blob.arrayBuffer();
       return arrayBuffer;
     },
-  }), 
-  
+  }),
+
   getAssetCommits: defineAction({
     input: z.object({
       assetName: z.string(),
@@ -638,5 +652,3 @@ export const server = {
     },
   }),
 };
-
-

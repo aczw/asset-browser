@@ -51,7 +51,7 @@ interface AssetInfoFlowProps {
   onDownload: (version: string) => void;
   onDownloadByTag: (tag: string) => void; // Add this new prop
   onFilesChange: (files: File[]) => void;
-  onLaunchDCC: () => void;
+  onLaunchDCC: (version: string) => void; // Updated to accept version parameter
   isDownloading: boolean;
   isCheckingOut: boolean;
   hideTitle?: boolean;
@@ -403,7 +403,7 @@ const AssetInfoFlow = ({
           )}
         </Button>
 
-        <Button variant="outline" className="flex items-center gap-2" onClick={onLaunchDCC}>
+        <Button variant="outline" className="flex items-center gap-2" onClick={() => onLaunchDCC(selectedCommit?.version || asset?.version)}>
           <PlayCircle className="h-4 w-4" />
           Launch DCC
         </Button>

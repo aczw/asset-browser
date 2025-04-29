@@ -290,7 +290,7 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
 
   return (
     <div className="container mx-auto py-14 px-4 max-w-7xl space-y-6">
-      <Header users={users} />
+      <Header />
 
       <SearchBar
         users={users}

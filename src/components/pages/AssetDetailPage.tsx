@@ -1,15 +1,15 @@
-import type { AssetWithDetails } from "@/lib/types";
-import { ChevronLeft, Lock } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Header } from "@/components/Header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import AssetPreview from "../asset-detail/AssetPreview";
+import type { AssetWithDetails } from "@/lib/types";
+import { type Metadata } from "@/lib/types";
+import { actions } from "astro:actions";
+import { Lock } from "lucide-react";
+import { useEffect, useState } from "react";
 import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
 import AssetInfoFlow from "../asset-detail/AssetInfoFlow";
-import { actions } from "astro:actions";
-import { type Metadata } from "@/lib/types";
+import AssetPreview from "../asset-detail/AssetPreview";
 
 interface AssetDetailPageProps {
   assetName: string;
@@ -18,6 +18,8 @@ interface AssetDetailPageProps {
 const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const { toast } = useToast();
 
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [asset, setAsset] = useState<AssetWithDetails | null>(null);
   const [userFiles, setUserFiles] = useState<File[]>([]);
   const [metadata, setMetadata] = useState<Metadata>({
@@ -27,19 +29,6 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
   // Mock user for demonstration purposes
   const user = { pennId: "soominp", fullName: "Jacky Park" };
-
-  // Helper function to get user full name
-  const getUserFullName = (pennId: string | null): string | null => {
-    if (!pennId) return null;
-    // This should match the mockUsers logic in the API
-    const mockUsers = [
-      { pennId: "willcai", fullName: "Will Cai" },
-      { pennId: "chuu", fullName: "Christina Qiu" },
-      { pennId: "cxndy", fullName: "Cindy Xu" },
-    ];
-    const user = mockUsers.find((u) => u.pennId === pennId);
-    return user ? user.fullName : null;
-  };
 
   const handleUserFilesChange = (newFiles: File[]) => {
     console.log("User files changed:", newFiles);
@@ -92,6 +81,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
   const handleCheckout = async () => {
     if (!assetName || !user || !asset) return;
+
+    setIsCheckingOut(true);
 
     const { data, error } = await actions.checkoutAsset({
       assetName,
@@ -153,6 +144,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
         }
       }
     }
+
+    setIsCheckingOut(false);
   };
 
   const handleCheckIn = async () => {
@@ -173,7 +166,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     formData.append("assetName", assetName);
 
     // Add keywords as an array
-    metadata.keywords.forEach(keyword => {
+    metadata.keywords.forEach((keyword) => {
       formData.append("keywordsRawList[]", keyword);
     });
 
@@ -197,6 +190,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   };
 
   const handleDownload = async () => {
+    setIsDownloading(true);
+
     console.log("[DEBUG] handleDownload called with assetName:", assetName);
 
     if (!assetName) {
@@ -246,6 +241,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
       console.log("[DEBUG] downloadAsset completed successfully");
     }
+
+    setIsDownloading(false);
   };
 
   const handleLaunchDCC = async () => {
@@ -264,36 +261,24 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
   if (!asset) {
     return (
-      <div className="container mx-auto py-8 px-4 max-w-7xl">
-        <div className="text-center py-16">
+      <div className="container mx-auto py-14 px-4 max-w-7xl">
+        <Header />
+
+        <div className="text-center flex flex-col items-center justify-center h-full min-h-[calc(100svh-156px)]">
           <h2 className="text-2xl font-bold mb-2">Asset Not Found</h2>
-          <p className="text-muted-foreground mb-6">The requested asset could not be found.</p>
-          <Button
-            onClick={() => {
-              window.location.href = "/";
-            }}
-          >
-            Return to home
-          </Button>
+          <p className="text-muted-foreground mb-6">
+            The requested asset "{assetName}" could not be found.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          className="flex items-center gap-1 hover:bg-secondary/80 transition-all"
-          onClick={() => (window.location.href = "/")}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Assets
-        </Button>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 py-14 space-y-6">
+      <Header />
 
-      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10 px-4">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10">
         <div className="flex-1 space-y-5">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold animate-fade-in text-left">{asset.name}</h1>
@@ -304,6 +289,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
               </Badge>
             )}
           </div>
+
           <AssetInfoFlow
             asset={asset}
             canCheckout={!asset.isCheckedOut && !!user}
@@ -314,6 +300,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
             onFilesChange={handleUserFilesChange}
             onMetadataChange={handleMetadataChange}
             onLaunchDCC={handleLaunchDCC}
+            isDownloading={isDownloading}
+            isCheckingOut={isCheckingOut}
           />
           <Separator />
         </div>

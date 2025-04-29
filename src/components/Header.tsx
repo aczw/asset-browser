@@ -1,13 +1,4 @@
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { GetUsersBody } from "@/lib/types";
-import { LogInIcon, User, UserIcon } from "lucide-react";
+import { UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type UserProps = {
@@ -15,7 +6,7 @@ type UserProps = {
   pennKey: string;
 };
 
-const Header = ({ users }: { users: GetUsersBody["users"] }) => {
+const Header = () => {
   const [user, setUser] = useState<UserProps | null>(null);
 
   useEffect(() => {

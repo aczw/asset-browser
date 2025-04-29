@@ -1,22 +1,12 @@
-import { ChevronLeft } from "lucide-react";
-import { Button } from "../../components/ui/button";
+import { Header } from "@/components/Header";
 import { Skeleton } from "../../components/ui/skeleton";
 
 const AssetDetailSkeleton = () => {
-  const handleBack = () => {
-    window.location.href = "/";
-  };
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button variant="ghost" className="flex items-center gap-1" onClick={handleBack}>
-          <ChevronLeft className="h-4 w-4" />
-          Back to Assets
-        </Button>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 py-14 space-y-6">
+      <Header />
 
-      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10 px-4">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10">
         <div className="flex-1 space-y-5">
           <div>
             <Skeleton className="h-8 w-64" />

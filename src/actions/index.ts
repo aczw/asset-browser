@@ -469,24 +469,6 @@ export const server = {
     }
   }),
 
-  // assetExists: defineAction({
-  //   input: z.object({ assetName: z.string() }),
-  //   handler: async ({ assetName }) => {
-  //     console.log("[DEBUG] API: assetName type:", typeof assetName);
-
-  //     const response = await fetch(`${API_URL}/assets/${assetName}/exists`);
-  //     if (!response.ok) {
-  //       throw new ActionError({
-  //         code: "INTERNAL_SERVER_ERROR",
-  //         message: "Failed to fetch asset details",
-  //       });
-  //     }
-
-  //     const data = await response.json();
-  //     return data;
-  //   },
-  // }),
-
   assetExists: defineAction({
     input: z.object({
       assetName: z.string(),
@@ -513,6 +495,39 @@ export const server = {
         console.error(`Fetch error:`, error);
         // Return a default response that allows the user to proceed
         return { exists: false };
+      }
+    },
+  }),
+
+  getAssetCommits: defineAction({
+    input: z.object({
+      assetName: z.string(),
+    }),
+    handler: async ({ assetName }) => {
+      console.log(`Fetching commit history for asset: ${assetName}`);
+      
+      try {
+        const response = await fetch(`${API_URL}/assets/${assetName}/info/commits/`, {
+          method: "GET",
+        });
+        
+        if (!response.ok) {
+          console.error(`Failed to fetch commit history: ${response.statusText}`);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: response.statusText || "Failed to fetch asset commit history",
+          });
+        }
+
+        const data = await response.json();
+        console.log(`Commit history data:`, data);
+        return data;
+      } catch (error) {
+        console.error(`Fetch error:`, error);
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to fetch asset commit history",
+        });
       }
     },
   }),

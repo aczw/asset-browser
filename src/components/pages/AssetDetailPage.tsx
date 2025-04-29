@@ -1,17 +1,15 @@
 import type { AssetWithDetails } from "@/lib/types";
 import { ChevronLeft, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Separator } from "../ui/separator";
-
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { type Metadata } from "@/lib/types";
-import { actions } from "astro:actions";
-import AssetControlPanel from "../asset-detail/AssetControlPanel";
-import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
-import AssetMetadata from "../asset-detail/AssetMetadata";
 import AssetPreview from "../asset-detail/AssetPreview";
+import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
+import AssetInfoFlow from "../asset-detail/AssetInfoFlow";
+import { actions } from "astro:actions";
+import { type Metadata } from "@/lib/types";
 
 interface AssetDetailPageProps {
   assetName: string;
@@ -306,7 +304,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
               </Badge>
             )}
           </div>
-          <AssetControlPanel
+          <AssetInfoFlow
             asset={asset}
             canCheckout={!asset.isCheckedOut && !!user}
             canCheckin={asset.isCheckedOut && !!user && asset.checkedOutBy === user.pennId}
@@ -318,8 +316,6 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
             onLaunchDCC={handleLaunchDCC}
           />
           <Separator />
-
-          <AssetMetadata asset={asset} hideTitle={true} />
         </div>
 
         <div className="flex justify-center lg:block mt-4 lg:mt-0">

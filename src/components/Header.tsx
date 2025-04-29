@@ -29,7 +29,7 @@ const Header = ({ users }: { users: GetUsersBody["users"] }) => {
 
   return (
     <header className="flex justify-between items-center">
-      <h1 className="text-3xl font-bold mb-2 text-left">
+      <h1 className="text-3xl font-bold mb-2 text-left -translate-x-2">
         <a href="/" className="hover:text-muted-foreground transition-colors font-extrabold">
           🍓Papaya
         </a>

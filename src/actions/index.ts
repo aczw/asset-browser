@@ -1,5 +1,10 @@
 import { findHoudiniPath, findHythonPath, writePythonHipFile } from "@/lib/launch-dcc";
-import { type AssetWithDetails, type GetUserBody, type GetUsersBody, type SingleUser } from "@/lib/types";
+import {
+  type AssetWithDetails,
+  type GetUserBody,
+  type GetUsersBody,
+  type SingleUser,
+} from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { execFile } from "child_process";
@@ -10,7 +15,7 @@ import * as unzipper from "unzipper";
 
 const API_URL = import.meta.env.DEV
   ? "http://127.0.0.1:8000/api"
-  : "https://backend-production-9a54.up.railway.app/api";
+  : "https://usd-asset-library.up.railway.app/api";
 
 export const server = {
   getAssets: defineAction({
@@ -433,14 +438,12 @@ export const server = {
     }),
     handler: async ({ accessToken }) => {
       const response = await fetch(`${API_URL}/currentUser/`, {
-        headers: { Authorization: `Bearer ${accessToken}`},
+        headers: { Authorization: `Bearer ${accessToken}` },
         method: "GET",
       });
-      
+
       if (!response.ok) {
-        console.log(
-          `[DEBUG] Could not get current user, status code: ${response.status}`
-        );
+        console.log(`[DEBUG] Could not get current user, status code: ${response.status}`);
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to get current user! ${
@@ -452,7 +455,7 @@ export const server = {
       return data;
     },
   }),
-  
+
   downloadGlb: defineAction({
     input: z.object({
       assetName: z.string(),
@@ -578,33 +581,33 @@ export const server = {
     }),
     handler: async ({ assetName, tag }) => {
       console.log("[DEBUG] downloadAssetByTag called with assetName:", assetName, "tag:", tag);
-  
+
       // Construct the endpoint URL for tag-based download
       const endpoint = `${API_URL}/assets/${assetName}/download/tag/${tag}/`;
-  
+
       // Call API in both development and production
       console.log("[DEBUG] Making API call to:", endpoint);
       const response = await fetch(endpoint);
-  
+
       if (!response.ok) {
         console.log("[DEBUG] Error occurred! API response status code:", response.status);
-  
+
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to download asset by tag",
         });
       }
-  
+
       // Get the blob from the response
       const blob = await response.blob();
       console.log("[DEBUG] Received blob of size:", blob.size);
-  
+
       // Action handlers don't support directly returning blobs. See https://github.com/rich-harris/devalue
       const arrayBuffer = await blob.arrayBuffer();
       return arrayBuffer;
     },
-  }), 
-  
+  }),
+
   getAssetCommits: defineAction({
     input: z.object({
       assetName: z.string(),
@@ -638,5 +641,3 @@ export const server = {
     },
   }),
 };
-
-

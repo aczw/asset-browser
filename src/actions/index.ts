@@ -545,6 +545,40 @@ export const server = {
     },
   }),
 
+  downloadAssetByTag: defineAction({
+    input: z.object({
+      assetName: z.string(),
+      tag: z.string(),
+    }),
+    handler: async ({ assetName, tag }) => {
+      console.log("[DEBUG] downloadAssetByTag called with assetName:", assetName, "tag:", tag);
+  
+      // Construct the endpoint URL for tag-based download
+      const endpoint = `${API_URL}/assets/${assetName}/download/tag/${tag}/`;
+  
+      // Call API in both development and production
+      console.log("[DEBUG] Making API call to:", endpoint);
+      const response = await fetch(endpoint);
+  
+      if (!response.ok) {
+        console.log("[DEBUG] Error occurred! API response status code:", response.status);
+  
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to download asset by tag",
+        });
+      }
+  
+      // Get the blob from the response
+      const blob = await response.blob();
+      console.log("[DEBUG] Received blob of size:", blob.size);
+  
+      // Action handlers don't support directly returning blobs. See https://github.com/rich-harris/devalue
+      const arrayBuffer = await blob.arrayBuffer();
+      return arrayBuffer;
+    },
+  }), 
+  
   getAssetCommits: defineAction({
     input: z.object({
       assetName: z.string(),
@@ -578,3 +612,5 @@ export const server = {
     },
   }),
 };
+
+

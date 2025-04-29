@@ -81,7 +81,55 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     fetchAsset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assetName]);
-
+  const handleDownloadByTag = async (tag: string) => {
+    console.log("[DEBUG] handleDownloadByTag called with assetName:", assetName, "tag:", tag);
+  
+    if (!assetName) {
+      console.log("[DEBUG] No assetName provided, returning early");
+      return;
+    }
+  
+    setIsDownloading(true);
+  
+    console.log("[DEBUG] Calling downloadAssetByTag");
+    const { data, error } = await actions.downloadAssetByTag({ assetName, tag });
+  
+    if (error) {
+      console.error("[DEBUG] Error in handleDownloadByTag:", error.message);
+  
+      toast({
+        title: "Download Error",
+        description: "Failed to download the asset by tag. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      // Convert array buffer to blob for easier usage
+      const blob = new Blob([data], { type: "application/zip" });
+  
+      // Get the blob from the response
+      console.log("[DEBUG] Received blob of size:", blob.size);
+  
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      console.log("[DEBUG] Created blob URL");
+  
+      // Create a link and click it to download the file
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${assetName}_${tag}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      console.log("[DEBUG] Triggered download");
+  
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+      console.log("[DEBUG] Cleaned up resources");
+    }
+  
+    setIsDownloading(false);
+  };
+  
   const handleCheckout = async () => {
     if (!assetName || !user || !asset) return;
 
@@ -332,6 +380,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
             onCheckout={handleCheckout}
             onCheckin={handleCheckIn}
             onDownload={handleDownload}
+            onDownloadByTag={handleDownloadByTag} // Add this new prop
             onFilesChange={handleUserFilesChange}
             onLaunchDCC={handleLaunchDCC}
             isDownloading={isDownloading}

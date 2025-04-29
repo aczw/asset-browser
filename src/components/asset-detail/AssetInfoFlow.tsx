@@ -48,7 +48,8 @@ interface AssetInfoFlowProps {
     hasTexture: boolean;
     keywords: string;
   }) => void;
-  onDownload: (version: string) => void; // Updated to accept version parameter
+  onDownload: (version: string) => void;
+  onDownloadByTag: (tag: string) => void; // Add this new prop
   onFilesChange: (files: File[]) => void;
   onLaunchDCC: () => void;
   isDownloading: boolean;
@@ -63,6 +64,7 @@ const AssetInfoFlow = ({
   onCheckout,
   onCheckin,
   onDownload,
+  onDownloadByTag,
   onFilesChange,
   onLaunchDCC,
   isDownloading,
@@ -419,6 +421,23 @@ const AssetInfoFlow = ({
         <Button variant="outline" className="flex items-center gap-2" onClick={onLaunchDCC}>
           <PlayCircle className="h-4 w-4" />
           Launch DCC
+        </Button>
+        <Button
+          variant="outline"
+          className="flex items-center gap-2"
+          onClick={() => onDownloadByTag("approved")}
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <Loader2Icon className="animate-spin" /> Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              Download Latest Approved
+            </>
+          )}
         </Button>
       </div>
 

@@ -1,4 +1,5 @@
 ---
+import { GlobalConfetti } from "@/components/GlobalConfetti";
 import { Toaster } from "@/components/ui/toaster";
 import "@/styles/global.css";
 import "@fontsource/geist-mono";
@@ -18,5 +19,6 @@ import "@fontsource/geist-sans";
   <body>
     <main><slot /></main>
     <Toaster client:only="react" />
+    <GlobalConfetti client:only="react" />
   </body>
 </html>

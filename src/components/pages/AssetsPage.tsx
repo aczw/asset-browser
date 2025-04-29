@@ -1,78 +1,84 @@
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import type { AssetWithDetails } from "@/lib/types";
+import type { AssetWithDetails, GetUsersBody } from "@/lib/types";
 import AssetGrid from "../AssetGrid";
 import UploadAssetFlow from "../asset-detail/UploadAssetFlow";
 
-import { useToast } from "@/hooks/use-toast";
+import { Header } from "@/components/Header";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { toast, useToast } from "@/hooks/use-toast";
+import { getAccessToken } from "@/utils/utils";
 import { actions } from "astro:actions";
-import { Check, ChevronDown, Filter, Plus, Search, User } from "lucide-react";
+import {
+  ArrowUpDownIcon,
+  Check,
+  ChevronDown,
+  FileLock2Icon,
+  Plus,
+  Search,
+  User,
+  UserIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface SearchBarProps {
+  users: GetUsersBody["users"];
   onSearch: (search: string) => void;
   onAuthorFilter: (author: string | null) => void;
-  onCheckedInFilter: (checkedInOnly: boolean) => void;
+  onAssetStatusFilter: (assetStatus: "none" | "check-in" | "check-out") => void;
   onSort: (sortBy: string) => void;
 }
 
-const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: SearchBarProps) => {
-  const { toast } = useToast();
-
+const SearchBar = ({
+  users,
+  onSearch,
+  onAuthorFilter,
+  onAssetStatusFilter,
+  onSort,
+}: SearchBarProps) => {
   const [searchValue, setSearchValue] = useState("");
-  const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
-  const [authors, setAuthors] = useState<string[]>([]);
+  const [assetStatus, setAssetStatus] = useState<string>("none");
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState("updated");
   const [createAssetOpen, setCreateAssetOpen] = useState(false);
+  const [authorOpen, setAuthorOpen] = useState(false);
 
   const sortOptions = [
     { label: "Name", value: "name" },
     { label: "Author", value: "author" },
-    { label: "Recently Updated", value: "updated" },
-    { label: "Recently Created", value: "created" },
+    { label: "Recently updated", value: "updated" },
+    { label: "Recently created", value: "created" },
   ];
 
-  useEffect(() => {
-    // Fetch authors when component mounts
-    const fetchAuthors = async () => {
-      const { data, error } = await actions.getAuthors();
-
-      if (error) {
-        toast({
-          title: "getAuthors - TODO",
-          description: "Not implemented. 'Filter by Author' will be empty for now.",
-          variant: "destructive",
-        });
-
-        setAuthors([]);
-      } else {
-        // TODO
-      }
-    };
-
-    fetchAuthors();
-  }, []);
+  const checkInOptions: { label: string; value: "none" | "check-in" | "check-out" }[] = [
+    { label: "None", value: "none" },
+    { label: "Checked-in only", value: "check-in" },
+    { label: "Checked-out only", value: "check-out" },
+  ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(searchValue);
   };
 
-  const handleCheckedInToggle = () => {
-    const newValue = !showCheckedInOnly;
-    setShowCheckedInOnly(newValue);
-    onCheckedInFilter(newValue);
+  const handleCheckedInToggle = (status: "none" | "check-in" | "check-out") => {
+    setAssetStatus(status);
+    onAssetStatusFilter(status);
   };
 
   const handleAuthorSelect = (author: string) => {
@@ -88,107 +94,141 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
 
   return (
     <div className="w-full space-y-4 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-[80%]">
-          <form onSubmit={handleSearchSubmit} className="relative w-full">
-            <Input
-              type="text"
-              placeholder="Search assets by name or keywords..."
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              className="search-input pl-10 h-12 text-base"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-            <Button
-              type="submit"
-              variant="default"
-              size="sm"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-            >
-              Search
-            </Button>
-          </form>
-        </div>
+      <form
+        onSubmit={handleSearchSubmit}
+        className="w-full flex items-center justify-between gap-4"
+      >
+        <Input
+          type="text"
+          placeholder="Search assets by name or keywords..."
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          className="h-12 pl-4"
+        />
 
-        <div className="ml-auto">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setCreateAssetOpen(true)}
-            className="flex items-center gap-1"
-          >
-            <Plus className="h-4 w-4" />
-            Upload New Asset
-          </Button>
-        </div>
-      </div>
+        <Button type="submit" variant="secondary" className="h-12 w-30">
+          <Search className="h-5 w-5" />
+          Search
+        </Button>
+      </form>
 
-      <div className="flex flex-wrap items-center gap-3 pb-2">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
+          <Popover open={authorOpen} onOpenChange={setAuthorOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline">
+                <UserIcon />
+                {selectedAuthor ? (
+                  <>
+                    <span className="font-semibold">Author:</span> {selectedAuthor}
+                  </>
+                ) : (
+                  "Filter by author"
+                )}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 h-[300px] overflow-y-auto p-0">
+              <Command>
+                <CommandInput placeholder="Search for name..." />
+                <CommandList>
+                  <CommandEmpty>No author found.</CommandEmpty>
+                  <CommandGroup>
+                    {users.map((user, index) => (
+                      <CommandItem
+                        key={`${user.pennId}-${user.fullName}-${index}`}
+                        value={user.fullName}
+                        onSelect={() => {
+                          handleAuthorSelect(user.pennId);
+                          setAuthorOpen(false);
+                        }}
+                        className="flex items-center justify-between"
+                      >
+                        {user.fullName}
+                        {selectedAuthor === user.pennId && <Check />}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                <Filter className="h-4 w-4 mr-1" />
-                {selectedAuthor ? `Author: ${selectedAuthor}` : "Filter by Author"}
+              <Button variant="outline">
+                <FileLock2Icon />
+                {assetStatus === "none" ? (
+                  "Filter by asset status"
+                ) : (
+                  <>
+                    <span className="font-semibold">Asset status:</span>{" "}
+                    {assetStatus === "check-in" ? "Checked in only" : "Checked out only"}
+                  </>
+                )}
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuLabel>Filter by Author</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="max-h-[300px] overflow-y-auto">
-                <DropdownMenuGroup>
-                  {authors.map((author) => (
-                    <DropdownMenuItem
-                      key={author}
-                      onClick={() => handleAuthorSelect(author)}
-                      className="flex items-center justify-between cursor-pointer"
-                    >
-                      {author}
-                      {selectedAuthor === author && <Check className="h-4 w-4" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuGroup>
-              </div>
+            <DropdownMenuContent className="w-56">
+              {checkInOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handleCheckedInToggle(option.value)}
+                  className="flex items-center justify-between"
+                >
+                  {option.label}
+                  {option.value === assetStatus && <Check className="h-4 w-4" />}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                Sort: {sortOptions.find((option) => option.value === sortOption)?.label}
+              <Button variant="outline">
+                <ArrowUpDownIcon />
+                <span className="font-semibold">Sorted by:</span>{" "}
+                {sortOptions.find((option) => option.value === sortOption)?.label}
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                {sortOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option.value}
-                    onClick={() => handleSortSelect(option.value)}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    {option.label}
-                    {sortOption === option.value && <Check className="h-4 w-4" />}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
+            <DropdownMenuContent className="w-56">
+              {sortOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handleSortSelect(option.value)}
+                  className="flex items-center justify-between"
+                >
+                  {option.label}
+                  {sortOption === option.value && <Check className="h-4 w-4" />}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="checked-in-only"
-            checked={showCheckedInOnly}
-            onCheckedChange={handleCheckedInToggle}
-          />
-          <label htmlFor="checked-in-only" className="text-sm cursor-pointer">
-            Show checked-in assets only
-          </label>
-        </div>
+        <Button
+          variant="default"
+          onClick={async () => {
+            let token = await getAccessToken();
+            if (!token.success) {
+              toast({
+                title: "Upload Error",
+                description: `You must be logged in to upload an asset.`,
+                variant: "destructive",
+              });
+              setTimeout(() => {
+                window.location.href = "/login/";
+              }, 1500);
+              return;
+            }
+            setCreateAssetOpen(true);
+          }}
+          className="flex items-center gap-1"
+        >
+          <Plus className="h-4 w-4" />
+          Upload New Asset
+        </Button>
       </div>
 
       <UploadAssetFlow
@@ -203,35 +243,38 @@ const SearchBar = ({ onSearch, onAuthorFilter, onCheckedInFilter, onSort }: Sear
   );
 };
 
-const AssetsPage = () => {
+const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any }) => {
   const { toast } = useToast();
 
   const [assets, setAssets] = useState<AssetWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAuthor, setFilterAuthor] = useState<string | null>(null);
-  const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
+  const [assetStatus, setAssetStatus] = useState<"none" | "check-in" | "check-out">("none");
   const [sortBy, setSortBy] = useState("updated");
 
-  // Mock user for demonstration purposes
-  const user = { pennId: "willcai", fullName: "Will Cai" };
+  if (error) {
+    toast({
+      title: "Failed to fetch all users",
+      description: "This is very bad",
+      variant: "destructive",
+    });
+
+    return null;
+  }
 
   const fetchAssets = async () => {
     setIsLoading(true);
 
-    console.log("Fetching assets with params:", {
-      searchTerm,
-      filterAuthor,
-      showCheckedInOnly,
-      sortBy,
-    });
-
-    const { data, error } = await actions.getAssets({
+    const payload = {
       search: searchTerm,
       author: filterAuthor || undefined,
-      checkedInOnly: showCheckedInOnly,
+      assetStatus,
       sortBy,
-    });
+    };
+
+    console.log("Fetching assets with params:", payload);
+    const { data, error } = await actions.getAssets(payload);
 
     if (error) {
       console.error("[ERROR] API: Failed to fetch assets:", error);
@@ -258,42 +301,21 @@ const AssetsPage = () => {
     fetchAssets();
     // We don't include fetchAssets in the dependency array to avoid an infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, filterAuthor, showCheckedInOnly, sortBy]);
+  }, [searchTerm, filterAuthor, assetStatus, sortBy]);
 
   return (
-    <div className="container mx-auto py-14 px-4 max-w-7xl">
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold mb-2 text-left">Asset Browser</h1>
-          <p className="text-muted-foreground text-left">Browse and search for assets</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{user.fullName}</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center cursor-pointer hover:bg-secondary/80">
-                <User className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem className="cursor-pointer" onClick={() => window.location.href = "/user"}>My Commits</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">Sign Out</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+    <div className="container mx-auto py-14 px-4 max-w-7xl space-y-6">
+      <Header />
 
       <SearchBar
+        users={users}
         onSearch={setSearchTerm}
         onAuthorFilter={setFilterAuthor}
-        onCheckedInFilter={setShowCheckedInOnly}
+        onAssetStatusFilter={setAssetStatus}
         onSort={setSortBy}
       />
 
-      <div className="mt-6">
-        <AssetGrid assets={assets} isLoading={isLoading} />
-      </div>
+      <AssetGrid assets={assets} isLoading={isLoading} />
     </div>
   );
 };

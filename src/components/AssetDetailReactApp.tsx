@@ -41,9 +41,5 @@ export default function AssetDetailReactApp({ assetName }: AssetDetailReactAppPr
     );
   }
 
-  return (
-    <div className="asset-detail-app-wrapper">
-      <AssetDetailPage assetName={effectiveAssetName} />
-    </div>
-  );
+  return <AssetDetailPage assetName={effectiveAssetName} />;
 }

@@ -1,0 +1,18 @@
+---
+import { actions } from "astro:actions";
+
+import UserPage from "@/components/pages/UserPage";
+import Layout from "@/layouts/Layout.astro";
+
+const { pennKey } = Astro.params;
+
+if (!pennKey) {
+  throw new Error("Undefined pennKey!");
+}
+
+const { data, error } = await Astro.callAction(actions.getUser, { pennKey, recentCommits: 5 });
+---
+
+<Layout>
+  <UserPage client:only="react" pennKey={pennKey} data={data!} error={error} />
+</Layout>

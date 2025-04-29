@@ -1,5 +1,5 @@
 ---
-import AssetsPage from "@/components/pages/AssetsPage";
+import LoginForm from "@/components/pages/LoginPage";
 import Layout from "@/layouts/Layout.astro";
 import { actions } from "astro:actions";
 
@@ -8,5 +8,5 @@ console.log(data);
 ---
 
 <Layout>
-  <AssetsPage client:only="react" users={data!.users} error={error} />
+    <LoginForm client:load />
 </Layout>

@@ -1,125 +1,19 @@
-import { useState, useEffect } from "react";
+import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { type AssetWithDetails, type Commit } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
+import type { GetUserBody } from "@/lib/types";
+import { removeTokens } from "@/utils/utils";
+import { LogOutIcon } from "lucide-react";
+import { useState } from "react";
 
-// Extended commit type that includes asset information
-interface UserCommit extends Commit {
-  asset: AssetWithDetails;
+interface UserPageProps {
+  pennKey: string;
+  data: GetUserBody;
+  error: any;
 }
 
-interface UserProfile {
-  pennId: string;
-  fullName: string;
-  avatarUrl?: string;
-}
-
-const UserPage = () => {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [commits, setCommits] = useState<UserCommit[]>([]);
-
-  // Mock data for demonstration
-  const mockUser: UserProfile = {
-    pennId: "willcai",
-    fullName: "Will Cai",
-    avatarUrl: "/placeholder-avatar.jpg"
-  };
-
-  const mockCommits: UserCommit[] = [
-    {
-      author: "willcai",
-      version: "1.2.0",
-      timestamp: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
-      note: "Updated textures and added new materials",
-      asset: {
-        name: "placeholder 1",
-        thumbnailUrl: "/placeholder-image.jpg",
-        version: "1.2.0",
-        creator: "willcai",
-        lastModifiedBy: "willcai",
-        checkedOutBy: null,
-        isCheckedOut: false,
-        materials: true,
-        keywords: ["character", "robot", "sci-fi"],
-        description: "a;sdlkjfa;lskdfj;alsdkf",
-        createdAt: new Date(Date.now() - 3600000 * 24 * 30).toISOString(),
-        updatedAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString()
-      }
-    },
-    {
-      author: "willcai",
-      version: "2.0.1",
-      timestamp: new Date(Date.now() - 3600000 * 24 * 5).toISOString(),
-      note: "Fixed rigging issues and optimized mesh",
-      asset: {
-        name: "placeholder 2",
-        thumbnailUrl: "/placeholder-image.jpg",
-        version: "2.0.1",
-        creator: "asdf",
-        lastModifiedBy: "willcai",
-        checkedOutBy: null,
-        isCheckedOut: false,
-        materials: true,
-        keywords: ["vehicle", "spaceship", "sci-fi"],
-        description: "alksdfjlksdfjalsd",
-        createdAt: new Date(Date.now() - 3600000 * 24 * 60).toISOString(),
-        updatedAt: new Date(Date.now() - 3600000 * 24 * 5).toISOString()
-      }
-    },
-    {
-      author: "willcai",
-      version: "1.0.0",
-      timestamp: new Date(Date.now() - 3600000 * 24 * 10).toISOString(),
-      note: "Initial commit",
-      asset: {
-        name: "placeholder 3",
-        thumbnailUrl: "/placeholder-image.jpg",
-        version: "1.0.0",
-        creator: "willcai",
-        lastModifiedBy: "willcai",
-        checkedOutBy: null,
-        isCheckedOut: false,
-        materials: true,
-        keywords: ["environment", "forest", "nature"],
-        description: "alsdkfj;alsdkfja",
-        createdAt: new Date(Date.now() - 3600000 * 24 * 10).toISOString(),
-        updatedAt: new Date(Date.now() - 3600000 * 24 * 10).toISOString()
-      }
-    }
-  ];
-
-  useEffect(() => {
-    // Simulate API call to fetch user profile and commits
-    const fetchUserData = async () => {
-      setIsLoading(true);
-      try {
-        // In a real implementation, this would be an API call
-        // await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-        setUserProfile(mockUser);
-        setCommits(mockCommits);
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load user data. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [toast]);
-
-  const handleBack = () => {
-    window.history.back();
-  };
+const UserPage = ({ pennKey, data, error }: UserPageProps) => {
+  const [selectedTab, setSelectedTab] = useState<"commits" | "created" | "checkedOut">("commits");
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -131,133 +25,175 @@ const UserPage = () => {
     });
   };
 
-  if (isLoading) {
+  if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Button variant="ghost" className="flex items-center gap-1" onClick={handleBack}>
-            <ChevronLeft className="h-4 w-4" />
-            Back to Assets
-          </Button>
-        </div>
-        
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-20 w-20 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-6">
-            <Skeleton className="h-6 w-32" />
-            {[1, 2, 3].map((_, index) => (
-              <div key={index} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-start gap-4">
-                  <Skeleton className="h-16 w-16 rounded-md" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+      <div className="container mx-auto py-14 px-4 max-w-7xl">
+        <Header />
 
-  if (!userProfile) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center py-16">
+        <div className="text-center flex flex-col items-center justify-center h-full min-h-[calc(100svh-156px)]">
           <h2 className="text-2xl font-bold mb-2">User Not Found</h2>
-          <p className="text-muted-foreground mb-6">The requested user profile could not be found.</p>
-          <Button onClick={handleBack}>Return to Asset Browser</Button>
+          <p className="text-muted-foreground mb-6">
+            The requested user "{pennKey}" could not be found.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          className="flex items-center gap-1 hover:bg-secondary/80 transition-all"
-          onClick={handleBack}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Assets
-        </Button>
-      </div>
-      
+    <div className="max-w-7xl mx-auto px-4 py-14 space-y-6">
+      <Header />
+
       <div className="flex flex-col gap-8">
-        {/* User Profile Header */}
-        <div className="flex items-center gap-4">
-          <div className="h-20 w-20 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
-            {userProfile.avatarUrl ? (
-              <img 
-                src={userProfile.avatarUrl} 
-                alt={userProfile.fullName} 
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="text-3xl font-bold text-muted-foreground">
-                {userProfile.fullName.charAt(0)}
-              </div>
-            )}
-          </div>
-          
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">{userProfile.fullName}</h1>
-            <p className="text-muted-foreground">@{userProfile.pennId}</p>
+            <h1 className="text-3xl font-bold">{data.user.fullName}</h1>
+            <p className="text-muted-foreground font-mono">@{data.user.pennKey}</p>
           </div>
+
+          <Button
+            onClick={() => {
+              removeTokens();
+              window.location.href = "/";
+            }}
+          >
+            <LogOutIcon />
+            Logout
+          </Button>
         </div>
-        
+
         <Separator />
-        
-        {/* Commits List */}
+
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Recent Commits</h2>
-          
-          {commits.length === 0 ? (
-            <div className="text-center py-8 border rounded-lg">
-              <p className="text-muted-foreground">No commits found for this user.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {commits.map((commit, index) => (
-                <div key={index} className="border rounded-lg p-4 hover:bg-secondary/30 transition-colors">
-                  <div className="flex items-start gap-4">
-                    <div className="h-16 w-16 rounded-md bg-secondary overflow-hidden flex-shrink-0">
-                      <img 
-                        src={commit.asset.thumbnailUrl} 
-                        alt={commit.asset.name} 
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium">{commit.asset.name}</h3>
-                        <span className="text-sm text-muted-foreground">v{commit.version}</span>
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {formatDate(commit.timestamp)}
-                      </p>
-                      
-                      <p className="text-sm">{commit.note}</p>
-                    </div>
-                  </div>
+          {/* Tab Headers */}
+          <div className="flex gap-6 items-center mb-8">
+            <button
+              className={`text-xl font-semibold border-b-2 px-1 transition-all ${
+                selectedTab === "commits"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-primary"
+              }`}
+              onClick={() => setSelectedTab("commits")}
+            >
+              Recent Commits
+            </button>
+            <button
+              className={`text-xl font-semibold border-b-2 px-1 transition-all ${
+                selectedTab === "created"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-primary"
+              }`}
+              onClick={() => setSelectedTab("created")}
+            >
+              Assets Created
+            </button>
+            <button
+              className={`text-xl font-semibold border-b-2 px-1 transition-all ${
+                selectedTab === "checkedOut"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-primary"
+              }`}
+              onClick={() => setSelectedTab("checkedOut")}
+            >
+              Checked Out Assets
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          {selectedTab === "commits" && (
+            <div className="space-y-6">
+              {data.user.recentCommits.length === 0 ? (
+                <div className="text-center py-8 border rounded-lg">
+                  <p className="text-muted-foreground">No commits found for this user.</p>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-4">
+                  {data.user.recentCommits.map((commit) => (
+                    <a
+                      href={`/asset/${commit.assetName}`}
+                      key={`${commit.assetName}-${commit.version}`}
+                      className="border rounded-lg p-4 hover:bg-secondary/30 transition-colors block"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium">{commit.assetName}</h3>
+                            <span className="text-sm text-muted-foreground">v{commit.version}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {formatDate(commit.timestamp)}
+                          </p>
+                          <p className="text-sm">{commit.note}</p>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedTab === "created" && (
+            <div className="space-y-6">
+              {data.user.assetsCreated.length === 0 ? (
+                <div className="text-center py-8 border rounded-lg">
+                  <p className="text-muted-foreground">No assets created by this user.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.user.assetsCreated.map((asset, index) => (
+                    <a
+                      href={`/asset/${asset.name}`}
+                      key={`${asset.name}-${index}`}
+                      className="border rounded-lg p-4 hover:bg-secondary/30 transition-colors block"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium">{asset.name}</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Created: {formatDate(asset.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedTab === "checkedOut" && (
+            <div className="space-y-6">
+              {data.user.checkedOutAssets.length === 0 ? (
+                <div className="text-center py-8 border rounded-lg">
+                  <p className="text-muted-foreground">
+                    No assets currently checked out by this user.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.user.checkedOutAssets.map((asset, index) => (
+                    <a
+                      href={`/asset/${asset.name}`}
+                      key={`${asset.name}-${index}`}
+                      className="border rounded-lg p-4 hover:bg-secondary/30 transition-colors block"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium">{asset.name}</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Checked Out: {formatDate(asset.checkedOutAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
-import { MetadataSchema } from "@/lib/types";
+import { findHoudiniPath, findHythonPath, writePythonHipFile } from "@/lib/launch-dcc";
+import { type AssetWithDetails, type GetUserBody, type GetUsersBody } from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { execFile } from "child_process";
@@ -181,7 +182,7 @@ export const server = {
       .object({
         search: z.string().optional(),
         author: z.string().optional(),
-        checkedInOnly: z.boolean().optional(),
+        assetStatus: z.enum(["none", "check-in", "check-out"]),
         sortBy: z.string().optional(),
       })
       .optional(),
@@ -194,7 +195,7 @@ export const server = {
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
       if (params?.author) queryParams.append("author", params.author);
-      if (params?.checkedInOnly) queryParams.append("checkedInOnly", "true");
+      if (params?.assetStatus) queryParams.append("assetStatus", params.assetStatus);
       if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
 
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
@@ -210,8 +211,7 @@ export const server = {
         });
       }
 
-      const data = await response.json();
-      //console.log("[DEBUG] API: Received response:", data);
+      const data = (await response.json()) as { assets: AssetWithDetails[] };
       return data;
     },
   }),
@@ -237,22 +237,49 @@ export const server = {
   createAsset: defineAction({
     accept: "form",
     input: z.object({
-      assetName: z.string(),
-      version: z.string(),
       file: z.instanceof(File),
+      note: z.string(),
+      hasTexture: z.boolean(),
+      pennKey: z.string(),
+      keywordsRawList: z.string(),
+      assetName: z.string(),
+      accessToken: z.string(),
     }),
-    handler: async ({ assetName, version, file }) => {
-      console.log("[DEBUG] API: assetName type:", typeof assetName);
+
+    handler: async ({
+      file,
+      pennKey,
+      note,
+      hasTexture,
+      keywordsRawList,
+      assetName,
+      accessToken,
+    }) => {
       console.log("[DEBUG] API: API URL:", API_URL);
+      if (typeof keywordsRawList === "string") {
+        keywordsRawList = JSON.parse(keywordsRawList);
+      }
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("version", version);
+      formData.append("note", note);
+      formData.append("hasTexture", String(hasTexture));
+      formData.append("pennkey", pennKey);
+
+      for (const keyword of keywordsRawList) {
+        formData.append("keywordsRawList", keyword);
+      }
 
       const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
-        method: 'POST',
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,
       });
+
+      const data = await response.json();
+      if (!data.success) {
+        console.log(data.message);
+      }
 
       if (!response.ok) {
         throw new ActionError({
@@ -262,29 +289,6 @@ export const server = {
             : "Failed to create asset",
         });
       }
-    },
-  }),
-
-  checkoutAsset: defineAction({
-    input: z.object({ assetName: z.string(), pennKey: z.string() }),
-    handler: async ({ assetName, pennKey }) => {
-      const response = await fetch(`${API_URL}/assets/${assetName}/checkout/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // Note: backend expects 'pennkey' not 'pennKey' (lowercase "K")
-        body: JSON.stringify({ pennkey: pennKey }),
-      });
-
-      if (!response.ok) {
-        throw new ActionError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: response.statusText || "Failed to check out asset",
-        });
-      }
-
-      const data = await response.json();
       return data;
     },
   }),
@@ -292,20 +296,53 @@ export const server = {
   checkinAsset: defineAction({
     accept: "form",
     input: z.object({
-      assetName: z.string(),
+      file: z.instanceof(File),
+      note: z.string(),
+      version: z.string(),
+      hasTexture: z.boolean(),
       pennKey: z.string(),
-      file: z.instanceof(File), // used to be an array, now just one because ZIP
-      metadata: MetadataSchema,
+      keywordsRawList: z.string(),
+      assetName: z.string(),
+      accessToken: z.string(),
     }),
-    handler: async ({ assetName, pennKey, file, metadata }) => {
+
+    handler: async ({
+      file,
+      pennKey,
+      version,
+      note,
+      hasTexture,
+      keywordsRawList,
+      assetName,
+      accessToken,
+    }) => {
+      if (typeof keywordsRawList === "string") {
+        keywordsRawList = JSON.parse(keywordsRawList);
+      }
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("note", note);
+      formData.append("version", version);
+      formData.append("hasTexture", String(hasTexture));
+      formData.append("pennkey", pennKey);
+      for (const keyword of keywordsRawList) {
+        formData.append("keywordsRawList", keyword);
+      }
+      formData.append("accessToken", accessToken);
+
+      console.log("formdata = ", formData);
 
       // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
       const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
-        method: "POST",
+        method: "PUT",
+        headers: { Authorization: `Bearer ${accessToken}` },
         body: formData,
       });
+
+      const data = await response.json();
+      if (!data.success) {
+        console.log("data message", data.message);
+      }
 
       if (!response.ok) {
         throw new ActionError({
@@ -314,23 +351,85 @@ export const server = {
         });
       }
 
-      // TO DO: Handle metadata updates and version ID control should it happen
+      return data;
+    },
+  }),
+
+  checkoutAsset: defineAction({
+    input: z.object({
+      assetName: z.string(),
+      pennKey: z.string(),
+      accessToken: z.string(),
+    }),
+    handler: async ({ assetName, pennKey, accessToken }) => {
+      const response = await fetch(`${API_URL}/assets/${assetName}/checkout/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        // Note: backend expects 'pennkey' not 'pennKey' (lowercase "K")
+        body: JSON.stringify({ pennkey: pennKey }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: data.error || response.statusText || "Failed to check out asset",
+        });
+      }
 
       const data = await response.json();
       return data;
     },
   }),
 
+  verifyAsset: defineAction({
+    accept: "form",
+    input: z.object({
+      assetName: z.string(),
+      file: z.instanceof(File),
+      isStrict: z.string(),
+    }),
+    handler: async ({ assetName, file, isStrict }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("isStrict", isStrict);
+
+      const response = await fetch(`${API_URL}/assets/${assetName}/verify/`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const results = await response.json();
+
+      return results;
+    },
+  }),
+
   downloadAsset: defineAction({
     input: z.object({
       assetName: z.string(),
+      version: z.string().optional(),
     }),
-    handler: async ({ assetName }) => {
-      console.log("[DEBUG] downloadAsset called with assetName:", assetName);
+    handler: async ({ assetName, version }) => {
+      console.log("[DEBUG] downloadAsset called with assetName:", assetName, "version:", version);
+
+      // Construct the endpoint URL based on whether a version is provided
+      let endpoint = `${API_URL}/assets/${assetName}/download`;
+      if (version) {
+        endpoint = `${API_URL}/assets/${assetName}/download/commit/${version}/`;
+      }
 
       // Call API in both development and production
-      console.log("[DEBUG] Making API call to:", `${API_URL}/assets/${assetName}/download`);
-      const response = await fetch(`${API_URL}/assets/${assetName}/download`);
+      console.log("[DEBUG] Making API call to:", endpoint);
+      const response = await fetch(endpoint);
 
       if (!response.ok) {
         console.log("[DEBUG] Error occurred! API response status code:", response.status);
@@ -369,19 +468,19 @@ export const server = {
       
       // if the zip file exists
       if (fs.existsSync(assetZip)) {
-        
         if (!fs.existsSync(outputDir)) {
           // unzip the file
           console.log("[DEBUG] Unzipping the file...");
 
           fs.createReadStream(assetZip)
-    .pipe(unzipper.Extract({ path: outputDir }))
-    .on('close', () => {
-      console.log('Extraction complete.');
-    })
-    .on('error', (err) => {
-      console.error('Error during extraction:', err);
-    });
+            .pipe(unzipper.Extract({ path: outputDir }))
+            .on("close", () => {
+              console.log("Extraction complete.");
+            })
+
+            .on("error", () => {
+              console.error("Error during extraction:");
+            });
         }
 
         //const hythonExe = findHythonPath();
@@ -390,7 +489,7 @@ export const server = {
         const hythonExe = '/Applications/Houdini/Houdini20.5.332/Frameworks/Houdini.framework/Versions/20.5/Resources/bin/hython';
         
         console.log("[DEBUG] hythonExe path:", hythonExe);
-             
+
         // create python generation file here
 
 
@@ -484,7 +583,7 @@ export const server = {
       return { message: "Application launched successfully" };
     }
     },
-}),
+  }),
 
   getAuthors: defineAction({
     input: undefined,
@@ -496,6 +595,205 @@ export const server = {
         code: "FORBIDDEN",
         message: "To do",
       });
+    },
+  }),
+
+  getUsers: defineAction({
+    input: undefined,
+    handler: async () => {
+      const response = await fetch(`${API_URL}/users/`, { method: "GET" });
+
+      if (!response.ok) {
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message:
+            "Failed to fetch all users! " +
+            (response.statusText.length > 0 ? response.statusText : ""),
+        });
+      }
+
+      const data = (await response.json()) as GetUsersBody;
+      return data;
+    },
+  }),
+
+  getUser: defineAction({
+    input: z.object({
+      pennKey: z.string(),
+      recentCommits: z.number().optional(),
+    }),
+    handler: async ({ pennKey, recentCommits }) => {
+      const recentCommitsParam = recentCommits ? `?recent_commits=${recentCommits}` : "";
+      const response = await fetch(`${API_URL}/users/${pennKey}/${recentCommitsParam}`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        console.log(
+          `[DEBUG] Could not get user "${pennKey}" with recent_commits = ${recentCommits}, status code: ${response.status}`
+        );
+
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to get user! ${
+            response.statusText.length > 0 ? response.statusText : ""
+          }`,
+        });
+      }
+
+      const data = (await response.json()) as GetUserBody;
+      return data;
+    },
+  }),
+
+  downloadGlb: defineAction({
+    input: z.object({
+      assetName: z.string(),
+    }),
+    handler: async ({ assetName }) => {
+      const response = await fetch(`${API_URL}/assets/${assetName}/download/glb/`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        console.log("[DEBUG] downloadGlb(): failed to download .glb file");
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to download .glb file for "${assetName}!" ${
+            response.statusText.length > 0 ? response.statusText : `Code: ${response.status}`
+          }`,
+        });
+      }
+
+      const data = await response.arrayBuffer();
+      return data;
+    },
+  }),
+
+  storeLoginTokens: defineAction({
+    accept: "form",
+    input: z.object({
+      username: z.string(),
+      password: z.string(),
+    }),
+    handler: async ({ username, password }) => {
+      const response = await fetch(`${API_URL}/token/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password,
+        }),
+      });
+
+      if (!response.ok) {
+        console.log("[DEBUG] getLoginToken(): failed to get login token");
+        if (response.status === 401) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Invalid credentials",
+          });
+        }
+      }
+
+      const data = await response.json();
+
+      return data;
+    },
+  }),
+
+  // move out of local storage
+  refreshToken: defineAction({
+    accept: "form",
+    input: z.object({
+      refreshToken: z.string(),
+    }),
+    handler: async ({ refreshToken }) => {
+      const response = await fetch(`${API_URL}/token/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          refresh: refreshToken,
+        }),
+      });
+
+      if (!response.ok) {
+        console.log("[DEBUG] refreshToken(): failed to get access token");
+        if (response.status === 401) {
+          console.log("Refresh token expired. Please log in again.");
+          return "";
+        }
+      }
+
+      const data = await response.json();
+
+      return data.access;
+    },
+  }),
+
+  assetExists: defineAction({
+    input: z.object({
+      assetName: z.string(),
+    }),
+    handler: async ({ assetName }) => {
+      console.log(`Checking if asset exists: ${assetName}`);
+
+      try {
+        // Try the first endpoint format
+        let response = await fetch(`${API_URL}/assets/${assetName}/exists`, {
+          method: "GET",
+        });
+
+        if (!response.ok) {
+          console.error(`Endpoint failed. Returning default response.`);
+          // return { exists: true };
+        }
+
+        const data = await response.json();
+        console.log(`Response data:`, data);
+        return data;
+      } catch (error) {
+        console.error(`Fetch error:`, error);
+        // Return a default response that allows the user to proceed
+        return { exists: false };
+      }
+    },
+  }),
+
+  getAssetCommits: defineAction({
+    input: z.object({
+      assetName: z.string(),
+    }),
+    handler: async ({ assetName }) => {
+      console.log(`Fetching commit history for asset: ${assetName}`);
+
+      try {
+        const response = await fetch(`${API_URL}/assets/${assetName}/info/commits/`, {
+          method: "GET",
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to fetch commit history: ${response.statusText}`);
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: response.statusText || "Failed to fetch asset commit history",
+          });
+        }
+
+        const data = await response.json();
+        console.log(`Commit history data:`, data);
+        return data;
+      } catch (error) {
+        console.error(`Fetch error:`, error);
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error instanceof Error ? error.message : "Failed to fetch asset commit history",
+        });
+      }
     },
   }),
 };

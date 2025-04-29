@@ -52,9 +52,9 @@ const AssetGrid = ({ assets, isLoading }: AssetGridProps) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-4">
-      {assets.map((asset) => (
+      {assets.map((asset, index) => (
         <div
-          key={asset.name}
+          key={`${asset.name}-${asset.keywords.join("-")}-${index}`}
           className="animate-slide-in [animation-fill-mode:backwards]"
           style={{
             animationDelay: `${assets.indexOf(asset) * 50}ms`,

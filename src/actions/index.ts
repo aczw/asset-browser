@@ -19,7 +19,7 @@ export const server = {
       .object({
         search: z.string().optional(),
         author: z.string().optional(),
-        checkedInOnly: z.boolean().optional(),
+        assetStatus: z.boolean().optional(),
         sortBy: z.string().optional(),
       })
       .optional(),
@@ -32,7 +32,7 @@ export const server = {
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
       if (params?.author) queryParams.append("author", params.author);
-      if (params?.checkedInOnly) queryParams.append("checkedInOnly", "true");
+      if (params?.assetStatus) queryParams.append("checkedInOnly", "true");
       if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
 
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";
@@ -91,7 +91,7 @@ export const server = {
       formData.append("hasTexture", String(hasTexture));
       formData.append("pennKey", pennKey);
       for (const keyword of keywordsRawList) {
-        formData.append("keywordsRawList[]", keyword); 
+        formData.append("keywordsRawList[]", keyword);
       }
 
       const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
@@ -132,7 +132,7 @@ export const server = {
       formData.append("hasTexture", String(hasTexture));
       formData.append("pennKey", pennKey);
       for (const keyword of keywordsRawList) {
-        formData.append("keywordsRawList[]", keyword); 
+        formData.append("keywordsRawList[]", keyword);
       }
 
       // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
@@ -157,7 +157,8 @@ export const server = {
   checkoutAsset: defineAction({
     input: z.object({
       assetName: z.string(),
-      pennKey: z.string() }),
+      pennKey: z.string(),
+    }),
     handler: async ({ assetName, pennKey }) => {
       const response = await fetch(`${API_URL}/assets/${assetName}/checkout/`, {
         method: "POST",
@@ -179,8 +180,6 @@ export const server = {
       return data;
     },
   }),
-
-
 
   verifyAsset: defineAction({
     accept: "form",
@@ -409,15 +408,14 @@ export const server = {
       password: z.string(),
     }),
     handler: async ({ username, password }) => {
-
       const response = await fetch(`${API_URL}/token/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          "username": username,
-          "password": password,
+          username: username,
+          password: password,
         }),
       });
 
@@ -432,41 +430,40 @@ export const server = {
       }
 
       const data = await response.json();
-      
+
       return data;
-    }
+    },
   }),
 
-  // move out of local storage 
+  // move out of local storage
   refreshToken: defineAction({
     accept: "form",
     input: z.object({
       refreshToken: z.string(),
     }),
     handler: async ({ refreshToken }) => {
-
       const response = await fetch(`${API_URL}/token/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          "refresh": refreshToken,
+          refresh: refreshToken,
         }),
       });
 
       if (!response.ok) {
         console.log("[DEBUG] refreshToken(): failed to get access token");
         if (response.status === 401) {
-          console.log("Refresh token expired. Please log in again.")
+          console.log("Refresh token expired. Please log in again.");
           return "";
         }
       }
 
       const data = await response.json();
-      
+
       return data.access;
-    }
+    },
   }),
 
   assetExists: defineAction({
@@ -475,13 +472,13 @@ export const server = {
     }),
     handler: async ({ assetName }) => {
       console.log(`Checking if asset exists: ${assetName}`);
-      
+
       try {
         // Try the first endpoint format
         let response = await fetch(`${API_URL}/assets/${assetName}/exists`, {
           method: "GET",
         });
-        
+
         if (!response.ok) {
           console.error(`Endpoint failed. Returning default response.`);
           // return { exists: true };
@@ -490,7 +487,6 @@ export const server = {
         const data = await response.json();
         console.log(`Response data:`, data);
         return data;
-        
       } catch (error) {
         console.error(`Fetch error:`, error);
         // Return a default response that allows the user to proceed
@@ -505,12 +501,12 @@ export const server = {
     }),
     handler: async ({ assetName }) => {
       console.log(`Fetching commit history for asset: ${assetName}`);
-      
+
       try {
         const response = await fetch(`${API_URL}/assets/${assetName}/info/commits/`, {
           method: "GET",
         });
-        
+
         if (!response.ok) {
           console.error(`Failed to fetch commit history: ${response.statusText}`);
           throw new ActionError({
@@ -531,5 +527,4 @@ export const server = {
       }
     },
   }),
-
 };

@@ -1,11 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -22,18 +19,26 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { actions } from "astro:actions";
-import { ArrowUpDownIcon, Check, ChevronDown, Filter, Plus, Search, User } from "lucide-react";
+import {
+  ArrowUpDownIcon,
+  Check,
+  ChevronDown,
+  FileLock2Icon,
+  Plus,
+  Search,
+  User,
+  UserIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface SearchBarProps {
   users: GetUsersBody["users"];
   onSearch: (search: string) => void;
   onAuthorFilter: (author: string | null) => void;
-  onCheckedInFilter: (checkedInOnly: boolean) => void;
+  onAssetStatusFilter: (assetStatus: string) => void;
   onSort: (sortBy: string) => void;
 }
 
@@ -41,11 +46,11 @@ const SearchBar = ({
   users,
   onSearch,
   onAuthorFilter,
-  onCheckedInFilter,
+  onAssetStatusFilter,
   onSort,
 }: SearchBarProps) => {
   const [searchValue, setSearchValue] = useState("");
-  const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
+  const [assetStatus, setAssetStatus] = useState<string>("none");
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState("updated");
   const [createAssetOpen, setCreateAssetOpen] = useState(false);
@@ -58,15 +63,20 @@ const SearchBar = ({
     { label: "Recently created", value: "created" },
   ];
 
+  const checkInOptions = [
+    { label: "None", value: "none" },
+    { label: "Checked-in only", value: "check-in" },
+    { label: "Checked-out only", value: "check-out" },
+  ];
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(searchValue);
   };
 
-  const handleCheckedInToggle = () => {
-    const newValue = !showCheckedInOnly;
-    setShowCheckedInOnly(newValue);
-    onCheckedInFilter(newValue);
+  const handleCheckedInToggle = (status: string) => {
+    setAssetStatus(status);
+    onAssetStatusFilter(status);
   };
 
   const handleAuthorSelect = (author: string) => {
@@ -105,7 +115,7 @@ const SearchBar = ({
           <Popover open={authorOpen} onOpenChange={setAuthorOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline">
-                <Filter />
+                <UserIcon />
                 {selectedAuthor ? (
                   <>
                     <span className="font-semibold">Author:</span> {selectedAuthor}
@@ -145,6 +155,35 @@ const SearchBar = ({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
+                <FileLock2Icon />
+                {assetStatus === "none" ? (
+                  "Filter by asset status"
+                ) : (
+                  <>
+                    <span className="font-semibold">Asset status:</span>{" "}
+                    {assetStatus === "check-in" ? "Checked in only" : "Checked out only"}
+                  </>
+                )}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              {checkInOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handleCheckedInToggle(option.value)}
+                  className="flex items-center justify-between"
+                >
+                  {option.label}
+                  {option.value === assetStatus && <Check className="h-4 w-4" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
                 <ArrowUpDownIcon />
                 <span className="font-semibold">Sorted by:</span>{" "}
                 {sortOptions.find((option) => option.value === sortOption)?.label}
@@ -164,17 +203,6 @@ const SearchBar = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="checked-in-only"
-              checked={showCheckedInOnly}
-              onCheckedChange={handleCheckedInToggle}
-            />
-            <Label htmlFor="checked-in-only" className="text-s cursor-pointer">
-              Show checked-in assets only
-            </Label>
-          </div>
         </div>
 
         <Button
@@ -206,7 +234,7 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAuthor, setFilterAuthor] = useState<string | null>(null);
-  const [showCheckedInOnly, setShowCheckedInOnly] = useState(false);
+  const [assetStatus, setAssetStatus] = useState("none");
   const [sortBy, setSortBy] = useState("updated");
 
   if (error) {
@@ -222,19 +250,15 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
   const fetchAssets = async () => {
     setIsLoading(true);
 
-    console.log("Fetching assets with params:", {
-      searchTerm,
-      filterAuthor,
-      showCheckedInOnly,
-      sortBy,
-    });
-
-    const { data, error } = await actions.getAssets({
+    const payload = {
       search: searchTerm,
       author: filterAuthor || undefined,
-      checkedInOnly: showCheckedInOnly,
+      assetStatus: assetStatus === "none" ? undefined : assetStatus === "check-in" ? true : false,
       sortBy,
-    });
+    };
+
+    console.log("Fetching assets with params:", payload);
+    const { data, error } = await actions.getAssets(payload);
 
     if (error) {
       console.error("[ERROR] API: Failed to fetch assets:", error);
@@ -261,7 +285,7 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
     fetchAssets();
     // We don't include fetchAssets in the dependency array to avoid an infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, filterAuthor, showCheckedInOnly, sortBy]);
+  }, [searchTerm, filterAuthor, assetStatus, sortBy]);
 
   return (
     <div className="container mx-auto py-14 px-4 max-w-7xl">
@@ -304,7 +328,7 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
         users={users}
         onSearch={setSearchTerm}
         onAuthorFilter={setFilterAuthor}
-        onCheckedInFilter={setShowCheckedInOnly}
+        onAssetStatusFilter={setAssetStatus}
         onSort={setSortBy}
       />
 

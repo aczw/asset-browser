@@ -11,7 +11,7 @@ import * as unzipper from "unzipper";
 
 const API_URL = import.meta.env.DEV
   ? "http://127.0.0.1:8000/api"
-  : "https://usd-asset-library.up.railway.app/api";
+  : "https://backend-production-9a54.up.railway.app/api";
 
 export const server = {
   getAssets: defineAction({
@@ -89,16 +89,16 @@ export const server = {
       assetName: z.string(),
     }),
     handler: async ({ file, pennKey, note, hasTexture, keywordsRawList, assetName }) => {
-      if (typeof keywordsRawList === 'string') {
+      if (typeof keywordsRawList === "string") {
         keywordsRawList = JSON.parse(keywordsRawList);
       }
-      
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("note", note);
       formData.append("hasTexture", String(hasTexture));
       formData.append("pennkey", pennKey);
-    
+
       for (const keyword of keywordsRawList) {
         formData.append("keywordsRawList", keyword);
       }
@@ -107,10 +107,10 @@ export const server = {
         method: "POST",
         body: formData,
       });
-      
+
       const data = await response.json();
-      if(!data.success) {
-        console.log(data.message)
+      if (!data.success) {
+        console.log(data.message);
       }
 
       if (!response.ok) {
@@ -137,7 +137,7 @@ export const server = {
       assetName: z.string(),
     }),
     handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList, assetName }) => {
-      if (typeof keywordsRawList === 'string') {
+      if (typeof keywordsRawList === "string") {
         keywordsRawList = JSON.parse(keywordsRawList);
       }
       const formData = new FormData();
@@ -157,8 +157,8 @@ export const server = {
       });
 
       const data = await response.json();
-      if(!data.success) {
-        console.log("data message", data.message)
+      if (!data.success) {
+        console.log("data message", data.message);
       }
 
       if (!response.ok) {
@@ -167,7 +167,6 @@ export const server = {
           message: response.statusText || "Failed to check in asset",
         });
       }
-
 
       return data;
     },
@@ -189,9 +188,11 @@ export const server = {
       });
 
       if (!response.ok) {
+        const data = await response.json();
+
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
-          message: response.statusText || "Failed to check out asset",
+          message: data.error || response.statusText || "Failed to check out asset",
         });
       }
 
@@ -205,7 +206,7 @@ export const server = {
     input: z.object({
       assetName: z.string(),
       file: z.instanceof(File),
-      isStrict: z.string()
+      isStrict: z.string(),
     }),
     handler: async ({ assetName, file, isStrict }) => {
       const formData = new FormData();

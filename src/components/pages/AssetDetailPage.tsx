@@ -24,6 +24,10 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const [userFiles, setUserFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Terrible hack! :D
+  const [firstThumbnailFetch, setFirstThumbnailFetch] = useState(true);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+
   // Mock user for demonstration purposes
   const user = { pennId: "soominp", fullName: "Jacky Park" };
 
@@ -46,7 +50,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
     if (error) {
       console.error("Error fetching asset:", error);
-      setIsLoading(false);
+
       toast({
         title: "Error",
         description: "Failed to load asset details. Please try again.",
@@ -55,8 +59,14 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     } else {
       console.log("API response:", data);
       setAsset(data.asset);
-      setIsLoading(false);
+
+      if (firstThumbnailFetch) {
+        setThumbnailUrl(data.asset.thumbnailUrl);
+        setFirstThumbnailFetch(false);
+      }
     }
+
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -160,10 +170,10 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     formData.append("version", checkInData.version);
     formData.append("hasTexture", checkInData.hasTexture.toString());
     formData.append("pennKey", user.pennId);
-    
+
     // Pass the keywords string directly without any further processing
     formData.append("keywordsRawList", checkInData.keywords);
-    
+
     formData.append("assetName", assetName);
 
     const { data, error } = await actions.checkinAsset(formData);
@@ -303,7 +313,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
         <div className="flex justify-center lg:block mt-4 lg:mt-0">
           <div className="w-[80vh] h-[80vh] bg-secondary rounded-xl overflow-hidden relative">
-            <AssetPreview asset={asset} />
+            <AssetPreview asset={asset} thumbnailUrl={thumbnailUrl} />
           </div>
         </div>
       </div>

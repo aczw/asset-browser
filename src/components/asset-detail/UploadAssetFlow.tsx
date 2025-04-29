@@ -66,7 +66,7 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
 
     getSelf();
   }, []);
-  
+
   // Mock asset for steps 2 and 3
   const mockAsset = {
     name: assetName || "New Asset",
@@ -207,7 +207,7 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
 
   const isFormValid = () => {
     return (
-      user?.name &&
+      user?.pennId &&
       date &&
       version &&
       materials &&
@@ -524,7 +524,7 @@ const UploadAssetFlow = ({ open, onOpenChange, onComplete }: UploadAssetFlowProp
                   <label htmlFor="author" className="text-sm font-medium">
                     Author *
                   </label>
-                  <Input id="author" value={user?.name || ""} readOnly className="bg-muted" />
+                  <Input id="author" value={user?.pennId || ""} readOnly className="bg-muted" />
                 </div>
 
                 {/* Date Field */}

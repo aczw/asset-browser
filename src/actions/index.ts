@@ -32,7 +32,13 @@ export const server = {
       const queryParams = new URLSearchParams();
       if (params?.search) queryParams.append("search", params.search);
       if (params?.author) queryParams.append("author", params.author);
-      if (params?.assetStatus) queryParams.append("checkedInOnly", "true");
+      if (params?.assetStatus !== undefined) {
+        if (params.assetStatus) {
+          queryParams.append("checkedInOnly", "true");
+        } else {
+          queryParams.append("checkedInOnly", "false");
+        }
+      }
       if (params?.sortBy) queryParams.append("sortBy", params.sortBy);
 
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : "";

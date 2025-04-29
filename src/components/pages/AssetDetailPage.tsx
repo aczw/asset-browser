@@ -22,9 +22,6 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [asset, setAsset] = useState<AssetWithDetails | null>(null);
   const [userFiles, setUserFiles] = useState<File[]>([]);
-  const [metadata, setMetadata] = useState<Metadata>({
-    hi: "empty",
-  } as unknown as Metadata);
   const [isLoading, setIsLoading] = useState(true);
 
   // Mock user for demonstration purposes
@@ -33,11 +30,6 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
   const handleUserFilesChange = (newFiles: File[]) => {
     console.log("User files changed:", newFiles);
     setUserFiles(newFiles);
-  };
-
-  const handleMetadataChange = (newMetadata: Metadata) => {
-    console.log("Metadata changed:", newMetadata);
-    setMetadata(newMetadata);
   };
 
   const fetchAsset = async () => {
@@ -148,27 +140,31 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     setIsCheckingOut(false);
   };
 
-  const handleCheckIn = async () => {
-    console.log("It's time to check in.");
-
-    if (!assetName || !user || !asset || !metadata || userFiles.length === 0) return;
+  const handleCheckIn = async (checkInData?: {
+    note: string;
+    version: string;
+    hasTexture: boolean;
+    keywords: string;
+  }) => {
+    if (!assetName || !user || !asset || userFiles.length === 0 || !checkInData) {
+      return;
+    }
 
     console.log("Preparing check-in data");
-    console.log("Metadata:", metadata);
     console.log("Files:", userFiles);
+    console.log("keywords:", checkInData.keywords);
 
     const formData = new FormData();
     formData.append("file", userFiles[0]);
-    formData.append("note", metadata.commit.note);
-    formData.append("version", metadata.commit.version);
-    formData.append("hasTexture", metadata.hasTexture.toString());
+    formData.append("note", checkInData.note);
+    formData.append("version", checkInData.version);
+    formData.append("hasTexture", checkInData.hasTexture.toString());
     formData.append("pennKey", user.pennId);
+    
+    // Pass the keywords string directly without any further processing
+    formData.append("keywordsRawList", checkInData.keywords);
+    
     formData.append("assetName", assetName);
-
-    // Add keywords as an array
-    metadata.keywords.forEach((keyword) => {
-      formData.append("keywordsRawList[]", keyword);
-    });
 
     const { data, error } = await actions.checkinAsset(formData);
 
@@ -298,7 +294,6 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
             onCheckin={handleCheckIn}
             onDownload={handleDownload}
             onFilesChange={handleUserFilesChange}
-            onMetadataChange={handleMetadataChange}
             onLaunchDCC={handleLaunchDCC}
             isDownloading={isDownloading}
             isCheckingOut={isCheckingOut}

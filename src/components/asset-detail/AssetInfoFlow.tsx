@@ -1,3 +1,4 @@
+import { useRef, useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import type { AssetWithDetails, Commit, Metadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -18,11 +19,10 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Calendar } from "../../components/ui/calendar";
-import { Dialog, DialogContent } from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
 import {
@@ -39,11 +39,15 @@ interface AssetInfoFlowProps {
   canCheckout: boolean;
   canCheckin: boolean;
   onCheckout: () => void;
-  onCheckin: () => void;
+  onCheckin: (checkInData: {
+    note: string;
+    version: string;
+    hasTexture: boolean;
+    keywords: string;
+  }) => void;
   onDownload: () => void;
+  onFilesChange: (files: File[]) => void;
   onLaunchDCC: () => void;
-  onFilesChange: (newFiles: File[]) => void;
-  onMetadataChange: (newMetadata: Metadata) => void;
   isDownloading: boolean;
   isCheckingOut: boolean;
   hideTitle?: boolean;
@@ -56,9 +60,8 @@ const AssetInfoFlow = ({
   onCheckout,
   onCheckin,
   onDownload,
-  onLaunchDCC,
   onFilesChange,
-  onMetadataChange,
+  onLaunchDCC,
   isDownloading,
   isCheckingOut,
   hideTitle = false,
@@ -87,14 +90,21 @@ const AssetInfoFlow = ({
   const [materials, setMaterials] = useState<string>("None");
   const [keywords, setKeywords] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [metadata, setMetadata] = useState<Metadata>({} as Metadata);
   const [commitHistory, setCommitHistory] = useState<Commit[]>([]);
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
 
   const handleCheckInComplete = () => {
-    onCheckin();
-    console.log("The checkin is done.");
-    setCheckInOpen(false);
+    console.log("handleCheckInComplete called");
+    console.log("Calling onCheckin...");
+    
+    // Properly split and trim keywords    
+    onCheckin({
+      note: description,
+      version: version,
+      hasTexture: materials === "Yes",
+      keywords: JSON.stringify(keywords.split(", ")),
+    });
+    console.log("onCheckin called");
   };
 
   const handleNextStep = () => {
@@ -233,14 +243,40 @@ const AssetInfoFlow = ({
     // Return all versions from the commit history
     return commitHistory.map((commit) => commit.version);
   };
-
   const versionOptions = getVersionOptions();
 
-  const handleMetadataChange = (field: keyof Metadata, value: any) => {
-    setMetadata((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const getPossibleVersionOptions = () => {
+    const currentVersion = asset?.version;
+    const parts = currentVersion.split(".");
+    const major = parseInt(parts[0], 10);
+    const minor = parseInt(parts[1], 10);
+    const patch = parseInt(parts[2], 10);
+
+    return [
+      `${(major + 1).toString().padStart(2, "0")}.00.00`, // Major update
+      `${major.toString().padStart(2, "0")}.${(minor + 1).toString().padStart(2, "0")}.00`, // Minor update
+      `${major.toString().padStart(2, "0")}.${minor.toString().padStart(2, "0")}.${(patch + 1).toString().padStart(2, "0")}`, // Patch update
+    ];
+  };
+  const possibleVersionOptions = getPossibleVersionOptions();
+
+  const handleMetadataChange = (field: string, value: any) => {
+    switch (field) {
+      case "version":
+        setVersion(value);
+        break;
+      case "materials":
+        setMaterials(value);
+        break;
+      case "keywords":
+        setKeywords(value);
+        break;
+      case "description":
+        setDescription(value);
+        break;
+      default:
+        break;
+    }
   };
 
   const isFormValid = () => {
@@ -248,31 +284,18 @@ const AssetInfoFlow = ({
   };
 
   const handleMetadataSubmit = () => {
-    // Prepare metadata for submission
-    const keywordsList = keywords
-      .split(",")
-      .map((k) => k.trim())
-      .filter((k) => k !== "");
-
-    const newMetadata: Metadata = {
-      assetName: asset.name,
-      assetStructureVersion: "1.0",
-      hasTexture: materials === "Yes",
-      keywords: keywordsList,
-      commit: {
-        version,
-        note: description,
-        author: asset.checkedOutBy || "",
-        timestamp: date ? date.toISOString() : new Date().toISOString(),
-      },
-      versionMap: {}, // Empty version map as required by the type
-    };
-
-    // Pass metadata to parent component
-    onMetadataChange(newMetadata);
-
+    console.log("handleMetadataSubmit called");
+    
+    // First pass the files to the parent component
+    console.log("Calling onFilesChange with files:", uploadedFiles);
+    onFilesChange(uploadedFiles);
+    
     // Complete the check-in process
+    console.log("Calling handleCheckInComplete...");
     handleCheckInComplete();
+    
+    // Close the dialog
+    setCheckInOpen(false);
   };
 
   useEffect(() => {
@@ -384,102 +407,103 @@ const AssetInfoFlow = ({
         <DialogContent className="sm:max-w-[500px]">
           {step === 2 && (
             <div className="flex flex-col h-full max-h-[75vh]">
-              <div className="pb-4">
-                <p className="text-sm text-muted-foreground">Check-in Step 1 of 2</p>
-                <p className="text-xl">Upload & Verify</p>
-              </div>
+              <DialogHeader>
+                <p className="text-sm text-muted-foreground">
+                  Check-in Step 1 of 2
+                </p>
+                <DialogTitle className="text-xl">
+                  Upload and Automatic Checks
+                </DialogTitle>
+              </DialogHeader>
 
-              <div className="flex-1 overflow-y-auto">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-sm font-medium">Upload Files</label>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        accept=".zip"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleUploadClick}
-                        className="flex items-center gap-1"
-                      >
-                        <FileUp className="h-3 w-3" />
-                        Browse
-                      </Button>
-                    </div>
-                    <div className="border rounded-md p-3 bg-muted/40 min-h-[100px]">
-                      {uploadedFiles.length === 0 ? (
-                        <div className="text-center text-muted-foreground text-sm py-8">
-                          Drag and drop files here or click Browse
-                        </div>
-                      ) : (
-                        <ul className="space-y-2">
-                          {uploadedFiles.map((file, index) => (
-                            <li
-                              key={index}
-                              className="flex items-center justify-between bg-background rounded-md p-2 text-sm"
-                            >
-                              <span className="truncate max-w-[300px]">{file.name}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveFile(index)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleVerify}
-                      className="w-full"
-                      disabled={uploadedFiles.length === 0}
-                    >
-                      Verify Files
-                    </Button>
-                  </div>
-
-                  {verificationMessage && (
-                    <div
-                      className={`p-2 text-center text-sm font-medium ${
-                        verificationComplete ? "text-green-600" : "text-red-500"
-                      }`}
-                      dangerouslySetInnerHTML={{
-                        __html: verificationMessage.replace(/\n/g, "<br />"),
-                      }}
-                    />
-                  )}
-
-                  {invalidFiles.length > 0 && (
-                    <div className="border border-red-200 bg-red-50 rounded-md p-3">
-                      <p className="text-sm font-medium text-red-700 mb-2">Invalid file names:</p>
-                      <ul className="space-y-1 text-sm text-red-600">
-                        {invalidFiles.map((fileName, index) => (
-                          <li key={index}>
-                            • {fileName} - should follow one of the valid patterns
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+              <div className="space-y-4">
+                <div className="text-sm">
+                  <p className="font-medium mb-1">Upload a .zip file!</p>
                 </div>
+
+                <Button
+                  className="w-full flex items-center gap-2"
+                  onClick={handleUploadClick}
+                  variant="outline"
+                >
+                  <FileUp size={16} />
+                  Upload file
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept=".zip"
+                />
+
+                {uploadedFiles.length > 0 && (
+                  <div className="border rounded-md p-3 space-y-2">
+                    <p className="text-sm font-medium">Uploaded files:</p>
+                    <ul className="space-y-2">
+                      {uploadedFiles.map((file, index) => (
+                        <li
+                          key={index}
+                          className={`flex items-center justify-between border-b pb-1 ${
+                            invalidFiles.includes(file.name) ? "text-red-500" : ""
+                          }`}
+                        >
+                          <span className="text-sm truncate">{file.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveFile(index)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <X size={16} />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleVerify}
+                  disabled={uploadedFiles.length === 0}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Verify files
+                </Button>
+
+                {verificationMessage && (
+                  <div
+                    className={`p-2 text-center text-sm font-medium ${
+                      verificationComplete ? "text-green-600" : "text-red-500"
+                    }`}
+                    dangerouslySetInnerHTML={{
+                      __html: verificationMessage.replace(/\n/g, "<br />"),
+                    }}
+                  />
+                )}
+
+                {invalidFiles.length > 0 && (
+                  <div className="border border-red-200 bg-red-50 rounded-md p-3">
+                    <p className="text-sm font-medium text-red-700 mb-2">
+                      Invalid file names:
+                    </p>
+                    <ul className="space-y-1 text-sm text-red-600">
+                      {invalidFiles.map((fileName, index) => (
+                        <li key={index}>
+                          • {fileName} - should follow one of the valid patterns
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-end mt-6">
-                {verificationComplete && <Button onClick={handleNextStep}>Proceed</Button>}
+              <div className="flex justify-between mt-6 gap-2">
+                <div></div> {/* Empty div to push the button to the right */}
+                <Button onClick={handleNextStep} disabled={!verificationComplete}>
+                  Proceed
+                </Button>
               </div>
             </div>
           )}
@@ -540,7 +564,7 @@ const AssetInfoFlow = ({
                         <SelectValue placeholder="Select version" />
                       </SelectTrigger>
                       <SelectContent>
-                        {versionOptions.map((v) => (
+                        {possibleVersionOptions.map((v) => (
                           <SelectItem key={v} value={v}>
                             {v}
                           </SelectItem>

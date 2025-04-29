@@ -306,18 +306,16 @@ const UploadAssetFlow = ({
       // Prepare form data with all required fields from the createAsset action
       const formData = new FormData();
       formData.append("file", uploadedFiles[0] as File);
-      formData.append("pennKey", user.pennId);
-      formData.append("assetName", assetName);
       formData.append("note", description);
       formData.append("hasTexture", materials === "Yes" ? "true" : "false");
+      formData.append("pennKey", user.pennId);
 
+
+      formData.append("assetName", assetName);
       const keywordsArray = keywords
-        .split(",")
-        .map((k) => k.trim())
-        .filter((k) => k !== "");
-      for (const keyword of keywordsArray) {
-        formData.append("keywordsRawList[]", keyword);
-      }
+        .split(", ");
+      formData.append("keywordsRawList", JSON.stringify(keywordsArray));
+      console.log('strigified', JSON.stringify(keywordsArray));
 
       const { data, error } = await actions.createAsset(formData);
       console.log('Response:', data);

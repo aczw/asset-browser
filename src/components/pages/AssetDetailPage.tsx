@@ -134,7 +134,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       // Create a link and click it to download the file
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${assetName}_${tag}.zip`;
+      link.download = `${assetName}.zip`;
       document.body.appendChild(link);
       link.click();
       console.log("[DEBUG] Triggered download");
@@ -336,7 +336,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
       // Create a link and click it to download the file
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${assetName}${version ? `_${version}` : ""}.zip`;
+      link.download = `${assetName}.zip`;
       document.body.appendChild(link);
       link.click();
       console.log("[DEBUG] Triggered download");

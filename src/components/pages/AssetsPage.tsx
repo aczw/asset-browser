@@ -16,7 +16,7 @@ import UploadAssetFlow from "../asset-detail/UploadAssetFlow";
 
 import { useToast } from "@/hooks/use-toast";
 import { actions } from "astro:actions";
-import { Check, ChevronDown, Filter, Plus, Search, User } from "lucide-react";
+import { ArrowUpDownIcon, Check, ChevronDown, Filter, Plus, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface SearchBarProps {
@@ -71,47 +71,30 @@ const SearchBar = ({
 
   return (
     <div className="w-full space-y-4 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-[80%]">
-          <form onSubmit={handleSearchSubmit} className="relative w-full">
-            <Input
-              type="text"
-              placeholder="Search assets by name or keywords..."
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              className="search-input pl-10 h-12 text-base"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-            <Button
-              type="submit"
-              variant="default"
-              size="sm"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-            >
-              Search
-            </Button>
-          </form>
-        </div>
+      <form
+        onSubmit={handleSearchSubmit}
+        className="w-full flex items-center justify-between gap-4"
+      >
+        <Input
+          type="text"
+          placeholder="Search assets by name or keywords..."
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          className="h-12"
+        />
 
-        <div className="ml-auto">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setCreateAssetOpen(true)}
-            className="flex items-center gap-1"
-          >
-            <Plus className="h-4 w-4" />
-            Upload New Asset
-          </Button>
-        </div>
-      </div>
+        <Button type="submit" variant="secondary" className="h-12">
+          <Search className="h-5 w-5" />
+          Search
+        </Button>
+      </form>
 
-      <div className="flex flex-wrap items-center gap-3 pb-2">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
-                <Filter className="h-4 w-4 mr-1" />
+              <Button variant="outline">
+                <Filter />
                 {selectedAuthor ? `Author: ${selectedAuthor}` : "Filter by Author"}
                 <ChevronDown className="h-4 w-4" />
               </Button>
@@ -138,7 +121,8 @@ const SearchBar = ({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1">
+              <Button variant="outline">
+                <ArrowUpDownIcon />
                 Sort: {sortOptions.find((option) => option.value === sortOption)?.label}
                 <ChevronDown className="h-4 w-4" />
               </Button>
@@ -160,18 +144,27 @@ const SearchBar = ({
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="checked-in-only"
+              checked={showCheckedInOnly}
+              onCheckedChange={handleCheckedInToggle}
+            />
+            <label htmlFor="checked-in-only" className="text-s cursor-pointer">
+              Show checked-in assets only
+            </label>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="checked-in-only"
-            checked={showCheckedInOnly}
-            onCheckedChange={handleCheckedInToggle}
-          />
-          <label htmlFor="checked-in-only" className="text-sm cursor-pointer">
-            Show checked-in assets only
-          </label>
-        </div>
+        <Button
+          variant="default"
+          onClick={() => setCreateAssetOpen(true)}
+          className="flex items-center gap-1"
+        >
+          <Plus className="h-4 w-4" />
+          Upload New Asset
+        </Button>
       </div>
 
       <UploadAssetFlow
@@ -255,11 +248,10 @@ const AssetsPage = ({ users, error }: { users: GetUsersBody["users"]; error: any
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold mb-2 text-left">
-            <a href="/" className="hover:underline underline-offset-[6px]">
-              🍓 Papaya
+            <a href="/" className="hover:text-muted-foreground transition-colors font-extrabold">
+              🍓Papaya
             </a>
           </h1>
-          <p className="text-muted-foreground text-left">Browse and search for assets</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Select user {"->"}</span>

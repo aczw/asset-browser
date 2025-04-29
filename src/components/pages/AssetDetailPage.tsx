@@ -285,7 +285,7 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
     console.log("[DEBUG] API: launchDCC called");
 
-    const { data, error } = await actions.launchDCC({ assetName, version });
+    //const { data, error } = await actions.launchDCC({ assetName, version });
 
     const launchURL = `houdini-launch://${assetName}?assetVersion=${version}`;
     window.open(launchURL, "_blank");

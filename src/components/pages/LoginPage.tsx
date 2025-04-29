@@ -5,12 +5,16 @@ import { Label } from "@/components/ui/label";
 
 import { useToast } from "@/hooks/use-toast";
 import { actions } from "astro:actions";
+import { Loader2Icon } from "lucide-react";
+import { useState } from "react";
 
 export default function LoginPage() {
   const { toast } = useToast();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoggingIn(true);
 
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const { data, error } = await actions.storeLoginTokens(formData);
@@ -26,6 +30,8 @@ export default function LoginPage() {
         variant: "destructive",
       });
     }
+
+    setIsLoggingIn(false);
   };
 
   return (
@@ -55,8 +61,14 @@ export default function LoginPage() {
                 </div>
                 <Input id="password" name="password" type="password" required />
               </div>
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                {isLoggingIn ? (
+                  <>
+                    <Loader2Icon className="animate-spin" /> Logging in...
+                  </>
+                ) : (
+                  "Login"
+                )}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm mb-6">

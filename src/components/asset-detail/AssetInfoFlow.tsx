@@ -1,8 +1,8 @@
-import { useRef, useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/hooks/use-toast";
 import type { AssetWithDetails, Commit, Metadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Checkbox } from "../../components/ui/checkbox";
+import { getAccessToken } from "@/utils/utils";
 import { actions } from "astro:actions";
 import { format } from "date-fns";
 import {
@@ -20,9 +20,11 @@ import {
   User,
   X,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Calendar } from "../../components/ui/calendar";
+import { Checkbox } from "../../components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
@@ -34,8 +36,6 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import { Textarea } from "../../components/ui/textarea";
-import { getAccessToken } from "@/utils/utils";
-import { toast } from "@/hooks/use-toast";
 
 interface AssetInfoFlowProps {
   asset: AssetWithDetails;
@@ -100,8 +100,8 @@ const AssetInfoFlow = ({
   const handleCheckInComplete = () => {
     console.log("handleCheckInComplete called");
     console.log("Calling onCheckin...");
-    
-    // Properly split and trim keywords    
+
+    // Properly split and trim keywords
     onCheckin({
       note: description,
       version: version,
@@ -178,59 +178,59 @@ const AssetInfoFlow = ({
       setVerificationComplete(false);
       return;
     }
-  
+
     // Get the asset name for verification
     const assetNameToVerify = asset.name;
-  
+
     const invalidFilesList: string[] = [];
-  
+
     if (!assetNameToVerify) {
       setVerificationMessage("Asset name is required for verification");
       setVerificationComplete(false);
       return;
     }
-  
+
     // Check if any files don't match the expected pattern
     const validFilePatterns = [
       new RegExp(`^${assetNameToVerify}\\.zip$`, "i"),
       new RegExp(`^${assetNameToVerify}_v\\d+\\.zip$`, "i"),
       new RegExp(`^${assetNameToVerify}_\\d+\\.\\d+\\.\\d+\\.zip$`, "i"),
     ];
-  
+
     for (const file of uploadedFiles) {
       const isValid = validFilePatterns.some((pattern) => pattern.test(file.name));
       if (!isValid) {
         invalidFilesList.push(file.name);
       }
     }
-  
+
     if (invalidFilesList.length > 0) {
       setInvalidFiles(invalidFilesList);
       setVerificationMessage("Some files do not follow the required naming pattern.");
       setVerificationComplete(false);
       return;
     }
-  
+
     setInvalidFiles([]);
-  
+
     // Verify files with backend
     try {
       const formData = new FormData();
       formData.append("assetName", assetNameToVerify);
       formData.append("file", uploadedFiles[0]);
       formData.append("isStrict", isStrict.toString()); // Add this line
-      
+
       const { data, error } = await actions.verifyAsset(formData);
-      
+
       if (!data.success) {
         setVerificationMessage(`Files did not verify! \n${data.message || "Unknown error"}`);
         setVerificationComplete(false);
         return;
       }
-  
+
       setVerificationMessage("Files verified successfully!");
       setVerificationComplete(true);
-  
+
       // Prepare metadata for the next step
       onFilesChange(uploadedFiles);
     } catch (error) {
@@ -262,29 +262,12 @@ const AssetInfoFlow = ({
     return [
       `${(major + 1).toString().padStart(2, "0")}.00.00`, // Major update
       `${major.toString().padStart(2, "0")}.${(minor + 1).toString().padStart(2, "0")}.00`, // Minor update
-      `${major.toString().padStart(2, "0")}.${minor.toString().padStart(2, "0")}.${(patch + 1).toString().padStart(2, "0")}`, // Patch update
+      `${major.toString().padStart(2, "0")}.${minor.toString().padStart(2, "0")}.${(patch + 1)
+        .toString()
+        .padStart(2, "0")}`, // Patch update
     ];
   };
   const possibleVersionOptions = getPossibleVersionOptions();
-
-  const handleMetadataChange = (field: string, value: any) => {
-    switch (field) {
-      case "version":
-        setVersion(value);
-        break;
-      case "materials":
-        setMaterials(value);
-        break;
-      case "keywords":
-        setKeywords(value);
-        break;
-      case "description":
-        setDescription(value);
-        break;
-      default:
-        break;
-    }
-  };
 
   const isFormValid = () => {
     return !!version && !!description && !!keywords.trim() && !!date;
@@ -292,15 +275,15 @@ const AssetInfoFlow = ({
 
   const handleMetadataSubmit = () => {
     console.log("handleMetadataSubmit called");
-    
+
     // First pass the files to the parent component
     console.log("Calling onFilesChange with files:", uploadedFiles);
     onFilesChange(uploadedFiles);
-    
+
     // Complete the check-in process
     console.log("Calling handleCheckInComplete...");
     handleCheckInComplete();
-    
+
     // Close the dialog
     setCheckInOpen(false);
   };
@@ -380,17 +363,19 @@ const AssetInfoFlow = ({
         <Button
           className="flex items-center gap-2"
           onClick={async () => {
-            let token = await getAccessToken()
+            let token = await getAccessToken();
             if (!token.success) {
               toast({
                 title: "Check-In Error",
                 description: `You must be logged in to check in an asset.`,
                 variant: "destructive",
               });
-              setTimeout(()=>{window.location.href = '/login/';}, 1500)
+              setTimeout(() => {
+                window.location.href = "/login/";
+              }, 1500);
               return;
-            } 
-            setCheckInOpen(true)
+            }
+            setCheckInOpen(true);
           }}
           disabled={!canCheckin}
         >
@@ -427,12 +412,8 @@ const AssetInfoFlow = ({
           {step === 2 && (
             <div className="flex flex-col h-full max-h-[75vh]">
               <DialogHeader>
-                <p className="text-sm text-muted-foreground">
-                  Check-in Step 1 of 2
-                </p>
-                <DialogTitle className="text-xl">
-                  Upload and Automatic Checks
-                </DialogTitle>
+                <p className="text-sm text-muted-foreground">Check-in Step 1 of 2</p>
+                <DialogTitle className="text-xl">Upload and Automatic Checks</DialogTitle>
               </DialogHeader>
 
               <div className="space-y-4">
@@ -492,14 +473,10 @@ const AssetInfoFlow = ({
                 </Button>
 
                 <div className="w-full flex items-center justify-center gap-2 pb-1">
-                  <div>
-                    Verification Strict Mode?
-                  </div>
+                  <div>Verification Strict Mode?</div>
                   <Checkbox
                     checked={isStrict}
-                    onCheckedChange={(checked) =>
-                      setIsStrict(checked as boolean)
-                    }
+                    onCheckedChange={(checked) => setIsStrict(checked as boolean)}
                   />
                 </div>
                 {verificationMessage && (
@@ -515,14 +492,10 @@ const AssetInfoFlow = ({
 
                 {invalidFiles.length > 0 && (
                   <div className="border border-red-200 bg-red-50 rounded-md p-3">
-                    <p className="text-sm font-medium text-red-700 mb-2">
-                      Invalid file names:
-                    </p>
+                    <p className="text-sm font-medium text-red-700 mb-2">Invalid file names:</p>
                     <ul className="space-y-1 text-sm text-red-600">
                       {invalidFiles.map((fileName, index) => (
-                        <li key={index}>
-                          • {fileName} - should follow one of the valid patterns
-                        </li>
+                        <li key={index}>• {fileName} - should follow one of the valid patterns</li>
                       ))}
                     </ul>
                   </div>

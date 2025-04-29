@@ -33,6 +33,8 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import { Textarea } from "../../components/ui/textarea";
+import { getAccessToken } from "@/utils/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface AssetInfoFlowProps {
   asset: AssetWithDetails;
@@ -349,7 +351,19 @@ const AssetInfoFlow = ({
 
         <Button
           className="flex items-center gap-2"
-          onClick={() => setCheckInOpen(true)}
+          onClick={async () => {
+            let token = await getAccessToken()
+            if (!token.success) {
+              toast({
+                title: "Check-In Error",
+                description: `You must be logged in to check in an asset.`,
+                variant: "destructive",
+              });
+              setTimeout(()=>{window.location.href = '/login/';}, 1500)
+              return;
+            } 
+            setCheckInOpen(true)
+          }}
           disabled={!canCheckin}
         >
           <Lock className="h-4 w-4" />

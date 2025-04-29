@@ -87,8 +87,9 @@ export const server = {
       pennKey: z.string(),
       keywordsRawList: z.array(z.string()),
       assetName: z.string(),
+      accessToken: z.string(),
     }),
-    handler: async ({ file, pennKey, note, hasTexture, keywordsRawList, assetName }) => {
+    handler: async ({ file, pennKey, note, hasTexture, keywordsRawList, assetName, accessToken }) => {
       console.log("[DEBUG] API: API URL:", API_URL);
 
       const formData = new FormData();
@@ -102,6 +103,7 @@ export const server = {
 
       const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
         method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`},
         body: formData,
       });
 
@@ -129,8 +131,9 @@ export const server = {
       pennKey: z.string(),
       keywordsRawList: z.array(z.string()),
       assetName: z.string(),
+      accessToken: z.string(),
     }),
-    handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList, assetName }) => {
+    handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList, assetName, accessToken }) => {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("note", note);
@@ -140,10 +143,12 @@ export const server = {
       for (const keyword of keywordsRawList) {
         formData.append("keywordsRawList[]", keyword);
       }
+      formData.append("accessToken", accessToken)
 
       // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
       const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
         method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`},
         body: formData,
       });
 
@@ -164,11 +169,13 @@ export const server = {
     input: z.object({
       assetName: z.string(),
       pennKey: z.string(),
+      accessToken: z.string(),
     }),
-    handler: async ({ assetName, pennKey }) => {
+    handler: async ({ assetName, pennKey, accessToken }) => {
       const response = await fetch(`${API_URL}/assets/${assetName}/checkout/`, {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
         // Note: backend expects 'pennkey' not 'pennKey' (lowercase "K")

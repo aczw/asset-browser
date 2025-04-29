@@ -21,6 +21,7 @@ import { actions } from "astro:actions";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, ArrowLeft, FileUp, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {getAccessToken } from "../../utils/utils.tsx"
 
 interface UploadAssetFlowProps {
   open: boolean;
@@ -305,7 +306,22 @@ const UploadAssetFlow = ({
 
       console.log(`uploaded: ${uploadedFiles[0].name}`);
       console.log(typeof uploadedFiles[0]);
+      
+      let token = await getAccessToken()
+      if (!token.success) {
+        if (!token.success) {
+          toast({
+            title: "Upload Error",
+            description: `You must be logged in to upload assets.`,
+            variant: "destructive",
+          });
+          setTimeout(()=>{window.location.href = '/login/';}, 1500)
+          return;
+        } 
+      } 
 
+      let accessToken = token.accessToken;
+      
       // Prepare form data with all required fields from the createAsset action
       const formData = new FormData();
       formData.append("file", uploadedFiles[0] as File);
@@ -319,6 +335,8 @@ const UploadAssetFlow = ({
         .split(", ");
       formData.append("keywordsRawList", JSON.stringify(keywordsArray));
       console.log('strigified', JSON.stringify(keywordsArray));
+
+      formData.append("accessToken", accessToken);
 
       const { data, error } = await actions.createAsset(formData);
       console.log('Response:', data);

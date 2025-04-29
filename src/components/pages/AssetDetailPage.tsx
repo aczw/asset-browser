@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import AssetDetailSkeleton from "../asset-detail/AssetDetailSkeleton";
 import AssetInfoFlow from "../asset-detail/AssetInfoFlow";
 import AssetPreview from "../asset-detail/AssetPreview";
+import { getAccessToken } from "@/utils/utils";
 
 interface AssetDetailPageProps {
   assetName: string;
@@ -86,9 +87,24 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
 
     setIsCheckingOut(true);
 
+    let token = await getAccessToken()
+    if (!token.success) {
+      console.error("Error checking out asset:", "No authentication.");
+      toast({
+        title: "Checkout Error",
+        description: `You must be logged in to check out asset "${assetName}".`,
+        variant: "destructive",
+      });
+      setTimeout(()=>{window.location.href = '/login/';}, 1500)
+      return;
+    } 
+
+    let accessToken = token.accessToken;
+    
     const { data, error } = await actions.checkoutAsset({
       assetName,
       pennKey: user.pennId,
+      accessToken: accessToken,
     });
 
     if (error) {
@@ -156,6 +172,22 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     hasTexture: boolean;
     keywords: string;
   }) => {
+    console.log("It's time to check in.");
+
+    let token = await getAccessToken()
+    if (!token.success) {
+      console.error("Error checking in asset:", "No authentication.");
+      toast({
+        title: "Checkin Error",
+        description: `You must be logged in to check in asset "${assetName}".`,
+        variant: "destructive",
+      });
+      setTimeout(()=>{window.location.href = '/login/';}, 1500)
+      return;
+    } 
+
+    let accessToken = token.accessToken;
+
     if (!assetName || !user || !asset || userFiles.length === 0 || !checkInData) {
       return;
     }
@@ -175,6 +207,8 @@ const AssetDetailPage = ({ assetName }: AssetDetailPageProps) => {
     formData.append("keywordsRawList", checkInData.keywords);
 
     formData.append("assetName", assetName);
+
+    formData.append("accessToken", accessToken);
 
     const { data, error } = await actions.checkinAsset(formData);
 

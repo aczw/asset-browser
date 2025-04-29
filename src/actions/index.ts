@@ -79,25 +79,33 @@ export const server = {
       note: z.string(),
       hasTexture: z.boolean(),
       pennKey: z.string(),
-      keywordsRawList: z.array(z.string()),
+      keywordsRawList: z.string(),
       assetName: z.string(),
     }),
     handler: async ({ file, pennKey, note, hasTexture, keywordsRawList, assetName }) => {
-      console.log("[DEBUG] API: API URL:", API_URL);
-
+      if (typeof keywordsRawList === 'string') {
+        keywordsRawList = JSON.parse(keywordsRawList);
+      }
+      
       const formData = new FormData();
       formData.append("file", file);
       formData.append("note", note);
       formData.append("hasTexture", String(hasTexture));
-      formData.append("pennKey", pennKey);
+      formData.append("pennkey", pennKey);
+    
       for (const keyword of keywordsRawList) {
-        formData.append("keywordsRawList[]", keyword); 
+        formData.append("keywordsRawList", keyword);
       }
 
       const response = await fetch(`${API_URL}/assets/${assetName}/upload/`, {
         method: "POST",
         body: formData,
       });
+      
+      const data = await response.json();
+      if(!data.success) {
+        console.log(data.message)
+      }
 
       if (!response.ok) {
         throw new ActionError({
@@ -107,8 +115,6 @@ export const server = {
             : "Failed to create asset",
         });
       }
-
-      const data = await response.json();
       return data;
     },
   }),
@@ -121,25 +127,33 @@ export const server = {
       version: z.string(),
       hasTexture: z.boolean(),
       pennKey: z.string(),
-      keywordsRawList: z.array(z.string()),
+      keywordsRawList: z.string(),
       assetName: z.string(),
     }),
     handler: async ({ file, pennKey, version, note, hasTexture, keywordsRawList, assetName }) => {
+      if (typeof keywordsRawList === 'string') {
+        keywordsRawList = JSON.parse(keywordsRawList);
+      }
       const formData = new FormData();
       formData.append("file", file);
       formData.append("note", note);
       formData.append("version", version);
       formData.append("hasTexture", String(hasTexture));
-      formData.append("pennKey", pennKey);
+      formData.append("pennkey", pennKey);
       for (const keyword of keywordsRawList) {
-        formData.append("keywordsRawList[]", keyword); 
+        formData.append("keywordsRawList", keyword);
       }
 
       // S3 update, currently does not return version IDs - instead writes to a assetName/version/file path
       const response = await fetch(`${API_URL}/assets/${assetName}/checkin/`, {
-        method: "POST",
+        method: "PUT",
         body: formData,
       });
+
+      const data = await response.json();
+      if(!data.success) {
+        console.log("data message", data.message)
+      }
 
       if (!response.ok) {
         throw new ActionError({
@@ -148,8 +162,7 @@ export const server = {
         });
       }
 
-      // TO DO: Handle metadata updates and version ID control should it happen
-      const data = await response.json();
+
       return data;
     },
   }),

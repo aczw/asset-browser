@@ -1,5 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAccessToken } from "@/utils/utils";
+import { actions } from "astro:actions";
 import { UserIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -21,7 +22,14 @@ const Account = () => {
         return;
       }
 
-      setUser({ name: "Charles Wang", pennKey: "czw" });
+      const { data, error } = await actions.getMe({ accessToken: result.accessToken });
+
+      if (error) {
+        setUser(null);
+        return;
+      }
+
+      setUser({ name: `${data.firstName} ${data.lastName}`, pennKey: data.pennkey });
     }
 
     fetchCurrentUser();

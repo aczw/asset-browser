@@ -1,5 +1,5 @@
 import { findHoudiniPath, findHythonPath, writePythonHipFile } from "@/lib/launch-dcc";
-import { MetadataSchema, type GetUserBody, type GetUsersBody } from "@/lib/types";
+import { MetadataSchema, type GetUserBody, type GetUsersBody, type SingleUser } from "@/lib/types";
 import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro:schema";
 import { execFile } from "child_process";
@@ -418,6 +418,32 @@ export const server = {
     },
   }),
 
+  getMe: defineAction({
+    input: z.object({
+      accessToken: z.string(),
+    }),
+    handler: async ({ accessToken }) => {
+      const response = await fetch(`${API_URL}/currentUser/`, {
+        headers: { Authorization: `Bearer ${accessToken}`},
+        method: "GET",
+      });
+      
+      if (!response.ok) {
+        console.log(
+          `[DEBUG] Could not get current user, status code: ${response.status}`
+        );
+        throw new ActionError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to get current user! ${
+            response.statusText.length > 0 ? response.statusText : ""
+          }`,
+        });
+      }
+      const data: SingleUser = (await response.json()) as SingleUser;
+      return data;
+    },
+  }),
+  
   downloadGlb: defineAction({
     input: z.object({
       assetName: z.string(),

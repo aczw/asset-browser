@@ -469,4 +469,34 @@ export const server = {
     }
   }),
 
+  assetExists: defineAction({
+    input: z.object({
+      assetName: z.string(),
+    }),
+    handler: async ({ assetName }) => {
+      console.log(`Checking if asset exists: ${assetName}`);
+      
+      try {
+        // Try the first endpoint format
+        
+        let response = await fetch(`${API_URL}/assets/${assetName}/exists/`, {
+          method: "GET",
+        });
+        
+        if (!response.ok) {
+          console.error(`Endpoint failed. Returning default response.`);
+          return { exists: false };
+        }
+
+        const data = await response.json();
+        console.log(`Response data:`, data);
+        return data;
+      } catch (error) {
+        console.error(`Fetch error:`, error);
+        // Return a default response that allows the user to proceed
+        return { exists: false };
+      }
+    },
+  }),
+
 };

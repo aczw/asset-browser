@@ -36,6 +36,7 @@ const UploadAssetFlow = ({
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [assetName, setAssetName] = useState("");
+  const [assetNameError, setAssetNameError] = useState<string | null>(null);
 
   // Step 2 states
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -107,11 +108,11 @@ const UploadAssetFlow = ({
   };
 
   const handleVerify = async () => {
-    const assetNameToVerify = assetName.trim().toLowerCase();
+    const assetNameToVerify = assetName.trim();
     const invalidFilesList: string[] = [];
 
     if (!assetNameToVerify) {
-      setVerificationMessage("Asset name is required for verification");
+      setAssetNameError("Asset name is required for verification");
       setVerificationComplete(false);
       return;
     }
@@ -241,17 +242,42 @@ const UploadAssetFlow = ({
   //   handleComplete();
   // };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (step === 1) {
       if (!assetName.trim()) {
-        toast({
-          title: "Asset Name Required",
-          description: "Please provide a name for the new asset.",
-          variant: "destructive",
-        });
+        setAssetNameError("Asset name is required");
         return;
       }
-      setStep(2);
+
+      // Check if asset name already exists
+      try {
+        console.log('assetName = ', assetName);
+        const { data, error } = await actions.assetExists({ assetName });
+        console.log('asset exists response:', data);
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to check if asset name exists.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.exists) {
+          setAssetNameError("Asset name already exists!");
+          return;
+        }
+
+        // Clear any previous error
+        setAssetNameError(null);
+        setStep(2);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred.",
+          variant: "destructive",
+        });
+      }
     } else if (step === 2) {
       if (uploadedFiles.length === 0) {
         toast({
@@ -276,7 +302,6 @@ const UploadAssetFlow = ({
 
       console.log(`uploaded: ${uploadedFiles[0].name}`);
       console.log(typeof uploadedFiles[0]);
-      console.log(`metadata: ${metadata.assetStructureVersion}`);
 
       // Prepare form data with all required fields from the createAsset action
       const formData = new FormData();
@@ -295,6 +320,7 @@ const UploadAssetFlow = ({
       }
 
       const { data, error } = await actions.createAsset(formData);
+      console.log('Response:', data);
 
       if (error) {
         throw new Error(error.message);
@@ -350,6 +376,9 @@ const UploadAssetFlow = ({
                   value={assetName}
                   onChange={(e) => setAssetName(e.target.value)}
                 />
+                {assetNameError && (
+                  <p className="text-sm text-red-500">{assetNameError}</p>
+                )}
               </div>
             </div>
 
